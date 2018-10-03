@@ -1,0 +1,51 @@
+<resources>
+    <string name="app_name">Passport Reader</string>
+
+    <string name="camera_error">This device doesn\'t support Camera2 API.</string>
+    <string-array name="ocrenginemodes">
+        <item>Tesseract</item>
+        <item>Cube</item>
+        <item>Both</item>
+    </string-array>
+
+    <string name="permission_camera_rationale">Access to the camera is needed for detection</string>
+    <string name="no_camera_permission">This application cannot run because it does not have the camera permission.  The application will now exit.</string>
+
+    <string name="warning_ocr_install">Installing &amp; Starting OCR</string>
+    <string name="warning_error_ocr_install">Error Installing &amp; Starting OCR</string>
+    <string name="warning_ocr_install_progress">Installation OCR: %1d%%</string>
+
+
+    <string name="status_bar_success">OCR Detected - Mean confidence: %1d%%- Time required: %2dms</string>
+    <string name="status_bar_failure">OCR Read failure - Time required: %1d ms</string>
+
+    <string name="nfc_title">Put your phone over your passport and don\'t move it</string>
+
+    <string name="label_document_number">Document Number</string>
+    <string name="label_document_expiry">Expiration Date</string>
+    <string name="label_document_issued">Issuing Date</string>
+    <string name="label_document_issuing_state">Issuing State</string>
+    <string name="label_document_nationality">Nationality</string>
+    <string name="label_passport">Passport</string>
+    <string name="label_not_available">NA</string>
+
+    <string name="name">%1s %2s</string>
+
+    <string name="doc_number">Doc Number: %1s</string>
+    <string name="doc_dob">Date of Birth: %1s</string>
+    <string name="doc_expiry">Expiry Date: %1s</string>
+
+    <string name="selection_title">Data Entry</string>
+    <string name="selection_manual">Manual</string>
+    <string name="selection_automatic">Automatic</string>
+
+    <string name="prompt_document_number">Document Number</string>
+    <string name="prompt_document_expiration">Document Expiration (yymmdd)</string>
+    <string name="prompt_document_date_of_birth">Date of Birth (yymmdd)</string>
+
+    <string name="read_nfc">READ NFC</string>
+
+    <string name="error_validation_date">Date format is not valid</string>
+    <string name="error_validation_document_number">Document number is not valid</string>
+
+</resources>
