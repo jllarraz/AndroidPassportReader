@@ -164,12 +164,12 @@ public class NfcFragment extends Fragment {
                     faceImage = retrieveFaceImage(dg2);
                 }catch (Exception e){
                     //Don't do anything
+                    e.printStackTrace();
                 }
 
-
-                Toast.makeText(getContext(), dg1.getMRZInfo().getPersonalNumber(), Toast.LENGTH_LONG).show();
-
+                //We don't want any authentication for now, just public data
                 // Chip Authentication
+                /*
                 is14 = ps.getInputStream(PassportService.EF_DG14);
                 DG14File dg14 = (DG14File) LDSFileUtil.getLDSFile(PassportService.EF_DG14, is14);
                 Map<BigInteger, PublicKey> keyInfo = dg14.getChipAuthenticationPublicKeyInfos();
@@ -181,7 +181,7 @@ public class NfcFragment extends Fragment {
                 // CVCA
                 isCvca = ps.getInputStream(PassportService.EF_CVCA);
                 CVCAFile cvca = (CVCAFile) LDSFileUtil.getLDSFile(PassportService.EF_CVCA, isCvca);
-
+                */
 
                 if(nfcFragmentListener!=null){
                     nfcFragmentListener.onPassportRead(dg1.getMRZInfo(), faceImage);
@@ -193,8 +193,8 @@ public class NfcFragment extends Fragment {
             } finally {
                 try {
                     is.close();
-                    is14.close();
-                    isCvca.close();
+                   // is14.close();
+                    //isCvca.close();
                     isPicture.close();
                 } catch (Exception e) {
                     e.printStackTrace();
