@@ -26,7 +26,6 @@ import org.jmrtd.lds.MRZInfo;
 
 import example.jllarraz.com.passportreader.R;
 import example.jllarraz.com.passportreader.common.IntentData;
-import example.jllarraz.com.passportreader.ui.fragments.Camera2MrzFragment;
 import example.jllarraz.com.passportreader.ui.fragments.SelectionFragment;
 
 public class SelectionActivity extends AppCompatActivity implements SelectionFragment.SelectionFragmentListener {

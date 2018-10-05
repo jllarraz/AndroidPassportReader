@@ -4,58 +4,16 @@ import android.app.PendingIntent;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.nfc.NfcAdapter;
-import android.nfc.Tag;
-import android.nfc.tech.IsoDep;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
-import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
 import android.widget.Toast;
 
-import net.sf.scuba.smartcards.CardService;
 import net.sf.scuba.smartcards.CardServiceException;
-import net.sf.scuba.tlv.TLVOutputStream;
 
-import org.jmrtd.BACKeySpec;
-import org.jmrtd.ChipAuthenticationResult;
-import org.jmrtd.DESedeSecureMessagingWrapper;
-import org.jmrtd.PassportService;
-import org.jmrtd.TerminalAuthenticationResult;
-import org.jmrtd.Util;
-import org.jmrtd.cert.CVCAuthorizationTemplate;
-import org.jmrtd.cert.CVCPrincipal;
-import org.jmrtd.cert.CardVerifiableCertificate;
-import org.jmrtd.lds.CVCAFile;
-
-import org.jmrtd.lds.DG14File;
-import org.jmrtd.lds.DG1File;
-import org.jmrtd.lds.LDSFileUtil;
 import org.jmrtd.lds.MRZInfo;
-import org.spongycastle.jce.provider.BouncyCastleProvider;
-
-import java.io.ByteArrayOutputStream;
-import java.io.InputStream;
-import java.lang.reflect.Field;
-import java.math.BigInteger;
-import java.security.KeyPair;
-import java.security.KeyPairGenerator;
-import java.security.MessageDigest;
-import java.security.PrivateKey;
-import java.security.PublicKey;
-import java.security.Security;
-import java.security.Signature;
-import java.security.interfaces.ECPublicKey;
-import java.security.spec.AlgorithmParameterSpec;
-import java.util.List;
-import java.util.Map;
-
-import javax.crypto.KeyAgreement;
-import javax.crypto.SecretKey;
-import javax.crypto.interfaces.DHPublicKey;
 
 import example.jllarraz.com.passportreader.R;
-import example.jllarraz.com.passportreader.ui.fragments.Camera2MrzFragment;
 import example.jllarraz.com.passportreader.ui.fragments.NfcFragment;
 import example.jllarraz.com.passportreader.ui.fragments.PassportDetailsFragment;
 

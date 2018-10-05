@@ -23,10 +23,9 @@ import android.support.v7.app.AppCompatActivity;
 import org.jmrtd.lds.MRZInfo;
 import example.jllarraz.com.passportreader.R;
 import example.jllarraz.com.passportreader.common.IntentData;
-import example.jllarraz.com.passportreader.ui.fragments.Camera2MrzFragment;
-import example.jllarraz.com.passportreader.ui.fragments.SelectionFragment;
+import example.jllarraz.com.passportreader.ui.fragments.Camera2MLKitFragment;
 
-public class CameraActivity extends AppCompatActivity implements Camera2MrzFragment.Camera2MrzFragmentListener {
+public class CameraActivity extends AppCompatActivity implements Camera2MLKitFragment.Camera2MLKitFragmentListener {
 
     private static final String TAG = CameraActivity.class.getSimpleName();
 
@@ -36,7 +35,7 @@ public class CameraActivity extends AppCompatActivity implements Camera2MrzFragm
         setContentView(R.layout.activity_camera);
         if (null == savedInstanceState) {
             getSupportFragmentManager().beginTransaction()
-                    .replace(R.id.container, new Camera2MrzFragment())
+                    .replace(R.id.container, new Camera2MLKitFragment())
                     .commit();
         }
     }

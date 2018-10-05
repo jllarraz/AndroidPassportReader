@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.ImageFormat;
 import android.graphics.Matrix;
 import android.graphics.Point;
@@ -42,7 +43,6 @@ import java.util.List;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
-import example.jllarraz.com.passportreader.image.PlanarYUVLuminanceSource;
 import example.jllarraz.com.passportreader.utils.ImageUtil;
 import example.jllarraz.com.passportreader.ui.views.AutoFitTextureView;
 
@@ -214,13 +214,7 @@ public class Camera2Manager {
 
     private int count=0;
 
-    private static final int MIN_FRAME_WIDTH = 50; // originally 240
-    private static final int MIN_FRAME_HEIGHT = 20; // originally 240
-    private Rect framingRect;
-    private Rect framingRectInPreview;
     private boolean initialized;
-    private int requestedFramingRectWidth;
-    private int requestedFramingRectHeight;
     private Point screenResolution;
 
 
@@ -235,31 +229,23 @@ public class Camera2Manager {
         public void onImageAvailable(ImageReader reader) {
             Log.d(TAG, "onImageAvailable: " + count++);
             Image image = reader.acquireNextImage();
-            try {
-                Rect framingRectInPreview = getFramingRectInPreview();
-                double rationHeight = (double) framingRectInPreview.height() / mPreviewSize.getHeight();
-                double rationWidth = (double) framingRectInPreview.width() / mPreviewSize.getWidth();
-                int framingRectHeight = (int) (rationHeight * image.getHeight());
-                int framingRectWidth = (int) (rationWidth * image.getWidth());
-                int framingTop= (int) (framingRectInPreview.top * rationHeight);
-                int framingLeft= (int) (framingRectInPreview.left * rationWidth);
-                Rect rect = new Rect(framingLeft, framingTop, framingRectWidth + framingLeft, framingRectHeight + framingTop );
-                byte[] bytes = ImageUtil.YUV_420_888toNV21(image);
-                PlanarYUVLuminanceSource planarYUVLuminanceSource = new PlanarYUVLuminanceSource(bytes, image.getWidth(), image.getHeight(), rect.left, rect.top, rect.width(), rect.height(), false);
-                Bitmap bitmap = planarYUVLuminanceSource.renderCroppedGreyscaleBitmap();
+            byte[] bytes = null;
+            try{
+                bytes = ImageUtil.imageToByteArray(image);
+                Bitmap bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
                 if(bitmap!=null && cameraManagerListener!=null) {
                     Log.d(TAG, "New Bitmap");
-                    cameraManagerListener.onPreviewImage(bitmap);
+                    cameraManagerListener.onPreviewCroppedImage(bitmap);
                     /*bitmap.recycle();
                     bitmap = null;*/
                 }
 
             }catch (Exception e){
                 e.printStackTrace();
-            }
-            finally {
+            }finally {
                 image.close();
             }
+
         }
 
     };
@@ -566,13 +552,6 @@ public class Camera2Manager {
                 screenResolution = new Point();
                 display.getSize(screenResolution);
 
-
-                //configManager.initFromCameraParameters(theCamera);
-                if (requestedFramingRectWidth > 0 && requestedFramingRectHeight > 0) {
-                    adjustFramingRect(requestedFramingRectWidth, requestedFramingRectHeight);
-                    requestedFramingRectWidth = 0;
-                    requestedFramingRectHeight = 0;
-                }
             }
         } catch (CameraAccessException e) {
             e.printStackTrace();
@@ -799,7 +778,7 @@ public class Camera2Manager {
         void onCamera2ApiNotSupported();
         void onConfigurationFailed();
         void onPermissionRequest();
-        void onPreviewImage(Bitmap bitmap);
+        void onPreviewCroppedImage(Bitmap bitmap);
     }
 
 
@@ -821,89 +800,6 @@ public class Camera2Manager {
 
 
 
-    /**
-     * Calculates the framing rect which the UI should draw to show the user where to place the
-     * barcode. This target helps with alignment as well as forces the user to hold the device
-     * far enough away to ensure the image will be in focus.
-     *
-     * @return The rectangle to draw on screen in window coordinates.
-     */
-    public synchronized Rect getFramingRect() {
-        if (framingRect == null) {
-            if (mCameraDevice == null) {
-                return null;
-            }
-            Point screenResolution = this.screenResolution;
-            if (screenResolution == null) {
-                // Called early, before init even finished
-                return null;
-            }
-            int width = screenResolution.x;
-            if (width < MIN_FRAME_WIDTH) {
-                width = MIN_FRAME_WIDTH;
-            }
-            int height = screenResolution.y / 4;
-            if (height < MIN_FRAME_HEIGHT) {
-                height = MIN_FRAME_HEIGHT;
-            }
-            int leftOffset = (screenResolution.x - width) / 2;
-            int topOffset = (screenResolution.y - height) / 2;
-            framingRect = new Rect(leftOffset, topOffset, leftOffset + width, topOffset + height);
-        }
-        return framingRect;
-    }
-
-    /**
-     * Like {@link #getFramingRect} but coordinates are in terms of the preview frame,
-     * not UI / screen.
-     */
-    public synchronized Rect getFramingRectInPreview() {
-        if (framingRectInPreview == null) {
-            Rect rect = new Rect(getFramingRect());
-            Point cameraResolution = new Point(mPreviewSize.getWidth(), mPreviewSize.getHeight());
-            Point screenResolution = this.screenResolution;
-            if (cameraResolution == null || screenResolution == null) {
-                // Called early, before init even finished
-                return null;
-            }
-            rect.left = rect.left * cameraResolution.x / screenResolution.x;
-            rect.right = rect.right * cameraResolution.x / screenResolution.x;
-            rect.top = rect.top * cameraResolution.y / screenResolution.y;
-            rect.bottom = rect.bottom * cameraResolution.y / screenResolution.y;
-            framingRectInPreview = rect;
-        }
-        return framingRectInPreview;
-    }
-
-    /**
-     * Changes the size of the framing rect.
-     *
-     * @param deltaWidth Number of pixels to adjust the width
-     * @param deltaHeight Number of pixels to adjust the height
-     */
-    public synchronized void adjustFramingRect(int deltaWidth, int deltaHeight) {
-        if (initialized) {
-            Point screenResolution = this.screenResolution;
-
-            // Set maximum and minimum sizes
-            if ((framingRect.width() + deltaWidth > screenResolution.x - 4) || (framingRect.width() + deltaWidth < 50)) {
-                deltaWidth = 0;
-            }
-            if ((framingRect.height() + deltaHeight > screenResolution.y - 4) || (framingRect.height() + deltaHeight < 50)) {
-                deltaHeight = 0;
-            }
-
-            int newWidth = framingRect.width() + deltaWidth;
-            int newHeight = framingRect.height() + deltaHeight;
-            int leftOffset = (screenResolution.x - newWidth) / 2;
-            int topOffset = (screenResolution.y - newHeight) / 2;
-            framingRect = new Rect(leftOffset, topOffset, leftOffset + newWidth, topOffset + newHeight);
-            framingRectInPreview = null;
-        } else {
-            requestedFramingRectWidth = deltaWidth;
-            requestedFramingRectHeight = deltaHeight;
-        }
-    }
 
 
 }

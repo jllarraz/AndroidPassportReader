@@ -1,14 +1,13 @@
 # Passport Reader
 
-Sample project to read Passports using MRZ or manual entry. Currently I am using Tesseract for the OCR but the performance it's not great.
+Sample project to read Passports using MRZ or manual entry. Currently I am using ML KIT for the OCR.
 
-I have also tried the lates ML KIT (https://firebase.google.com/docs/ml-kit/recognize-text) from google but it's struggling with "<<<".
+I don't read the the whole MRZ as ML KIT for now it's unable to read it (it's struggling with "<<<"), but I use it to read the second line and after that use a regular expression to match the rigth format.
 
-You can use the example images stored under `examples` to test the application.
+You can use the example images stored under `examples` to test the application or download any sample passport document from https://www.consilium.europa.eu/prado/EN/prado-start-page.html
 
 ![alt text](https://github.com/jllarraz/AndroidPassportReader/blob/master/examples/passport_ireland.jpg)
 
-or download any sample passport document from https://www.consilium.europa.eu/prado/EN/prado-start-page.html
 
 This project is based in the information and tutorials found in
 
@@ -18,6 +17,7 @@ This project is based in the information and tutorials found in
 - https://github.com/mercuriete/android-mrz-reader
 - https://en.wikipedia.org/wiki/Machine-readable_passport
 - https://jmrtd.org/about.shtml
+- https://firebase.google.com/docs/ml-kit/recognize-text
 
 
 ## Build & Run
@@ -29,9 +29,9 @@ This project is based in the information and tutorials found in
     4. Launch application
 ```
 
-## Things to improve
+## OCR
 
-OCR must be improved to allow good user experience
+You must put your phone horizontal when you try to read the passports MRZ.
 
 ## License
 
