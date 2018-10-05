@@ -71,6 +71,12 @@ public class SelectionActivity extends AppCompatActivity implements SelectionFra
                 }
                 break;
             }
+            case REQUEST_NFC:{
+                Fragment fragmentByTag = getSupportFragmentManager().findFragmentByTag(TAG_SELECTION_FRAGMENT);
+                if(fragmentByTag instanceof SelectionFragment){
+                    ((SelectionFragment)fragmentByTag).selectManualToggle();
+                }
+            }
         }
         super.onActivityResult(requestCode, resultCode, data);
     }
