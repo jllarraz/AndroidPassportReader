@@ -92,7 +92,7 @@
         android:layout_alignRight="@+id/textViewNfcTitle"
         android:layout_above="@+id/textViewNfcTitle"
         android:indeterminate="true"
-        android:visibility="invisible"
+        android:visibility="gone"
         />
 
     <TextView

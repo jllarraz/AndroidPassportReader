@@ -8,6 +8,7 @@ import android.graphics.ImageFormat;
 import android.graphics.Rect;
 import android.graphics.YuvImage;
 import android.media.Image;
+import android.util.Log;
 
 import org.jnbis.WsqDecoder;
 
@@ -25,6 +26,8 @@ import jj2000.j2k.decoder.Decoder;
 import jj2000.j2k.util.ParameterList;
 
 public final class ImageUtil {
+
+    private static final String TAG = ImageUtil.class.getSimpleName();
 
     public static byte[] imageToByteArray(Image image) {
         byte[] data = null;
@@ -75,6 +78,17 @@ public final class ImageUtil {
         if (mimeType.equalsIgnoreCase("image/jp2") || mimeType.equalsIgnoreCase("image/jpeg2000")) {
 
             // Save jp2 file
+            File fileJp2 = new File(context.getCacheDir(), "temp.jp2");
+            if(fileJp2.exists()){
+                boolean delete = fileJp2.delete();
+                Log.d(TAG,"Deleting file JP2: "+ delete);
+            }
+
+            File fileJp3 = new File(context.getCacheDir(), "/temp.ppm");
+            if(fileJp3.exists()){
+                boolean delete = fileJp3.delete();
+                Log.d(TAG,"Deleting file JP3: "+ delete);
+            }
 
             OutputStream output = new FileOutputStream(new File(context.getCacheDir(), "temp.jp2"));
             byte[] buffer = new byte[1024];

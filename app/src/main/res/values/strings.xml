@@ -49,4 +49,8 @@
     <string name="error_validation_date">Date format is not valid</string>
     <string name="error_validation_document_number">Document number is not valid</string>
 
+    <string name="warning_no_nfc">There is no NFC available</string>
+    <string name="warning_enable_nfc">You need to enable NFC</string>
+
+
 </resources>

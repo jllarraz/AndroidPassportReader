@@ -2,9 +2,13 @@ package example.jllarraz.com.passportreader.ui.activities;
 
 import android.app.PendingIntent;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.graphics.Bitmap;
 import android.nfc.NfcAdapter;
+import android.nfc.tech.IsoDep;
+import android.nfc.tech.NfcF;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
 import android.widget.Toast;
@@ -28,6 +32,9 @@ public class NfcActivity extends FragmentActivity implements NfcFragment.NfcFrag
     private static final String TAG_NFC="TAG_NFC";
     private static final String TAG_PASSPORT_DETAILS="TAG_PASSPORT_DETAILS";
 
+    private NfcAdapter nfcAdapter;
+    private PendingIntent pendingIntent;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -39,8 +46,20 @@ public class NfcActivity extends FragmentActivity implements NfcFragment.NfcFrag
             onBackPressed();
         }
 
-        if (null == savedInstanceState) {
+        nfcAdapter = NfcAdapter.getDefaultAdapter(this);
 
+        if (nfcAdapter == null) {
+            Toast.makeText(this, getString(R.string.warning_no_nfc), Toast.LENGTH_SHORT).show();
+            finish();
+            return;
+        }
+
+        pendingIntent = PendingIntent.getActivity(this, 0,
+                new Intent(this, this.getClass())
+                        .addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP), 0);
+
+
+        if (null == savedInstanceState) {
             getSupportFragmentManager().beginTransaction()
                     .replace(R.id.container, NfcFragment.newInstance(mrzInfo), TAG_NFC)
                     .commit();
@@ -58,7 +77,8 @@ public class NfcActivity extends FragmentActivity implements NfcFragment.NfcFrag
     }
 
     public void onNewIntent(Intent intent) {
-        if (NfcAdapter.ACTION_TAG_DISCOVERED.equals(intent.getAction())) {
+        if (NfcAdapter.ACTION_TAG_DISCOVERED.equals(intent.getAction())||
+                NfcAdapter.ACTION_TECH_DISCOVERED.equals(intent.getAction())) {
             // drop NFC events
             handleIntent(intent);
         }
@@ -80,9 +100,14 @@ public class NfcActivity extends FragmentActivity implements NfcFragment.NfcFrag
 
     @Override
     public void onEnableNfc() {
-        NfcAdapter nfcAdapter = NfcAdapter.getDefaultAdapter(this);
-        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, new Intent(this, getClass()).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP), 0);
-        nfcAdapter.enableForegroundDispatch(this, pendingIntent, null, null);
+
+
+        if (nfcAdapter != null) {
+            if (!nfcAdapter.isEnabled())
+                showWirelessSettings();
+
+            nfcAdapter.enableForegroundDispatch(this, pendingIntent, null, null);
+        }
     }
 
     @Override
@@ -102,5 +127,11 @@ public class NfcActivity extends FragmentActivity implements NfcFragment.NfcFrag
     public void onCardException(CardServiceException cardException) {
         Toast.makeText(this, cardException.toString(), Toast.LENGTH_SHORT).show();
         //onBackPressed();
+    }
+
+    private void showWirelessSettings() {
+        Toast.makeText(this, getString(R.string.warning_enable_nfc), Toast.LENGTH_SHORT).show();
+        Intent intent = new Intent(Settings.ACTION_WIRELESS_SETTINGS);
+        startActivity(intent);
     }
 }
