@@ -33,6 +33,9 @@ This project is based in the information and tutorials found in
 
 You must put your phone horizontal when you try to read the passports MRZ.
 
+This is an example of how the app performs.
+https://youtu.be/kuIkZ1ZktCk
+
 ## License
 
 Licensed to the Apache Software Foundation (ASF) under one or more contributor license agreements. See the NOTICE file distributed with this work for additional information regarding copyright ownership. The ASF licenses this file to you under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License. You may obtain a copy of the License at
