@@ -52,5 +52,21 @@
     <string name="warning_no_nfc">There is no NFC available</string>
     <string name="warning_enable_nfc">You need to enable NFC</string>
 
+    <string name="label_additional_information">Additional person information</string>
+    <string name="label_additional_information_custody">Custody</string>
+    <string name="label_additional_information_dob">Date of birth</string>
+    <string name="label_additional_information_other_names">Other names</string>
+    <string name="label_additional_information_other_valid_td_numbers">Other Td numbers</string>
+    <string name="label_additional_information_permanent_address">Permanent address</string>
+    <string name="label_additional_information_personal_number">Personal number</string>
+    <string name="label_additional_information_personal_summary">Personal summary</string>
+    <string name="label_additional_information_place_of_birth">Place of birth</string>
+    <string name="label_additional_information_profession">Profession</string>
+    <string name="label_additional_information_telephone">Telephone</string>
+    <string name="label_additional_information_title">Title</string>
+
+    <string name="label_authentication">Authentication</string>
+    <string name="label_authentication_chip">Chip</string>
+    <string name="label_authentication_terminal">Terminal</string>
 
 </resources>
