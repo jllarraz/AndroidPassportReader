@@ -19,57 +19,20 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import net.sf.scuba.smartcards.CardService;
 import net.sf.scuba.smartcards.CardServiceException;
-import net.sf.scuba.tlv.TLVOutputStream;
 
-import org.jmrtd.BACKeySpec;
-import org.jmrtd.ChipAuthenticationResult;
-import org.jmrtd.DESedeSecureMessagingWrapper;
-import org.jmrtd.PassportService;
-import org.jmrtd.TerminalAuthenticationResult;
-import org.jmrtd.Util;
-import org.jmrtd.cert.CVCAuthorizationTemplate;
-import org.jmrtd.cert.CVCPrincipal;
-import org.jmrtd.cert.CardVerifiableCertificate;
-import org.jmrtd.lds.CVCAFile;
-import org.jmrtd.lds.DG14File;
-import org.jmrtd.lds.DG1File;
-import org.jmrtd.lds.DG2File;
-import org.jmrtd.lds.FaceImageInfo;
-import org.jmrtd.lds.FaceInfo;
-import org.jmrtd.lds.LDSFileUtil;
-import org.jmrtd.lds.MRZInfo;
+
+import org.jmrtd.lds.icao.MRZInfo;
 import org.spongycastle.jce.provider.BouncyCastleProvider;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.DataInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.lang.reflect.Field;
-import java.math.BigInteger;
-import java.security.KeyPair;
-import java.security.KeyPairGenerator;
-import java.security.MessageDigest;
-import java.security.PrivateKey;
-import java.security.PublicKey;
-import java.security.Security;
-import java.security.Signature;
-import java.security.interfaces.ECPublicKey;
-import java.security.spec.AlgorithmParameterSpec;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
 
-import javax.crypto.KeyAgreement;
-import javax.crypto.SecretKey;
-import javax.crypto.interfaces.DHPublicKey;
+import java.security.Security;
+
 
 import example.jllarraz.com.passportreader.R;
 import example.jllarraz.com.passportreader.asynctask.NfcPassportAsyncTask;
 import example.jllarraz.com.passportreader.common.IntentData;
-import example.jllarraz.com.passportreader.utils.ImageUtil;
+
 
 public class NfcFragment extends Fragment {
     private static final String TAG = NfcFragment.class.getSimpleName();

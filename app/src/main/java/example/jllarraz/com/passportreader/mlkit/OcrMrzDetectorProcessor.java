@@ -26,7 +26,8 @@ import com.google.firebase.ml.vision.text.FirebaseVisionTextRecognizer;
 
 import net.sf.scuba.data.Gender;
 
-import org.jmrtd.lds.MRZInfo;
+
+import org.jmrtd.lds.icao.MRZInfo;
 
 import java.io.IOException;
 import java.util.List;

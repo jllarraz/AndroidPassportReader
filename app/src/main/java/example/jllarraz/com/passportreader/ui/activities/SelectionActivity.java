@@ -22,7 +22,8 @@ import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.AppCompatActivity;
 
-import org.jmrtd.lds.MRZInfo;
+
+import org.jmrtd.lds.icao.MRZInfo;
 
 import example.jllarraz.com.passportreader.R;
 import example.jllarraz.com.passportreader.common.IntentData;

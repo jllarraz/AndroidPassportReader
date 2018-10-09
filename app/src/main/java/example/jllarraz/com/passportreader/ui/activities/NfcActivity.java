@@ -15,7 +15,8 @@ import android.widget.Toast;
 
 import net.sf.scuba.smartcards.CardServiceException;
 
-import org.jmrtd.lds.MRZInfo;
+
+import org.jmrtd.lds.icao.MRZInfo;
 
 import example.jllarraz.com.passportreader.R;
 import example.jllarraz.com.passportreader.ui.fragments.NfcFragment;

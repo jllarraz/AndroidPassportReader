@@ -11,7 +11,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
-import org.jmrtd.lds.MRZInfo;
+
+import org.jmrtd.lds.icao.MRZInfo;
 
 import example.jllarraz.com.passportreader.R;
 import example.jllarraz.com.passportreader.common.IntentData;

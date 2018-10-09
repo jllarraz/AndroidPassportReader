@@ -44,7 +44,7 @@ dependencies {
     implementation 'com.google.firebase:firebase-ml-model-interpreter:16.2.2'
 
     //NFC Passport
-    implementation 'org.jmrtd:jmrtd:0.5.5'
+    implementation 'org.jmrtd:jmrtd:0.5.13'
     implementation 'com.madgag.spongycastle:prov:1.54.0.0'
     implementation 'net.sf.scuba:scuba-sc-android:0.0.9';
     implementation group: 'org.ejbca.cvc', name: 'cert-cvc', version: '1.4.3'

@@ -7,18 +7,28 @@ import android.util.Log;
 import net.sf.scuba.smartcards.CardServiceException;
 import net.sf.scuba.tlv.TLVOutputStream;
 
-import org.jmrtd.ChipAuthenticationResult;
-import org.jmrtd.DESedeSecureMessagingWrapper;
+
 import org.jmrtd.PassportService;
-import org.jmrtd.TerminalAuthenticationResult;
+
 import org.jmrtd.Util;
 import org.jmrtd.cert.CVCAuthorizationTemplate;
 import org.jmrtd.cert.CVCPrincipal;
 import org.jmrtd.cert.CardVerifiableCertificate;
-import org.jmrtd.lds.DG2File;
-import org.jmrtd.lds.FaceImageInfo;
-import org.jmrtd.lds.FaceInfo;
-import org.jmrtd.lds.MRZInfo;
+import org.jmrtd.lds.CVCAFile;
+import org.jmrtd.lds.ChipAuthenticationPublicKeyInfo;
+import org.jmrtd.lds.DisplayedImageInfo;
+import org.jmrtd.lds.LDSFileUtil;
+import org.jmrtd.lds.icao.DG14File;
+import org.jmrtd.lds.icao.DG2File;
+import org.jmrtd.lds.icao.DG5File;
+import org.jmrtd.lds.icao.MRZInfo;
+import org.jmrtd.lds.iso19794.FaceImageInfo;
+import org.jmrtd.lds.iso19794.FaceInfo;
+import org.jmrtd.protocol.CAResult;
+import org.jmrtd.protocol.DESedeSecureMessagingWrapper;
+import org.jmrtd.protocol.SecureMessagingWrapper;
+import org.jmrtd.protocol.TAResult;
+import org.spongycastle.jce.provider.BouncyCastleProvider;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -27,27 +37,72 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.math.BigInteger;
+import java.security.GeneralSecurityException;
+import java.security.Key;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
+import java.security.KeyStore;
 import java.security.MessageDigest;
 import java.security.PrivateKey;
 import java.security.PublicKey;
+import java.security.Security;
 import java.security.Signature;
+import java.security.cert.CertPath;
+import java.security.cert.CertPathBuilder;
+import java.security.cert.CertPathBuilderException;
+import java.security.cert.CertStore;
+import java.security.cert.CertStoreParameters;
+import java.security.cert.Certificate;
+import java.security.cert.CollectionCertStoreParameters;
+import java.security.cert.PKIXBuilderParameters;
+import java.security.cert.PKIXCertPathBuilderResult;
+import java.security.cert.TrustAnchor;
+import java.security.cert.X509CertSelector;
+import java.security.cert.X509Certificate;
 import java.security.interfaces.ECPublicKey;
 import java.security.spec.AlgorithmParameterSpec;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import javax.crypto.KeyAgreement;
 import javax.crypto.SecretKey;
 import javax.crypto.interfaces.DHPublicKey;
+import javax.security.auth.x500.X500Principal;
 
 public class PassportNfcUtils {
+
+    private static final String TAG = PassportNfcUtils.class.getSimpleName();
+
+    static {
+        Security.addProvider(new BouncyCastleProvider());
+    }
+
+    private static final int TAG_CVCERTIFICATE_SIGNATURE = 0x5F37;
+
+    private static final boolean IS_PKIX_REVOCATION_CHECING_ENABLED = false;
 
     /**
      * Copy pasted, because original uses explicit cast to BouncyCastle key implementation, whereas we have a spongycastle one
      */
-    public static synchronized ChipAuthenticationResult doCA(PassportService ps, BigInteger keyId, PublicKey publicKey) throws CardServiceException {
+
+    /**
+     * Perform CA (Chip Authentication) part of EAC (version 1). For details see TR-03110
+     * ver. 1.11. In short, we authenticate the chip with (EC)DH key agreement
+     * protocol and create new secure messaging keys.
+     *
+     * @param keyId passport's public key id (stored in DG14), -1 if none
+     * @param publicKey passport's public key (stored in DG14)
+     *
+     * @return the chip authentication result
+     *
+     * @throws CardServiceException if CA failed or some error occurred
+     */
+    public static CAResult doCA(PassportService ps, BigInteger keyId, PublicKey publicKey) throws CardServiceException {
         if (publicKey == null) { throw new IllegalArgumentException("Public key is null"); }
         try {
             String agreementAlg = Util.inferKeyAgreementAlgorithm(publicKey);
@@ -98,23 +153,59 @@ public class PassportNfcUtils {
             }
             ps.sendMSEKAT(ps.getWrapper(), keyData, idData);
 
+            /* Start secure messaging. */
             SecretKey ksEnc = Util.deriveKey(secret, Util.ENC_MODE);
             SecretKey ksMac = Util.deriveKey(secret, Util.MAC_MODE);
-
             ps.setWrapper(new DESedeSecureMessagingWrapper(ksEnc, ksMac, 0L));
+            //wrapper = new DESedeSecureMessagingWrapper(ksEnc, ksMac, 0L); // FIXME: can be AESSecureMessagingWrapper for EAC 2. -- MO
+
+
+            //Not sure that this should be here
             Field fld = PassportService.class.getDeclaredField("state");
             fld.setAccessible(true);
-            fld.set(ps, 4) ; //PassportService.CA_AUTHENTICATED_STATE)
-            return new ChipAuthenticationResult(keyId, publicKey, keyHash, keyPair);
+            fld.set(ps, Enum.valueOf((Class<Enum>) fld.getType(), "CA_EXECUTED_STATE")) ;
+
+
+            return new CAResult(keyId, publicKey, keyHash, keyPair.getPublic(), keyPair.getPrivate(), (SecureMessagingWrapper) ps.getWrapper());
         } catch (Exception e) {
-            e.printStackTrace();
             throw new CardServiceException(e.toString());
         }
     }
 
 
-    public static synchronized TerminalAuthenticationResult doTA(PassportService ps, CVCPrincipal caReference, List<CardVerifiableCertificate> terminalCertificates,
-                                                          PrivateKey terminalKey, String taAlg, ChipAuthenticationResult chipAuthenticationResult, String documentNumber) throws CardServiceException {
+    /* From BSI-03110 v1.1, B.2:
+     *
+     * <pre>
+     * The following sequence of commands SHALL be used to implement Terminal Authentication:
+     *  1. MSE:Set DST
+     *  2. PSO:Verify Certificate
+     *  3. MSE:Set AT
+     *  4. Get Challenge
+     *  5. External Authenticate
+     * Steps 1 and 2 are repeated for every CV certificate to be verified
+     * (CVCA Link Certificates, DV Certificate, IS Certificate).
+     * </pre>
+     */
+    /**
+     * Perform TA (Terminal Authentication) part of EAC (version 1). For details see
+     * TR-03110 ver. 1.11. In short, we feed the sequence of terminal
+     * certificates to the card for verification, get a challenge from the
+     * card, sign it with terminal private key, and send back to the card
+     * for verification.
+     *
+     * @param caReference reference issuer
+     * @param terminalCertificates terminal certificate chain
+     * @param terminalKey terminal private key
+     * @param taAlg algorithm
+     * @param chipAuthenticationResult the chip authentication result
+     * @param documentNumber the document number
+     *
+     * @return the challenge from the card
+     *
+     * @throws CardServiceException on error
+     */
+    public static synchronized TAResult doTA(PassportService ps, CVCPrincipal caReference, List<CardVerifiableCertificate> terminalCertificates,
+                                      PrivateKey terminalKey, String taAlg, CAResult chipAuthenticationResult, String documentNumber) throws CardServiceException {
         try {
             if (terminalCertificates == null || terminalCertificates.size() < 1) {
                 throw new IllegalArgumentException("Need at least 1 certificate to perform TA, found: " + terminalCertificates);
@@ -157,7 +248,6 @@ public class PassportNfcUtils {
             }
             CardVerifiableCertificate terminalCert = lastCert;
 
-            int i = 0;
             /* Have the MRTD check our chain. */
             for (CardVerifiableCertificate cert: terminalCertificates) {
                 try {
@@ -177,18 +267,19 @@ public class PassportNfcUtils {
                     byte[] signature = cert.getSignature();
                     ByteArrayOutputStream sigOut = new ByteArrayOutputStream();
                     TLVOutputStream tlvSigOut = new TLVOutputStream(sigOut);
-                    tlvSigOut.writeTag(0x5F37); //TAG_CVCERTIFICATE_SIGNATURE);
+                    tlvSigOut.writeTag(TAG_CVCERTIFICATE_SIGNATURE);
                     tlvSigOut.writeValue(signature);
                     tlvSigOut.close();
                     signature = sigOut.toByteArray();
 
                     /* Step 2: PSO:Verify Certificate */
-                    ps.sendPSOChainMode(ps.getWrapper(), body, signature);
-                } catch (Exception cse) {
-                    Log.w("FOO", String.valueOf(i));
+                    ps.sendPSOExtendedLengthMode(ps.getWrapper(), body, signature);
+                } catch (CardServiceException cse) {
                     throw cse;
+                } catch (Exception e) {
+                    /* FIXME: Does this mean we failed to authenticate? -- MO */
+                    throw new CardServiceException(e.getMessage());
                 }
-                i++;
             }
 
             if (terminalKey == null) {
@@ -208,7 +299,7 @@ public class PassportNfcUtils {
             /* FIXME: idPICC should be public key in case of PACE. See BSI TR 03110 v2.03 4.4. */
             byte[] idPICC = new byte[documentNumber.length() + 1];
             System.arraycopy(documentNumber.getBytes("ISO-8859-1"), 0, idPICC, 0, documentNumber.length());
-            idPICC[idPICC.length - 1] = (byte) MRZInfo.checkDigit(documentNumber);
+            idPICC[idPICC.length - 1] = (byte)MRZInfo.checkDigit(documentNumber);
 
             ByteArrayOutputStream dtbs = new ByteArrayOutputStream();
             dtbs.write(idPICC);
@@ -230,16 +321,125 @@ public class PassportNfcUtils {
                 signedData = Util.getRawECDSASignature(signedData, keySize);
             }
             ps.sendMutualAuthenticate(ps.getWrapper(), signedData);
+
+            //Not sure this should be here
             Field fld = PassportService.class.getDeclaredField("state");
             fld.setAccessible(true);
+            fld.set(ps, Enum.valueOf((Class<Enum>) fld.getType(), "TA_AUTHENTICATED_STATE")) ;
             fld.set(ps, 5) ; //PassportService.TA_AUTHENTICATED_STATE)
-            return new TerminalAuthenticationResult(chipAuthenticationResult, caReference, terminalCertificates, terminalKey, documentNumber, rPICC);
+
+            return new TAResult(chipAuthenticationResult, caReference, terminalCertificates, terminalKey, documentNumber, rPICC);
         } catch (CardServiceException cse) {
             throw cse;
         } catch (Exception e) {
             throw new CardServiceException(e.toString());
         }
     }
+
+    public static List<CAResult> doChipAuthentication(PassportService ps) throws CardServiceException{
+        InputStream is14 = null;
+        List<CAResult> caResults = new ArrayList<>();
+        try {
+            is14 = ps.getInputStream(PassportService.EF_DG14);
+            DG14File dg14 = (DG14File) LDSFileUtil.getLDSFile(PassportService.EF_DG14, is14);
+            List<ChipAuthenticationPublicKeyInfo> chipAuthenticationPublicKeyInfos = dg14.getChipAuthenticationPublicKeyInfos();
+            Iterator<ChipAuthenticationPublicKeyInfo> chipAuthenticationPublicKeyInfoIterator = chipAuthenticationPublicKeyInfos.iterator();
+            while (chipAuthenticationPublicKeyInfoIterator.hasNext()){
+                ChipAuthenticationPublicKeyInfo chipAuthenticationPublicKeyInfo = chipAuthenticationPublicKeyInfoIterator.next();
+                try {
+                    Log.i("EMRTD", "Chip Authentication starting");
+                    CAResult caResult = PassportNfcUtils.doCA(ps, BigInteger.valueOf(-1), chipAuthenticationPublicKeyInfo.getSubjectPublicKey());
+                    Log.i("EMRTD", "Chip authentnication succeeded");
+                    caResults.add(caResult);
+                } catch(CardServiceException cse) {
+                    cse.printStackTrace();
+                    /* NOTE: Failed? Too bad, try next public key. */
+                    continue;
+                }
+            }
+        }catch (Exception e){
+            e.printStackTrace();
+            throw new CardServiceException("Chip authentication Failed");
+        }finally {
+            try {
+                if(is14!=null){
+                    is14.close();
+                }
+            }catch (Exception e){
+                e.printStackTrace();
+            }
+        }
+        return caResults;
+
+    }
+
+
+    public static List<TAResult> doEac(PassportService ps, String documentNumber, List<KeyStore> cvcaKeyStores) throws CardServiceException{
+
+        InputStream isCvca=null;
+        InputStream is14 = null;
+        List<TAResult> taResults = new ArrayList<>();
+        try {
+
+            is14 = ps.getInputStream(PassportService.EF_DG14);
+            DG14File dg14 = (DG14File) LDSFileUtil.getLDSFile(PassportService.EF_DG14, is14);
+
+            isCvca = ps.getInputStream(PassportService.EF_CVCA);
+            CVCAFile cvca = (CVCAFile) LDSFileUtil.getLDSFile(PassportService.EF_CVCA, isCvca);
+
+            CVCPrincipal[] possibleCVCAReferences = new CVCPrincipal[]{ cvca.getCAReference(), cvca.getAltCAReference() };
+            for (CVCPrincipal caReference: possibleCVCAReferences) {
+                EACCredentials eacCredentials = getEACCredentials(caReference, cvcaKeyStores);
+                if (eacCredentials == null) { continue; }
+
+                PrivateKey privateKey = eacCredentials.getPrivateKey();
+                Certificate[] chain = eacCredentials.getChain();
+                List<CardVerifiableCertificate> terminalCerts = new ArrayList<CardVerifiableCertificate>(chain.length);
+                for (Certificate c: chain) { terminalCerts.add((CardVerifiableCertificate)c); }
+
+                List<ChipAuthenticationPublicKeyInfo> chipAuthenticationPublicKeyInfos = dg14.getChipAuthenticationPublicKeyInfos();
+                Iterator<ChipAuthenticationPublicKeyInfo> chipAuthenticationPublicKeyInfoIterator = chipAuthenticationPublicKeyInfos.iterator();
+                while (chipAuthenticationPublicKeyInfoIterator.hasNext()){
+                    ChipAuthenticationPublicKeyInfo chipAuthenticationPublicKeyInfo = chipAuthenticationPublicKeyInfoIterator.next();
+                    try {
+                        Log.i("EMRTD", "Chip Authentication starting");
+                        CAResult caResult = PassportNfcUtils.doCA(ps, BigInteger.valueOf(-1), chipAuthenticationPublicKeyInfo.getSubjectPublicKey());
+                        Log.i("EMRTD", "Chip authentnication succeeded");
+
+                        Log.i("EMRTD", "Chip Terminal Authentication starting");
+                        TAResult taResult = PassportNfcUtils.doTA(ps, caReference, terminalCerts, privateKey, null, caResult, documentNumber);
+                        Log.i("EMRTD", "Chip Terminal authentnication succeeded");
+                        taResults.add(taResult);
+                    } catch(CardServiceException cse) {
+                        cse.printStackTrace();
+                        /* NOTE: Failed? Too bad, try next public key. */
+                        continue;
+                    }
+                }
+
+                break;
+            }
+
+
+        }catch (Exception e){
+            e.printStackTrace();
+            throw new CardServiceException("EAC Failed");
+        }finally {
+            try {
+                if(is14!=null){
+                    is14.close();
+                }
+                if (isCvca != null) {
+                    isCvca.close();
+                }
+            }catch (Exception e){
+                e.printStackTrace();
+            }
+        }
+        return taResults;
+
+    }
+
 
 
     public static Bitmap retrieveFaceImage(Context context, DG2File dg2File) throws IOException {
@@ -264,4 +464,148 @@ public class PassportNfcUtils {
         }
         throw new IOException("Unable to read Image");
     }
+
+    public static Bitmap retrievePortraitImage(Context context, DG5File dg2File) throws IOException {
+        List<DisplayedImageInfo> faceInfos = dg2File.getImages();
+        if (!faceInfos.isEmpty()) {
+            DisplayedImageInfo faceImageInfo = faceInfos.iterator().next();
+
+            int imageLength = faceImageInfo.getImageLength();
+            DataInputStream dataInputStream = new DataInputStream(faceImageInfo.getImageInputStream());
+            byte[] buffer = new byte[imageLength];
+            dataInputStream.readFully(buffer, 0, imageLength);
+            InputStream inputStream = new ByteArrayInputStream(buffer, 0, imageLength);
+
+            return ImageUtil.decodeImage(
+                    context, faceImageInfo.getMimeType(), inputStream);
+
+        }
+        throw new IOException("Unable to read Image");
+    }
+
+
+
+
+
+    private static EACCredentials getEACCredentials(CVCPrincipal caReference, List<KeyStore> cvcaStores) throws GeneralSecurityException {
+        for (KeyStore cvcaStore: cvcaStores) {
+            EACCredentials eacCredentials = getEACCredentials(caReference, cvcaStore);
+            if (eacCredentials != null) { return eacCredentials; }
+        }
+        return null;
+    }
+
+    /**
+     * Searches the key store for a relevant terminal key and associated certificate chain.
+     *
+     * @param caReference
+     * @param cvcaStore should contain a single key with certificate chain
+     * @return
+     * @throws GeneralSecurityException
+     */
+    private static EACCredentials getEACCredentials(CVCPrincipal caReference, KeyStore cvcaStore) throws GeneralSecurityException {
+        if (caReference == null) { throw new IllegalArgumentException("CA reference cannot be null"); }
+
+        PrivateKey privateKey = null;
+        Certificate[] chain = null;
+
+        List<String> aliases = Collections.list(cvcaStore.aliases());
+        for (String alias: aliases) {
+            if (cvcaStore.isKeyEntry(alias)) {
+                Key key = cvcaStore.getKey(alias, "".toCharArray());
+                if (key instanceof PrivateKey) {
+                    privateKey = (PrivateKey)key;
+                } else {
+                    Log.w(TAG, "skipping non-private key " + alias);
+                    continue;
+                }
+                chain = cvcaStore.getCertificateChain(alias);
+                return new EACCredentials(privateKey, chain);
+            } else if (cvcaStore.isCertificateEntry(alias)) {
+                CardVerifiableCertificate certificate = (CardVerifiableCertificate)cvcaStore.getCertificate(alias);
+                CVCPrincipal authRef = certificate.getAuthorityReference();
+                CVCPrincipal holderRef = certificate.getHolderReference();
+                if (!caReference.equals(authRef)) { continue; }
+                /* See if we have a private key for that certificate. */
+                privateKey = (PrivateKey)cvcaStore.getKey(holderRef.getName(), "".toCharArray());
+                chain = cvcaStore.getCertificateChain(holderRef.getName());
+                if (privateKey == null) { continue; }
+                Log.i(TAG, "found a key, privateKey = " + privateKey);
+                return new EACCredentials(privateKey, chain);
+            }
+            if (privateKey == null || chain == null) {
+                Log.e(TAG, "null chain or key for entry " + alias + ": chain = " + Arrays.toString(chain) + ", privateKey = " + privateKey);
+                continue;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Builds a certificate chain to an anchor using the PKIX algorithm.
+     *
+     * @param docSigningCertificate the start certificate
+     * @param sodIssuer the issuer of the start certificate (ignored unless <code>docSigningCertificate</code> is <code>null</code>)
+     * @param sodSerialNumber the serial number of the start certificate (ignored unless <code>docSigningCertificate</code> is <code>null</code>)
+     *
+     * @return the certificate chain
+     */
+    private static List<Certificate> getCertificateChain(X509Certificate docSigningCertificate,
+                                                         final X500Principal sodIssuer, final BigInteger sodSerialNumber,
+                                                         List<CertStore> cscaStores, Set<TrustAnchor> cscaTrustAnchors) {
+        List<Certificate> chain = new ArrayList<Certificate>();
+        X509CertSelector selector = new X509CertSelector();
+        try {
+
+            if (docSigningCertificate != null) {
+                selector.setCertificate(docSigningCertificate);
+            } else {
+                selector.setIssuer(sodIssuer);
+                selector.setSerialNumber(sodSerialNumber);
+            }
+
+            CertStoreParameters docStoreParams = new CollectionCertStoreParameters(Collections.singleton((Certificate)docSigningCertificate));
+            CertStore docStore = CertStore.getInstance("Collection", docStoreParams);
+
+            CertPathBuilder builder = CertPathBuilder.getInstance("PKIX", "SC");//Spungy castle
+            PKIXBuilderParameters buildParams = new PKIXBuilderParameters(cscaTrustAnchors, selector);
+            buildParams.addCertStore(docStore);
+            for (CertStore trustStore: cscaStores) {
+                buildParams.addCertStore(trustStore);
+            }
+            buildParams.setRevocationEnabled(IS_PKIX_REVOCATION_CHECING_ENABLED); /* NOTE: set to false for checking disabled. */
+
+            PKIXCertPathBuilderResult result = null;
+
+            try {
+                result = (PKIXCertPathBuilderResult)builder.build(buildParams);
+            } catch (CertPathBuilderException cpbe) {
+                /* NOTE: ignore, result remain null */
+            }
+            if (result != null) {
+                CertPath pkixCertPath = result.getCertPath();
+                if (pkixCertPath != null) {
+                    chain.addAll(pkixCertPath.getCertificates());
+                }
+            }
+            if (docSigningCertificate != null && !chain.contains(docSigningCertificate)) {
+                /* NOTE: if doc signing certificate not in list, we add it ourselves. */
+                Log.w(TAG, "Adding doc signing certificate after PKIXBuilder finished");
+                chain.add(0, docSigningCertificate);
+            }
+            if (result != null) {
+                Certificate trustAnchorCertificate = result.getTrustAnchor().getTrustedCert();
+                if (trustAnchorCertificate != null && !chain.contains(trustAnchorCertificate)) {
+                    /* NOTE: if trust anchor not in list, we add it ourselves. */
+                    Log.w(TAG, "Adding trust anchor certificate after PKIXBuilder finished");
+                    chain.add(trustAnchorCertificate);
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            Log.i(TAG, "Building a chain failed (" + e.getMessage() + ").");
+        }
+        return chain;
+    }
+
 }

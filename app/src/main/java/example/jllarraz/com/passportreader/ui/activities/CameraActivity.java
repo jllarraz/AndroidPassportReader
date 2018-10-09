@@ -20,7 +20,8 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 
-import org.jmrtd.lds.MRZInfo;
+import org.jmrtd.lds.icao.MRZInfo;
+
 import example.jllarraz.com.passportreader.R;
 import example.jllarraz.com.passportreader.common.IntentData;
 import example.jllarraz.com.passportreader.ui.fragments.Camera2MLKitFragment;

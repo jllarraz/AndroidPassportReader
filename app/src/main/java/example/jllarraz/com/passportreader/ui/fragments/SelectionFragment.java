@@ -20,7 +20,8 @@ import com.mobsandgeeks.saripaar.Validator;
 
 import net.sf.scuba.data.Gender;
 
-import org.jmrtd.lds.MRZInfo;
+
+import org.jmrtd.lds.icao.MRZInfo;
 
 import java.util.List;
 

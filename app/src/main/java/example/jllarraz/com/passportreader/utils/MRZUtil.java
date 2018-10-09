@@ -2,7 +2,7 @@ package example.jllarraz.com.passportreader.utils;
 
 
 
-import org.jmrtd.lds.MRZInfo;
+import org.jmrtd.lds.icao.MRZInfo;
 
 import java.util.ArrayList;
 import java.util.Iterator;

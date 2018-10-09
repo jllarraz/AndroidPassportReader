@@ -41,7 +41,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 
-import org.jmrtd.lds.MRZInfo;
+import org.jmrtd.lds.icao.MRZInfo;
 
 import example.jllarraz.com.passportreader.R;
 import example.jllarraz.com.passportreader.asynctask.OcrRecognizeMlKitAsyncTask;

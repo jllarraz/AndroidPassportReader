@@ -20,63 +20,81 @@ import android.graphics.Bitmap;
 import android.nfc.Tag;
 import android.nfc.tech.IsoDep;
 import android.os.AsyncTask;
+import android.util.Log;
 
 import net.sf.scuba.smartcards.CardService;
 import net.sf.scuba.smartcards.CardServiceException;
 
 import org.jmrtd.BACKeySpec;
 import org.jmrtd.PassportService;
-import org.jmrtd.lds.DG1File;
-import org.jmrtd.lds.DG2File;
-import org.jmrtd.lds.FaceImageInfo;
-import org.jmrtd.lds.FaceInfo;
-import org.jmrtd.lds.LDSFileUtil;
-import org.jmrtd.lds.MRZInfo;
 
-import java.io.ByteArrayInputStream;
-import java.io.DataInputStream;
-import java.io.IOException;
+import org.jmrtd.cert.CVCPrincipal;
+import org.jmrtd.lds.CVCAFile;
+import org.jmrtd.lds.ChipAuthenticationPublicKeyInfo;
+import org.jmrtd.lds.LDSFileUtil;
+import org.jmrtd.lds.icao.DG11File;
+import org.jmrtd.lds.icao.DG14File;
+import org.jmrtd.lds.icao.DG1File;
+import org.jmrtd.lds.icao.DG2File;
+import org.jmrtd.lds.icao.DG5File;
+import org.jmrtd.lds.icao.MRZInfo;
+import org.jmrtd.protocol.CAResult;
+
+
+import java.io.FileInputStream;
 import java.io.InputStream;
+
+import java.math.BigInteger;
+import java.security.KeyStore;
+import java.security.PublicKey;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+import java.util.Map;
+
+import javax.net.ssl.TrustManagerFactory;
 
 import example.jllarraz.com.passportreader.utils.ImageUtil;
+import example.jllarraz.com.passportreader.utils.MRZUtil;
 import example.jllarraz.com.passportreader.utils.PassportNfcUtils;
 
 public final class NfcPassportAsyncTask extends AsyncTask<Void, Void, Boolean> {
 
-  private Context context;
-  private Tag tag;
-  private MRZInfo mrzInfo;
-  private NfcPassportAsyncTaskListener nfcPassportAsyncTaskListener;
+    private static final String TAG = NfcPassportAsyncTask.class.getSimpleName();
 
-  private CardServiceException cardServiceException;
-  private MRZInfo mrzInfoResult;
-  private Bitmap faceImage;
+    private Context context;
+    private Tag tag;
+    private MRZInfo mrzInfo;
+    private NfcPassportAsyncTaskListener nfcPassportAsyncTaskListener;
+
+    private CardServiceException cardServiceException;
+    private MRZInfo mrzInfoResult;
+    private Bitmap faceImage;
+    private Bitmap portraitImage;
 
 
-  public NfcPassportAsyncTask(Context context, Tag imageProcessor, MRZInfo mrzInfo, NfcPassportAsyncTaskListener nfcPassportAsyncTaskListener) {
-    this.context = context;
-    this.tag = imageProcessor;
-    this.mrzInfo = mrzInfo;
-    this.nfcPassportAsyncTaskListener = nfcPassportAsyncTaskListener;
-  }
+    public NfcPassportAsyncTask(Context context, Tag imageProcessor, MRZInfo mrzInfo, NfcPassportAsyncTaskListener nfcPassportAsyncTaskListener) {
+        this.context = context;
+        this.tag = imageProcessor;
+        this.mrzInfo = mrzInfo;
+        this.nfcPassportAsyncTaskListener = nfcPassportAsyncTaskListener;
+    }
 
-  @Override
-  protected Boolean doInBackground(Void... arg0) {
-    return handle(tag);
-  }
+    @Override
+    protected Boolean doInBackground(Void... arg0) {
+        return handle(tag);
+    }
 
-  @Override
-  protected void onPostExecute(Boolean result) {
+    @Override
+    protected void onPostExecute(Boolean result) {
     super.onPostExecute(result);
-    if(result){
-        onPassportRead(mrzInfoResult, faceImage);
+        if(result){
+            onPassportRead(mrzInfoResult, faceImage);
+        }
+        else {
+            onCardException(cardServiceException);
+        }
     }
-    else {
-        onCardException(cardServiceException);
-    }
-  }
 
 
   protected boolean handle(Tag tag){
@@ -108,9 +126,9 @@ public final class NfcPassportAsyncTask extends AsyncTask<Void, Void, Boolean> {
       ps.doBAC(bacKey);
 
       InputStream is = null;
-      InputStream is14 = null;
-      InputStream isCvca = null;
       InputStream isPicture = null;
+      InputStream isPortrait = null;
+      InputStream isAdditionalPersonalDetails = null;
       try {
         // Basic data
         is = ps.getInputStream(PassportService.EF_DG1);
@@ -129,33 +147,91 @@ public final class NfcPassportAsyncTask extends AsyncTask<Void, Void, Boolean> {
           e.printStackTrace();
         }
 
-        //We don't want any authentication for now, just public data
-        // Chip Authentication
-                /*
-                is14 = ps.getInputStream(PassportService.EF_DG14);
-                DG14File dg14 = (DG14File) LDSFileUtil.getLDSFile(PassportService.EF_DG14, is14);
-                Map<BigInteger, PublicKey> keyInfo = dg14.getChipAuthenticationPublicKeyInfos();
-                Map.Entry<BigInteger, PublicKey> entry = keyInfo.entrySet().iterator().next();
-                Log.i("EMRTD", "Chip Authentication starting");
-                ChipAuthenticationResult caResult = doCA(ps, entry.getKey(), entry.getValue());
-                Log.i("EMRTD", "Chip authentnication succeeded");
 
-                // CVCA
-                isCvca = ps.getInputStream(PassportService.EF_CVCA);
-                CVCAFile cvca = (CVCAFile) LDSFileUtil.getLDSFile(PassportService.EF_CVCA, isCvca);
-                */
+        //Portrait
+        //Get the picture
+        Bitmap portraitImage = null;
+        try {
+            isPortrait = ps.getInputStream(PassportService.EF_DG5);
+            DG5File dg5 = (DG5File)LDSFileUtil.getLDSFile(PassportService.EF_DG5, isPortrait);
+            portraitImage = PassportNfcUtils.retrievePortraitImage(context, dg5);
+        }catch (Exception e){
+          //Don't do anything
+            Log.e(TAG, "Portrait image: "+e);
+        }
 
-                mrzInfoResult = dg1.getMRZInfo();
-                this.faceImage = faceImage;
+          /*try {
+              isAdditionalPersonalDetails = ps.getInputStream(PassportService.EF_DG11);
+              DG11File dg11 = (DG11File)LDSFileUtil.getLDSFile(PassportService.EF_DG11, isAdditionalPersonalDetails);
+              String custodyInformation = dg11.getCustodyInformation();
+              Date fullDateOfBirth = dg11.getFullDateOfBirth();
+              String nameOfHolder = dg11.getNameOfHolder();
+              List<String> otherNames = dg11.getOtherNames();
+              List<String> otherValidTDNumbers = dg11.getOtherValidTDNumbers();
+              List<String> permanentAddress = dg11.getPermanentAddress();
+              String personalNumber = dg11.getPersonalNumber();
+              String personalSummary = dg11.getPersonalSummary();
+              List<String> placeOfBirth = dg11.getPlaceOfBirth();
+              String profession = dg11.getProfession();
+              byte[] proofOfCitizenship = dg11.getProofOfCitizenship();
+              int tag1 = dg11.getTag();
+              List<Integer> tagPresenceList = dg11.getTagPresenceList();
+              String telephone = dg11.getTelephone();
+              String title = dg11.getTitle();
+
+              if(dg11!=null){
+
+              }
+
+          }catch (Exception e){
+              //Don't do anything
+              Log.e(TAG, "Additional Personal Details: "+e);
+          }*/
+
+
+          // Chip Authentication
+          List<CAResult> caResults = PassportNfcUtils.doChipAuthentication(ps);
+          if(caResults.size()>0){
+              Log.d(TAG, "Chip authentication success ");
+          }
+
+          /*
+          //EAC
+          //First we load our keystore
+          KeyStore ks = KeyStore.getInstance(KeyStore.getDefaultType());
+          // get user password and file input stream
+          char[] password = "MY_PASSWORD".toCharArray();//Keystore password
+          try (FileInputStream fis = new FileInputStream("keyStoreName")) {
+              ks.load(fis, password);
+          }
+          List<KeyStore> keyStoreList = new ArrayList<>();
+          keyStoreList.add(ks);
+
+          //WE try to do EAC with the certificates in our Keystore
+          PassportNfcUtils.doEac(ps, dg1.getMRZInfo().getDocumentNumber(), keyStoreList);
+            */
+
+        mrzInfoResult = dg1.getMRZInfo();
+        this.faceImage = faceImage;
+        this.portraitImage = portraitImage;
         //TODO EAC
       } catch (Exception e) {
         e.printStackTrace();
       } finally {
         try {
-          is.close();
-          // is14.close();
-          //isCvca.close();
-          isPicture.close();
+            if(is!=null) {
+                is.close();
+            }
+            if(isPicture!=null) {
+                isPicture.close();
+            }
+            if(isPortrait!=null) {
+              isPortrait.close();
+            }
+
+            if(isAdditionalPersonalDetails!=null) {
+                isAdditionalPersonalDetails.close();
+            }
         } catch (Exception e) {
           e.printStackTrace();
         }
@@ -165,7 +241,10 @@ public final class NfcPassportAsyncTask extends AsyncTask<Void, Void, Boolean> {
       return false;
     } finally {
       try {
-        ps.close();
+          if (ps != null){
+              ps.close();
+          }
+
       } catch (Exception ex) {
         ex.printStackTrace();
       }
