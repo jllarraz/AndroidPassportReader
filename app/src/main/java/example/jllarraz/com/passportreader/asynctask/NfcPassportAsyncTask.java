@@ -22,6 +22,7 @@ import android.nfc.tech.IsoDep;
 import android.os.AsyncTask;
 import android.util.Log;
 
+import net.sf.scuba.data.Gender;
 import net.sf.scuba.smartcards.CardService;
 import net.sf.scuba.smartcards.CardServiceException;
 
@@ -54,6 +55,9 @@ import java.util.Map;
 
 import javax.net.ssl.TrustManagerFactory;
 
+import example.jllarraz.com.passportreader.data.AdditionalPersonDetails;
+import example.jllarraz.com.passportreader.data.Passport;
+import example.jllarraz.com.passportreader.data.PersonDetails;
 import example.jllarraz.com.passportreader.utils.ImageUtil;
 import example.jllarraz.com.passportreader.utils.MRZUtil;
 import example.jllarraz.com.passportreader.utils.PassportNfcUtils;
@@ -68,9 +72,7 @@ public final class NfcPassportAsyncTask extends AsyncTask<Void, Void, Boolean> {
     private NfcPassportAsyncTaskListener nfcPassportAsyncTaskListener;
 
     private CardServiceException cardServiceException;
-    private MRZInfo mrzInfoResult;
-    private Bitmap faceImage;
-    private Bitmap portraitImage;
+    private Passport passport;
 
 
     public NfcPassportAsyncTask(Context context, Tag imageProcessor, MRZInfo mrzInfo, NfcPassportAsyncTaskListener nfcPassportAsyncTaskListener) {
@@ -89,7 +91,7 @@ public final class NfcPassportAsyncTask extends AsyncTask<Void, Void, Boolean> {
     protected void onPostExecute(Boolean result) {
     super.onPostExecute(result);
         if(result){
-            onPassportRead(mrzInfoResult, faceImage);
+            onPassportRead(passport);
         }
         else {
             onCardException(cardServiceException);
@@ -97,157 +99,183 @@ public final class NfcPassportAsyncTask extends AsyncTask<Void, Void, Boolean> {
     }
 
 
-  protected boolean handle(Tag tag){
-    PassportService ps = null;
-    try {
-      IsoDep nfc = IsoDep.get(tag);
-      CardService cs = CardService.getInstance(nfc);
-      ps = new PassportService(cs);
-      ps.open();
-
-      ps.sendSelectApplet(false);
-      BACKeySpec bacKey = new BACKeySpec() {
-        @Override
-        public String getDocumentNumber() {
-          return mrzInfo.getDocumentNumber();
-        }
-
-        @Override
-        public String getDateOfBirth() {
-          return mrzInfo.getDateOfBirth();
-        }
-
-        @Override
-        public String getDateOfExpiry() {
-          return mrzInfo.getDateOfExpiry();
-        }
-      };
-
-      ps.doBAC(bacKey);
-
-      InputStream is = null;
-      InputStream isPicture = null;
-      InputStream isPortrait = null;
-      InputStream isAdditionalPersonalDetails = null;
-      try {
-        // Basic data
-        is = ps.getInputStream(PassportService.EF_DG1);
-        DG1File dg1 = (DG1File) LDSFileUtil.getLDSFile(PassportService.EF_DG1, is);
-
-        //Picture
-        isPicture = ps.getInputStream(PassportService.EF_DG2);
-        DG2File dg2 = (DG2File)LDSFileUtil.getLDSFile(PassportService.EF_DG2, isPicture);
-
-        //Get the picture
-        Bitmap faceImage = null;
+    protected boolean handle(Tag tag){
+        PassportService ps = null;
         try {
-          faceImage = PassportNfcUtils.retrieveFaceImage(context, dg2);
-        }catch (Exception e){
-          //Don't do anything
-          e.printStackTrace();
+            IsoDep nfc = IsoDep.get(tag);
+            CardService cs = CardService.getInstance(nfc);
+            ps = new PassportService(cs);
+            ps.open();
+
+            ps.sendSelectApplet(false);
+            BACKeySpec bacKey = new BACKeySpec() {
+                @Override
+                public String getDocumentNumber() {
+                  return mrzInfo.getDocumentNumber();
+                }
+
+                @Override
+                public String getDateOfBirth() {
+                  return mrzInfo.getDateOfBirth();
+                }
+
+                @Override
+                public String getDateOfExpiry() {
+                  return mrzInfo.getDateOfExpiry();
+                }
+                };
+
+            ps.doBAC(bacKey);
+
+            InputStream is = null;
+            InputStream isPicture = null;
+            InputStream isPortrait = null;
+            InputStream isAdditionalPersonalDetails = null;
+            try {
+
+                Passport passport = new Passport();
+                // Basic data
+                is = ps.getInputStream(PassportService.EF_DG1);
+                DG1File dg1 = (DG1File) LDSFileUtil.getLDSFile(PassportService.EF_DG1, is);
+                if(dg1!=null){
+
+                    MRZInfo mrzInfo = dg1.getMRZInfo();
+                    PersonDetails personDetails = new PersonDetails();
+
+                    personDetails.setDateOfBirth(mrzInfo.getDateOfBirth());
+                    personDetails.setDateOfExpiry(mrzInfo.getDateOfExpiry());
+                    personDetails.setDocumentCode(mrzInfo.getDocumentCode());
+                    personDetails.setDocumentNumber(mrzInfo.getDocumentNumber());
+                    personDetails.setOptionalData1(mrzInfo.getOptionalData1());
+                    personDetails.setOptionalData2(mrzInfo.getOptionalData2());
+                    personDetails.setIssuingState(mrzInfo.getIssuingState());
+                    personDetails.setPrimaryIdentifier(mrzInfo.getPrimaryIdentifier());
+                    personDetails.setSecondaryIdentifier(mrzInfo.getSecondaryIdentifier());
+                    personDetails.setNationality(mrzInfo.getNationality());
+                    personDetails.setGender(mrzInfo.getGender());
+
+                    passport.setPersonDetails(personDetails);
+
+                }
+
+
+                //Picture
+                isPicture = ps.getInputStream(PassportService.EF_DG2);
+                DG2File dg2 = (DG2File)LDSFileUtil.getLDSFile(PassportService.EF_DG2, isPicture);
+
+                //Get the picture
+                try {
+                    Bitmap faceImage = PassportNfcUtils.retrieveFaceImage(context, dg2);
+                    passport.setFace(faceImage);
+                }catch (Exception e){
+                  //Don't do anything
+                  e.printStackTrace();
+                }
+
+
+                // Chip Authentication
+                List<CAResult> caResults = PassportNfcUtils.doChipAuthentication(ps);
+                if(caResults.size()>0){
+                    Log.d(TAG, "Chip authentication success ");
+                    passport.setChipAuthentication(true);
+                }
+
+
+                //Portrait
+                //Get the picture
+                try {
+                    isPortrait = ps.getInputStream(PassportService.EF_DG5);
+                    DG5File dg5 = (DG5File)LDSFileUtil.getLDSFile(PassportService.EF_DG5, isPortrait);
+                    Bitmap portraitImage = PassportNfcUtils.retrievePortraitImage(context, dg5);
+                    passport.setPortrait(portraitImage);
+                }catch (Exception e){
+                  //Don't do anything
+                    Log.e(TAG, "Portrait image: "+e);
+                }
+
+                try {
+
+                    isAdditionalPersonalDetails = ps.getInputStream(PassportService.EF_DG11);
+                    DG11File dg11 = (DG11File)LDSFileUtil.getLDSFile(PassportService.EF_DG11, isAdditionalPersonalDetails);
+
+                    AdditionalPersonDetails additionalPersonDetails = new AdditionalPersonDetails();
+
+                    additionalPersonDetails.setCustodyInformation(dg11.getCustodyInformation());
+                    additionalPersonDetails.setFullDateOfBirth(dg11.getFullDateOfBirth());
+                    additionalPersonDetails.setNameOfHolder(dg11.getNameOfHolder());
+                    additionalPersonDetails.setOtherNames(dg11.getOtherNames());
+                    additionalPersonDetails.setOtherNames(dg11.getOtherNames());
+                    additionalPersonDetails.setOtherValidTDNumbers(dg11.getOtherValidTDNumbers());
+                    additionalPersonDetails.setPermanentAddress(dg11.getPermanentAddress());
+                    additionalPersonDetails.setPersonalNumber(dg11.getPersonalNumber());
+                    additionalPersonDetails.setPersonalSummary(dg11.getPersonalSummary());
+                    additionalPersonDetails.setPlaceOfBirth(dg11.getPlaceOfBirth());
+                    additionalPersonDetails.setProfession(dg11.getProfession());
+                    additionalPersonDetails.setProofOfCitizenship(dg11.getProofOfCitizenship());
+                    additionalPersonDetails.setTag(dg11.getTag());
+                    additionalPersonDetails.setTagPresenceList(dg11.getTagPresenceList());
+                    additionalPersonDetails.setTelephone(dg11.getTelephone());
+                    additionalPersonDetails.setTitle(dg11.getTitle());
+
+                    passport.setAdditionalPersonDetails(additionalPersonDetails);
+
+                }catch (Exception e){
+                  //Don't do anything
+                  Log.e(TAG, "Additional Personal Details: "+e);
+                }
+
+                /*
+                //EAC
+                //First we load our keystore
+                KeyStore ks = KeyStore.getInstance(KeyStore.getDefaultType());
+                // get user password and file input stream
+                char[] password = "MY_PASSWORD".toCharArray();//Keystore password
+                try (FileInputStream fis = new FileInputStream("keyStoreName")) {
+                  ks.load(fis, password);
+                }
+                List<KeyStore> keyStoreList = new ArrayList<>();
+                keyStoreList.add(ks);
+
+                //WE try to do EAC with the certificates in our Keystore
+                PassportNfcUtils.doEac(ps, dg1.getMRZInfo().getDocumentNumber(), keyStoreList);
+                */
+
+
+
+                this.passport = passport;
+            //TODO EAC
+            } catch (Exception e) {
+                e.printStackTrace();
+            } finally {
+            try {
+                if(is!=null) {
+                    is.close();
+                }
+                if(isPicture!=null) {
+                    isPicture.close();
+                }
+                if(isPortrait!=null) {
+                  isPortrait.close();
+                }
+
+                if(isAdditionalPersonalDetails!=null) {
+                    isAdditionalPersonalDetails.close();
+                }
+            } catch (Exception e) {
+              e.printStackTrace();
+            }
         }
-
-
-        //Portrait
-        //Get the picture
-        Bitmap portraitImage = null;
-        try {
-            isPortrait = ps.getInputStream(PassportService.EF_DG5);
-            DG5File dg5 = (DG5File)LDSFileUtil.getLDSFile(PassportService.EF_DG5, isPortrait);
-            portraitImage = PassportNfcUtils.retrievePortraitImage(context, dg5);
-        }catch (Exception e){
-          //Don't do anything
-            Log.e(TAG, "Portrait image: "+e);
-        }
-
-          /*try {
-              isAdditionalPersonalDetails = ps.getInputStream(PassportService.EF_DG11);
-              DG11File dg11 = (DG11File)LDSFileUtil.getLDSFile(PassportService.EF_DG11, isAdditionalPersonalDetails);
-              String custodyInformation = dg11.getCustodyInformation();
-              Date fullDateOfBirth = dg11.getFullDateOfBirth();
-              String nameOfHolder = dg11.getNameOfHolder();
-              List<String> otherNames = dg11.getOtherNames();
-              List<String> otherValidTDNumbers = dg11.getOtherValidTDNumbers();
-              List<String> permanentAddress = dg11.getPermanentAddress();
-              String personalNumber = dg11.getPersonalNumber();
-              String personalSummary = dg11.getPersonalSummary();
-              List<String> placeOfBirth = dg11.getPlaceOfBirth();
-              String profession = dg11.getProfession();
-              byte[] proofOfCitizenship = dg11.getProofOfCitizenship();
-              int tag1 = dg11.getTag();
-              List<Integer> tagPresenceList = dg11.getTagPresenceList();
-              String telephone = dg11.getTelephone();
-              String title = dg11.getTitle();
-
-              if(dg11!=null){
-
-              }
-
-          }catch (Exception e){
-              //Don't do anything
-              Log.e(TAG, "Additional Personal Details: "+e);
-          }*/
-
-
-          // Chip Authentication
-          List<CAResult> caResults = PassportNfcUtils.doChipAuthentication(ps);
-          if(caResults.size()>0){
-              Log.d(TAG, "Chip authentication success ");
-          }
-
-          /*
-          //EAC
-          //First we load our keystore
-          KeyStore ks = KeyStore.getInstance(KeyStore.getDefaultType());
-          // get user password and file input stream
-          char[] password = "MY_PASSWORD".toCharArray();//Keystore password
-          try (FileInputStream fis = new FileInputStream("keyStoreName")) {
-              ks.load(fis, password);
-          }
-          List<KeyStore> keyStoreList = new ArrayList<>();
-          keyStoreList.add(ks);
-
-          //WE try to do EAC with the certificates in our Keystore
-          PassportNfcUtils.doEac(ps, dg1.getMRZInfo().getDocumentNumber(), keyStoreList);
-            */
-
-        mrzInfoResult = dg1.getMRZInfo();
-        this.faceImage = faceImage;
-        this.portraitImage = portraitImage;
-        //TODO EAC
-      } catch (Exception e) {
-        e.printStackTrace();
-      } finally {
-        try {
-            if(is!=null) {
-                is.close();
-            }
-            if(isPicture!=null) {
-                isPicture.close();
-            }
-            if(isPortrait!=null) {
-              isPortrait.close();
-            }
-
-            if(isAdditionalPersonalDetails!=null) {
-                isAdditionalPersonalDetails.close();
-            }
-        } catch (Exception e) {
-          e.printStackTrace();
-        }
-      }
     } catch (CardServiceException e) {
-      cardServiceException = e;
-      return false;
+        cardServiceException = e;
+        return false;
     } finally {
-      try {
-          if (ps != null){
-              ps.close();
-          }
-
-      } catch (Exception ex) {
-        ex.printStackTrace();
-      }
+        try {
+            if (ps != null){
+                ps.close();
+            }
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
     }
     return true;
   }
@@ -258,14 +286,14 @@ public final class NfcPassportAsyncTask extends AsyncTask<Void, Void, Boolean> {
     }
   }
 
-  protected void onPassportRead(final MRZInfo personInfo, final Bitmap faceImage){
+  protected void onPassportRead(final Passport passport){
     if(nfcPassportAsyncTaskListener!=null){
-      nfcPassportAsyncTaskListener.onPassportRead(personInfo, faceImage);
+      nfcPassportAsyncTaskListener.onPassportRead(passport);
     }
   }
 
   public interface NfcPassportAsyncTaskListener{
-    void onPassportRead(MRZInfo personInfo, Bitmap faceImage);
+    void onPassportRead(Passport passport);
     void onCardException(CardServiceException cardException);
   }
 }

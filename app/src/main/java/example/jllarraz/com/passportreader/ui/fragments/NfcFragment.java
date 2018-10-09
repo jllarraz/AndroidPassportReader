@@ -32,6 +32,7 @@ import java.security.Security;
 import example.jllarraz.com.passportreader.R;
 import example.jllarraz.com.passportreader.asynctask.NfcPassportAsyncTask;
 import example.jllarraz.com.passportreader.common.IntentData;
+import example.jllarraz.com.passportreader.data.Passport;
 
 
 public class NfcFragment extends Fragment {
@@ -88,8 +89,8 @@ public class NfcFragment extends Fragment {
         onNFCSReadStart();
         NfcPassportAsyncTask nfcPassportAsyncTask = new NfcPassportAsyncTask(getContext().getApplicationContext(), tag, mrzInfo, new NfcPassportAsyncTask.NfcPassportAsyncTaskListener() {
             @Override
-            public void onPassportRead(MRZInfo personInfo, Bitmap faceImage) {
-                NfcFragment.this.onPassportRead(personInfo, faceImage);
+            public void onPassportRead(Passport passport) {
+                NfcFragment.this.onPassportRead(passport);
                 onNFCReadFinish();
             }
 
@@ -175,12 +176,12 @@ public class NfcFragment extends Fragment {
         });
     }
 
-    protected void onPassportRead(final MRZInfo personInfo, final Bitmap faceImage){
+    protected void onPassportRead(final Passport passport){
         mHandler.post(new Runnable() {
             @Override
             public void run() {
                 if(nfcFragmentListener!=null){
-                    nfcFragmentListener.onPassportRead(personInfo, faceImage);
+                    nfcFragmentListener.onPassportRead(passport);
                 }
             }
         });
@@ -189,7 +190,7 @@ public class NfcFragment extends Fragment {
     public interface NfcFragmentListener{
         void onEnableNfc();
         void onDisableNfc();
-        void onPassportRead(MRZInfo personInfo, Bitmap faceImage);
+        void onPassportRead(Passport passport);
         void onCardException(CardServiceException cardException);
     }
 }

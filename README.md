@@ -18,6 +18,7 @@ This project is based in the information and tutorials found in
 - https://en.wikipedia.org/wiki/Machine-readable_passport
 - https://jmrtd.org/about.shtml
 - https://firebase.google.com/docs/ml-kit/recognize-text
+- https://github.com/tananaev/passport-reader
 
 
 ## Build & Run

@@ -19,6 +19,7 @@ import net.sf.scuba.smartcards.CardServiceException;
 import org.jmrtd.lds.icao.MRZInfo;
 
 import example.jllarraz.com.passportreader.R;
+import example.jllarraz.com.passportreader.data.Passport;
 import example.jllarraz.com.passportreader.ui.fragments.NfcFragment;
 import example.jllarraz.com.passportreader.ui.fragments.PassportDetailsFragment;
 
@@ -118,9 +119,9 @@ public class NfcActivity extends FragmentActivity implements NfcFragment.NfcFrag
     }
 
     @Override
-    public void onPassportRead(MRZInfo personInfo, Bitmap faceImage) {
+    public void onPassportRead(Passport passport) {
         getSupportFragmentManager().beginTransaction()
-                .replace(R.id.container, PassportDetailsFragment.newInstance(personInfo, faceImage), TAG_PASSPORT_DETAILS)
+                .replace(R.id.container, PassportDetailsFragment.newInstance(passport), TAG_PASSPORT_DETAILS)
                 .commit();
     }
 

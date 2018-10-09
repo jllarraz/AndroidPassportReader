@@ -16,13 +16,14 @@ import org.jmrtd.lds.icao.MRZInfo;
 
 import example.jllarraz.com.passportreader.R;
 import example.jllarraz.com.passportreader.common.IntentData;
+import example.jllarraz.com.passportreader.data.Passport;
+import example.jllarraz.com.passportreader.data.PersonDetails;
 
 public class PassportDetailsFragment extends Fragment{
 
     private PassportDetailsFragmentListener passportDetailsFragmentListener;
 
-    private MRZInfo mrzInfo;
-    private Bitmap faceImage;
+    private Passport passport;
 
     private AppCompatImageView appCompatImageViewFace;
     private TextView textViewName;
@@ -34,11 +35,10 @@ public class PassportDetailsFragment extends Fragment{
     private TextView textViewIssuingCountry;
     private TextView textViewNationality;
 
-    public static PassportDetailsFragment newInstance(MRZInfo mrzInfo, Bitmap face) {
+    public static PassportDetailsFragment newInstance(Passport passport) {
         PassportDetailsFragment myFragment = new PassportDetailsFragment();
         Bundle args = new Bundle();
-        args.putSerializable(IntentData.KEY_MRZ_INFO, mrzInfo);
-        args.putParcelable(IntentData.KEY_FACE_IMAGE, face);
+        args.putParcelable(IntentData.KEY_PASSPORT, passport);
         myFragment.setArguments(args);
         return myFragment;
     }
@@ -50,14 +50,10 @@ public class PassportDetailsFragment extends Fragment{
         View inflatedView = inflater.inflate(R.layout.fragment_passport_details, container, false);
 
         Bundle arguments = getArguments();
-        if(arguments.containsKey(IntentData.KEY_MRZ_INFO)){
-            mrzInfo = (MRZInfo) arguments.getSerializable(IntentData.KEY_MRZ_INFO);
+        if(arguments.containsKey(IntentData.KEY_PASSPORT)){
+            passport = (Passport) arguments.getParcelable(IntentData.KEY_PASSPORT);
         } else {
             //error
-        }
-
-        if(arguments.containsKey(IntentData.KEY_FACE_IMAGE)){
-            faceImage = (Bitmap) arguments.getParcelable(IntentData.KEY_FACE_IMAGE);
         }
 
         appCompatImageViewFace =  inflatedView.findViewById(R.id.iconPhoto);
@@ -76,27 +72,29 @@ public class PassportDetailsFragment extends Fragment{
     public void onResume() {
         super.onResume();
 
-        refreshData(mrzInfo, faceImage);
+        refreshData(passport);
     }
 
-    private void refreshData(MRZInfo mrzInfo, Bitmap face){
-        if(mrzInfo == null){
+    private void refreshData(Passport passport){
+        if(passport == null){
             return;
         }
 
-        if(face!=null) {
-            appCompatImageViewFace.setImageBitmap(face);
+        if(passport.getFace()!=null) {
+            appCompatImageViewFace.setImageBitmap(passport.getFace());
         }
 
-        String name = mrzInfo.getPrimaryIdentifier().replace("<", "");
-        String surname = mrzInfo.getSecondaryIdentifier().replace("<", "");
+        PersonDetails personDetails = passport.getPersonDetails();
+
+        String name = personDetails.getPrimaryIdentifier().replace("<", "");
+        String surname = personDetails.getSecondaryIdentifier().replace("<", "");
         textViewName.setText(getString(R.string.name, name, surname));
-        textViewDateOfBirth.setText(mrzInfo.getDateOfBirth());
-        textViewGender.setText(mrzInfo.getGender().name());
-        textViewDocumentNumber.setText(mrzInfo.getDocumentNumber());
-        textViewExpiration.setText(mrzInfo.getDateOfExpiry());
-        textViewIssuingCountry.setText(mrzInfo.getIssuingState());
-        textViewNationality.setText(mrzInfo.getNationality());
+        textViewDateOfBirth.setText(personDetails.getDateOfBirth());
+        textViewGender.setText(personDetails.getGender().name());
+        textViewDocumentNumber.setText(personDetails.getDocumentNumber());
+        textViewExpiration.setText(personDetails.getDateOfExpiry());
+        textViewIssuingCountry.setText(personDetails.getIssuingState());
+        textViewNationality.setText(personDetails.getNationality());
 
     }
 
