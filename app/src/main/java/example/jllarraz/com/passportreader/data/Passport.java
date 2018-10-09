@@ -4,6 +4,9 @@ import android.graphics.Bitmap;
 import android.os.Parcel;
 import android.os.Parcelable;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class Passport implements Parcelable {
 
     boolean isChipAuthentication = false;
@@ -11,19 +14,28 @@ public class Passport implements Parcelable {
 
     Bitmap face;
     Bitmap portrait;
+    Bitmap signature;
+    List<Bitmap> fingerprints;
     PersonDetails personDetails;
     AdditionalPersonDetails additionalPersonDetails;
 
     public Passport(Parcel in) {
+        fingerprints = new ArrayList<>();
         this.face = in.readInt()== 1 ? in.readParcelable(Bitmap.class.getClassLoader()) : null;
         this.portrait = in.readInt()== 1 ? in.readParcelable(Bitmap.class.getClassLoader()) : null;
         this.personDetails = in.readInt()== 1 ? in.readParcelable(PersonDetails.class.getClassLoader()) : null;
         this.additionalPersonDetails = in.readInt()== 1 ? in.readParcelable(AdditionalPersonDetails.class.getClassLoader()) : null;
         this.isChipAuthentication = in.readInt()==1;
         this.isEAC = in.readInt()==1;
+        if(in.readInt()==1){
+            in.readList(fingerprints, Bitmap.class.getClassLoader());
+        }
+
+        this.signature = in.readInt()== 1 ? in.readParcelable(Bitmap.class.getClassLoader()) : null;
     }
 
     public Passport(){
+        fingerprints = new ArrayList<>();
     }
 
     public Bitmap getFace() {
@@ -66,6 +78,22 @@ public class Passport implements Parcelable {
         isEAC = EAC;
     }
 
+    public List<Bitmap> getFingerprints() {
+        return fingerprints;
+    }
+
+    public void setFingerprints(List<Bitmap> fingerprints) {
+        this.fingerprints = fingerprints;
+    }
+
+    public Bitmap getSignature() {
+        return signature;
+    }
+
+    public void setSignature(Bitmap signature) {
+        this.signature = signature;
+    }
+
     public AdditionalPersonDetails getAdditionalPersonDetails() {
         return additionalPersonDetails;
     }
@@ -103,6 +131,16 @@ public class Passport implements Parcelable {
 
         dest.writeInt(isChipAuthentication?1:0);
         dest.writeInt(isEAC?1:0);
+
+        dest.writeInt(fingerprints!=null ? 1 : 0);
+        if(fingerprints!=null) {
+            dest.writeList(fingerprints);
+        }
+
+        dest.writeInt(signature!=null ? 1 : 0);
+        if(signature!=null) {
+            dest.writeParcelable(signature, flags);
+        }
     }
 
 

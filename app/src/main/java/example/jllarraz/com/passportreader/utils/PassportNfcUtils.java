@@ -20,10 +20,14 @@ import org.jmrtd.lds.DisplayedImageInfo;
 import org.jmrtd.lds.LDSFileUtil;
 import org.jmrtd.lds.icao.DG14File;
 import org.jmrtd.lds.icao.DG2File;
+import org.jmrtd.lds.icao.DG3File;
 import org.jmrtd.lds.icao.DG5File;
+import org.jmrtd.lds.icao.DG7File;
 import org.jmrtd.lds.icao.MRZInfo;
 import org.jmrtd.lds.iso19794.FaceImageInfo;
 import org.jmrtd.lds.iso19794.FaceInfo;
+import org.jmrtd.lds.iso19794.FingerImageInfo;
+import org.jmrtd.lds.iso19794.FingerInfo;
 import org.jmrtd.protocol.CAResult;
 import org.jmrtd.protocol.DESedeSecureMessagingWrapper;
 import org.jmrtd.protocol.SecureMessagingWrapper;
@@ -481,6 +485,54 @@ public class PassportNfcUtils {
 
         }
         throw new IOException("Unable to read Image");
+    }
+
+    public static Bitmap retrieveSignatureImage(Context context, DG7File dg7File) throws IOException {
+        List<DisplayedImageInfo> displayedImageInfos = dg7File.getImages();
+        if (!displayedImageInfos.isEmpty()) {
+            DisplayedImageInfo faceImageInfo = displayedImageInfos.iterator().next();
+
+            int imageLength = faceImageInfo.getImageLength();
+            DataInputStream dataInputStream = new DataInputStream(faceImageInfo.getImageInputStream());
+            byte[] buffer = new byte[imageLength];
+            dataInputStream.readFully(buffer, 0, imageLength);
+            InputStream inputStream = new ByteArrayInputStream(buffer, 0, imageLength);
+
+            return ImageUtil.decodeImage(
+                    context, faceImageInfo.getMimeType(), inputStream);
+
+        }
+        throw new IOException("Unable to read Image");
+    }
+
+    public static List<Bitmap> retrieveFingerPrintImage(Context context, DG3File dg3File) throws IOException {
+        List<FingerImageInfo> allFingerImageInfos = new ArrayList<>();
+        List<FingerInfo> fingerInfos = dg3File.getFingerInfos();
+
+        List<Bitmap> fingerprintsImage=new ArrayList<>();
+        for (FingerInfo fingerInfo : fingerInfos) {
+            allFingerImageInfos.addAll(fingerInfo.getFingerImageInfos());
+        }
+
+        Iterator<FingerImageInfo> iterator = allFingerImageInfos.iterator();
+        while (iterator.hasNext()){
+            FingerImageInfo fingerImageInfo = iterator.next();
+            int imageLength = fingerImageInfo.getImageLength();
+            DataInputStream dataInputStream = new DataInputStream(fingerImageInfo.getImageInputStream());
+            byte[] buffer = new byte[imageLength];
+            dataInputStream.readFully(buffer, 0, imageLength);
+            InputStream inputStream = new ByteArrayInputStream(buffer, 0, imageLength);
+
+            Bitmap bitmap = ImageUtil.decodeImage(
+                    context, fingerImageInfo.getMimeType(), inputStream);
+            fingerprintsImage.add(bitmap);
+        }
+
+        if (fingerprintsImage.isEmpty()) {
+            throw new IOException("Unable to read Finger print Image");
+        }
+        return fingerprintsImage;
+
     }
 
 

@@ -34,10 +34,13 @@ import org.jmrtd.lds.CVCAFile;
 import org.jmrtd.lds.ChipAuthenticationPublicKeyInfo;
 import org.jmrtd.lds.LDSFileUtil;
 import org.jmrtd.lds.icao.DG11File;
+import org.jmrtd.lds.icao.DG12File;
 import org.jmrtd.lds.icao.DG14File;
 import org.jmrtd.lds.icao.DG1File;
 import org.jmrtd.lds.icao.DG2File;
+import org.jmrtd.lds.icao.DG3File;
 import org.jmrtd.lds.icao.DG5File;
+import org.jmrtd.lds.icao.DG7File;
 import org.jmrtd.lds.icao.MRZInfo;
 import org.jmrtd.protocol.CAResult;
 
@@ -130,6 +133,8 @@ public final class NfcPassportAsyncTask extends AsyncTask<Void, Void, Boolean> {
             InputStream is = null;
             InputStream isPicture = null;
             InputStream isPortrait = null;
+            InputStream isFingerprint = null;
+            InputStream isSignature = null;
             InputStream isAdditionalPersonalDetails = null;
             try {
 
@@ -240,7 +245,28 @@ public final class NfcPassportAsyncTask extends AsyncTask<Void, Void, Boolean> {
                 PassportNfcUtils.doEac(ps, dg1.getMRZInfo().getDocumentNumber(), keyStoreList);
                 */
 
+                //Finger prints
+                //Get the pictures
+                try {
+                    isFingerprint = ps.getInputStream(PassportService.EF_DG3);
+                    DG3File dg3 = (DG3File)LDSFileUtil.getLDSFile(PassportService.EF_DG3, isFingerprint);
+                    List<Bitmap> bitmaps = PassportNfcUtils.retrieveFingerPrintImage(context, dg3);
+                    passport.setFingerprints(bitmaps);
+                }catch (Exception e){
+                    //Don't do anything
+                    Log.e(TAG, "Fingerprint image: "+e);
+                }
 
+
+                try {
+                    isSignature = ps.getInputStream(PassportService.EF_DG7);
+                    DG7File dg7 = (DG7File)LDSFileUtil.getLDSFile(PassportService.EF_DG7, isSignature);
+                    Bitmap bitmap = PassportNfcUtils.retrieveSignatureImage(context, dg7);
+                    passport.setSignature(bitmap);
+                }catch (Exception e){
+                    //Don't do anything
+                    Log.e(TAG, "Signature image: "+e);
+                }
 
                 this.passport = passport;
             //TODO EAC
@@ -256,6 +282,14 @@ public final class NfcPassportAsyncTask extends AsyncTask<Void, Void, Boolean> {
                 }
                 if(isPortrait!=null) {
                   isPortrait.close();
+                }
+
+                if(isFingerprint!=null){
+                    isFingerprint.close();
+                }
+
+                if(isSignature!=null){
+                    isSignature.close();
                 }
 
                 if(isAdditionalPersonalDetails!=null) {
