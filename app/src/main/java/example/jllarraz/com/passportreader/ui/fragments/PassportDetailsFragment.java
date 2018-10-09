@@ -117,7 +117,11 @@ public class PassportDetailsFragment extends Fragment{
         }
 
         if(passport.getFace()!=null) {
+            //Add teh face
             appCompatImageViewFace.setImageBitmap(passport.getFace());
+        } else if(passport.getPortrait()!=null){
+            //If we don't have the face, we try with the portrait
+            appCompatImageViewFace.setImageBitmap(passport.getPortrait());
         }
 
         PersonDetails personDetails = passport.getPersonDetails();
