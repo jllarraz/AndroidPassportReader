@@ -70,7 +70,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import javax.crypto.KeyAgreement;
@@ -462,11 +461,11 @@ public class PassportNfcUtils {
             dataInputStream.readFully(buffer, 0, imageLength);
             InputStream inputStream = new ByteArrayInputStream(buffer, 0, imageLength);
 
-            return ImageUtil.decodeImage(
-                    context, faceImageInfo.getMimeType(), inputStream);
+           // return ImageUtil.decodeImage(context, faceImageInfo.getMimeType(), inputStream);
+            return ImageUtil.decodeImage(inputStream, imageLength, faceImageInfo.getMimeType());
 
         }
-        throw new IOException("Unable to read Image");
+        throw new IOException("Unable to decodeImage Image");
     }
 
     public static Bitmap retrievePortraitImage(Context context, DG5File dg2File) throws IOException {
@@ -480,11 +479,10 @@ public class PassportNfcUtils {
             dataInputStream.readFully(buffer, 0, imageLength);
             InputStream inputStream = new ByteArrayInputStream(buffer, 0, imageLength);
 
-            return ImageUtil.decodeImage(
-                    context, faceImageInfo.getMimeType(), inputStream);
+            return ImageUtil.decodeImage(inputStream, imageLength, faceImageInfo.getMimeType());
 
         }
-        throw new IOException("Unable to read Image");
+        throw new IOException("Unable to decodeImage Image");
     }
 
     public static Bitmap retrieveSignatureImage(Context context, DG7File dg7File) throws IOException {
@@ -498,11 +496,10 @@ public class PassportNfcUtils {
             dataInputStream.readFully(buffer, 0, imageLength);
             InputStream inputStream = new ByteArrayInputStream(buffer, 0, imageLength);
 
-            return ImageUtil.decodeImage(
-                    context, faceImageInfo.getMimeType(), inputStream);
+            return ImageUtil.decodeImage(inputStream, imageLength, faceImageInfo.getMimeType());
 
         }
-        throw new IOException("Unable to read Image");
+        throw new IOException("Unable to decodeImage Image");
     }
 
     public static List<Bitmap> retrieveFingerPrintImage(Context context, DG3File dg3File) throws IOException {
@@ -523,13 +520,12 @@ public class PassportNfcUtils {
             dataInputStream.readFully(buffer, 0, imageLength);
             InputStream inputStream = new ByteArrayInputStream(buffer, 0, imageLength);
 
-            Bitmap bitmap = ImageUtil.decodeImage(
-                    context, fingerImageInfo.getMimeType(), inputStream);
+            Bitmap bitmap = ImageUtil.decodeImage(inputStream, imageLength, fingerImageInfo.getMimeType());
             fingerprintsImage.add(bitmap);
         }
 
         if (fingerprintsImage.isEmpty()) {
-            throw new IOException("Unable to read Finger print Image");
+            throw new IOException("Unable to decodeImage Finger print Image");
         }
         return fingerprintsImage;
 
