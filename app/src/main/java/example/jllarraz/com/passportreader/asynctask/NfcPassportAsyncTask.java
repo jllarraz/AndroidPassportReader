@@ -17,6 +17,7 @@ package example.jllarraz.com.passportreader.asynctask;
 
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.nfc.Tag;
 import android.nfc.tech.IsoDep;
 import android.os.AsyncTask;
@@ -58,6 +59,7 @@ import java.util.Map;
 
 import javax.net.ssl.TrustManagerFactory;
 
+import example.jllarraz.com.passportreader.data.AdditionalDocumentDetails;
 import example.jllarraz.com.passportreader.data.AdditionalPersonDetails;
 import example.jllarraz.com.passportreader.data.Passport;
 import example.jllarraz.com.passportreader.data.PersonDetails;
@@ -135,6 +137,7 @@ public final class NfcPassportAsyncTask extends AsyncTask<Void, Void, Boolean> {
             InputStream isPortrait = null;
             InputStream isFingerprint = null;
             InputStream isSignature = null;
+            InputStream isPassportExtraDetails = null;
             InputStream isAdditionalPersonalDetails = null;
             try {
 
@@ -268,6 +271,39 @@ public final class NfcPassportAsyncTask extends AsyncTask<Void, Void, Boolean> {
                     Log.e(TAG, "Signature image: "+e);
                 }
 
+                try {
+                    isPassportExtraDetails = ps.getInputStream(PassportService.EF_DG12);
+                    DG12File dg12 = (DG12File)LDSFileUtil.getLDSFile(PassportService.EF_DG12, isPassportExtraDetails);
+                    AdditionalDocumentDetails additionalDocumentDetails = new AdditionalDocumentDetails();
+                    additionalDocumentDetails.setDateAndTimeOfPersonalization(dg12.getDateAndTimeOfPersonalization());
+                    additionalDocumentDetails.setDateOfIssue(dg12.getDateOfIssue());
+                    additionalDocumentDetails.setEndorsementsAndObservations(dg12.getEndorsementsAndObservations());
+                    try {
+                        byte[] imageOfFront = dg12.getImageOfFront();
+                        Bitmap bitmapImageOfFront = BitmapFactory.decodeByteArray(imageOfFront, 0, imageOfFront.length);
+                        additionalDocumentDetails.setImageOfFront(bitmapImageOfFront);
+                    }catch (Exception e){
+                        Log.e(TAG, "Additional document image front: "+e);
+                    }
+                    try {
+                        byte[] imageOfRear = dg12.getImageOfRear();
+                        Bitmap bitmapImageOfRear = BitmapFactory.decodeByteArray(imageOfRear, 0, imageOfRear.length);
+                        additionalDocumentDetails.setImageOfRear(bitmapImageOfRear);
+                    }catch (Exception e){
+                        Log.e(TAG, "Additional document image rear: "+e);
+                    }
+                    additionalDocumentDetails.setIssuingAuthority(dg12.getIssuingAuthority());
+                    additionalDocumentDetails.setNamesOfOtherPersons(dg12.getNamesOfOtherPersons());
+                    additionalDocumentDetails.setPersonalizationSystemSerialNumber(dg12.getPersonalizationSystemSerialNumber());
+                    additionalDocumentDetails.setTaxOrExitRequirements(dg12.getTaxOrExitRequirements());
+
+                    passport.setAdditionalDocumentDetails(additionalDocumentDetails);
+
+                }catch (Exception e){
+                    //Don't do anything
+                    Log.e(TAG, "Additional document details: "+e);
+                }
+
                 this.passport = passport;
             //TODO EAC
             } catch (Exception e) {
@@ -294,6 +330,10 @@ public final class NfcPassportAsyncTask extends AsyncTask<Void, Void, Boolean> {
 
                 if(isAdditionalPersonalDetails!=null) {
                     isAdditionalPersonalDetails.close();
+                }
+
+                if(isPassportExtraDetails!=null){
+                    isPassportExtraDetails.close();
                 }
             } catch (Exception e) {
               e.printStackTrace();

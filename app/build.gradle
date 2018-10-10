@@ -49,13 +49,15 @@ dependencies {
     implementation 'net.sf.scuba:scuba-sc-android:0.0.9';
     implementation group: 'org.ejbca.cvc', name: 'cert-cvc', version: '1.4.3'
 
-    //Jpeg2000
-    //implementation 'edu.ucar:jj2000:5.2'
     //WSQ
     implementation 'com.github.mhshams:jnbis:1.1.0'
 
-    //Validator
+    //Input data Validator
     implementation 'com.mobsandgeeks:android-saripaar:2.0.3'
+
+    //Butter knife
+    implementation 'com.jakewharton:butterknife:8.8.1'
+    annotationProcessor 'com.jakewharton:butterknife-compiler:8.8.1'
 
 }
 

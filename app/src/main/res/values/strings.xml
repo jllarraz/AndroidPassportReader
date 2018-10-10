@@ -69,4 +69,16 @@
     <string name="label_authentication_chip">Chip</string>
     <string name="label_authentication_terminal">Terminal</string>
 
+
+    <string name="label_additional_document_information">Additional document information</string>
+    <string name="label_additional_document_information_endorsements_and_observations">Observations</string>
+    <string name="label_additional_document_information_date_and_time_of_personalization">Date personalization</string>
+    <string name="label_additional_document_information_date_of_issue">Date issue</string>
+    <string name="label_additional_document_information_image_front">Image front</string>
+    <string name="label_additional_document_information_image_rear">Image rear</string>
+    <string name="label_additional_document_information_issuing_authority">Issuing authority</string>
+    <string name="label_additional_document_information_names_of_other_persons">Names of other persons</string>
+    <string name="label_additional_document_information_personalization_system_serial_number">System serial number</string>
+    <string name="label_additional_document_information_tax_or_exit_requirements">Tax or exit requirements</string>
+
 </resources>

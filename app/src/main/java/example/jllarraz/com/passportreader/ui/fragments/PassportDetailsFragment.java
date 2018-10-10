@@ -7,6 +7,7 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.widget.AppCompatImageView;
+import android.support.v7.widget.CardView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -15,11 +16,15 @@ import android.widget.TextView;
 
 
 import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 
+import butterknife.BindView;
+import butterknife.ButterKnife;
 import example.jllarraz.com.passportreader.R;
 import example.jllarraz.com.passportreader.common.IntentData;
+import example.jllarraz.com.passportreader.data.AdditionalDocumentDetails;
 import example.jllarraz.com.passportreader.data.AdditionalPersonDetails;
 import example.jllarraz.com.passportreader.data.Passport;
 import example.jllarraz.com.passportreader.data.PersonDetails;
@@ -28,32 +33,106 @@ public class PassportDetailsFragment extends Fragment{
 
     private PassportDetailsFragmentListener passportDetailsFragmentListener;
 
+    SimpleDateFormat simpleDateFormat =  new SimpleDateFormat("dd/MM/yyyy");
+
     private Passport passport;
 
-    private AppCompatImageView appCompatImageViewFace;
-    private TextView textViewName;
-    private TextView textViewDateOfBirth;
-    private TextView textViewGender;
+    @BindView(R.id.iconPhoto)
+    AppCompatImageView appCompatImageViewFace;
 
-    private TextView textViewDocumentNumber;
-    private TextView textViewExpiration;
-    private TextView textViewIssuingCountry;
-    private TextView textViewNationality;
+    @BindView(R.id.value_name)
+    TextView textViewName;
 
-    private TextView textViewAdditionalInfoCustody;
-    private TextView textViewAdditionalDateOfBirth;
-    private TextView textViewAdditionalOtherNames;
-    private TextView textViewAdditionalOtherTdNumbers;
-    private TextView textViewAdditionalPermanentAddress;
-    private TextView textViewAdditionalPersonalNumber;
-    private TextView textViewAdditionalPersonalSummary;
-    private TextView textViewAdditionalPlaceOfBirth;
-    private TextView textViewAdditionalProfession;
-    private TextView textViewAdditionalTelephone;
-    private TextView textViewAdditionalTitle;
+    @BindView(R.id.value_DOB)
+    TextView textViewDateOfBirth;
 
-    private ImageView imageViewChipAuthentication;
-    private ImageView imageViewTerminalAuthentication;
+    @BindView(R.id.value_gender)
+    TextView textViewGender;
+
+    @BindView(R.id.value_passport_number)
+    TextView textViewDocumentNumber;
+
+    @BindView(R.id.value_expiration_date)
+    TextView textViewExpiration;
+
+    @BindView(R.id.value_issuing_state)
+    TextView textViewIssuingCountry;
+
+    @BindView(R.id.value_nationality)
+    TextView textViewNationality;
+
+
+    @BindView(R.id.card_view_additional_person_information)
+    CardView cardViewAdditionalPersonInformation;
+
+
+    @BindView(R.id.value_custody)
+    TextView textViewAdditionalInfoCustody;
+
+    @BindView(R.id.value_date_of_birth)
+    TextView textViewAdditionalDateOfBirth;
+
+    @BindView(R.id.value_other_names)
+    TextView textViewAdditionalOtherNames;
+
+    @BindView(R.id.value_other_td_numbers)
+    TextView textViewAdditionalOtherTdNumbers;
+
+    @BindView(R.id.value_permanent_address)
+    TextView textViewAdditionalPermanentAddress;
+
+    @BindView(R.id.value_personal_number)
+    TextView textViewAdditionalPersonalNumber;
+
+    @BindView(R.id.value_personal_summary)
+    TextView textViewAdditionalPersonalSummary;
+
+    @BindView(R.id.value_place_of_birth)
+    TextView textViewAdditionalPlaceOfBirth;
+
+    @BindView(R.id.value_profession)
+    TextView textViewAdditionalProfession;
+
+    @BindView(R.id.value_telephone)
+    TextView textViewAdditionalTelephone;
+
+    @BindView(R.id.value_title)
+    TextView textViewAdditionalTitle;
+
+    @BindView(R.id.value_chip_authentication)
+    ImageView imageViewChipAuthentication;
+
+    @BindView(R.id.value_terminal_authentication)
+    ImageView imageViewTerminalAuthentication;
+
+
+
+    @BindView(R.id.card_view_additional_document_information)
+    CardView cardViewAdditionalDocumentInformation;
+
+    @BindView(R.id.value_endorsements)
+    TextView textViewAdditionalDocumentEndorsements;
+
+    @BindView(R.id.value_date_personalization)
+    TextView textViewAdditionalDocumentDatePersonalization;
+
+    @BindView(R.id.value_date_issue)
+    TextView textViewAdditionalDocumentDateIssue;
+
+    @BindView(R.id.value_issuing_authority)
+    TextView textViewAdditionalDocumentIssuingAuthority;
+
+    @BindView(R.id.value_names_other_persons)
+    TextView textViewAdditionalDocumentOtherNames;
+
+    @BindView(R.id.value_system_serial_number)
+    TextView textViewAdditionalDocumentSystemSerialNumber;
+
+    @BindView(R.id.value_tax_exit)
+    TextView textViewAdditionalDocumentTaxOrExit;
+
+
+
 
 
     public static PassportDetailsFragment newInstance(Passport passport) {
@@ -70,36 +149,14 @@ public class PassportDetailsFragment extends Fragment{
 
         View inflatedView = inflater.inflate(R.layout.fragment_passport_details, container, false);
 
+        ButterKnife.bind(this, inflatedView);
+
         Bundle arguments = getArguments();
         if(arguments.containsKey(IntentData.KEY_PASSPORT)){
             passport = (Passport) arguments.getParcelable(IntentData.KEY_PASSPORT);
         } else {
             //error
         }
-
-        appCompatImageViewFace =  inflatedView.findViewById(R.id.iconPhoto);
-        textViewName =  inflatedView.findViewById(R.id.value_name);
-        textViewDateOfBirth =  inflatedView.findViewById(R.id.value_DOB);
-        textViewGender =  inflatedView.findViewById(R.id.value_gender);
-        textViewDocumentNumber =  inflatedView.findViewById(R.id.value_passport_number);
-        textViewExpiration =  inflatedView.findViewById(R.id.value_expiration_date);
-        textViewIssuingCountry =  inflatedView.findViewById(R.id.value_issuing_state);
-        textViewNationality =  inflatedView.findViewById(R.id.value_nationality);
-
-        textViewAdditionalInfoCustody =  inflatedView.findViewById(R.id.value_custody);
-        textViewAdditionalDateOfBirth =  inflatedView.findViewById(R.id.value_date_of_birth);
-        textViewAdditionalOtherNames =  inflatedView.findViewById(R.id.value_other_names);
-        textViewAdditionalOtherTdNumbers =  inflatedView.findViewById(R.id.value_other_td_numbers);
-        textViewAdditionalPermanentAddress =  inflatedView.findViewById(R.id.value_permanent_address);
-        textViewAdditionalPersonalNumber =  inflatedView.findViewById(R.id.value_personal_number);
-        textViewAdditionalPersonalSummary =  inflatedView.findViewById(R.id.value_personal_summary);
-        textViewAdditionalPlaceOfBirth =  inflatedView.findViewById(R.id.value_place_of_birth);
-        textViewAdditionalProfession =  inflatedView.findViewById(R.id.value_profession);
-        textViewAdditionalTelephone =  inflatedView.findViewById(R.id.value_telephone);
-        textViewAdditionalTitle =  inflatedView.findViewById(R.id.value_title);
-
-        imageViewChipAuthentication =  inflatedView.findViewById(R.id.value_chip_authentication);
-        imageViewTerminalAuthentication =  inflatedView.findViewById(R.id.value_terminal_authentication);
 
 
         appCompatImageViewFace.setOnClickListener(new View.OnClickListener() {
@@ -153,12 +210,13 @@ public class PassportDetailsFragment extends Fragment{
         AdditionalPersonDetails additionalPersonDetails = passport.getAdditionalPersonDetails();
         if(additionalPersonDetails!=null){
             //This object it's not available in the majority of passports
+            cardViewAdditionalPersonInformation.setVisibility(View.VISIBLE);
 
             if(additionalPersonDetails.getCustodyInformation()!=null) {
                 textViewAdditionalInfoCustody.setText(additionalPersonDetails.getCustodyInformation());
             }
             if(additionalPersonDetails.getFullDateOfBirth()!=null) {
-                SimpleDateFormat simpleDateFormat =  new SimpleDateFormat("dd/MM/yyyy");
+
                 textViewAdditionalDateOfBirth.setText(simpleDateFormat.format(additionalPersonDetails.getFullDateOfBirth()));
             }
             if(additionalPersonDetails.getOtherNames()!=null && additionalPersonDetails.getOtherNames().size()>0) {
@@ -194,7 +252,48 @@ public class PassportDetailsFragment extends Fragment{
             if(additionalPersonDetails.getTitle()!=null) {
                 textViewAdditionalTitle.setText(additionalPersonDetails.getTitle());
             }
+        }else{
+            cardViewAdditionalPersonInformation.setVisibility(View.GONE);
         }
+
+        AdditionalDocumentDetails additionalDocumentDetails = passport.getAdditionalDocumentDetails();
+        if(additionalDocumentDetails!=null){
+            cardViewAdditionalDocumentInformation.setVisibility(View.VISIBLE);
+
+            if(additionalDocumentDetails.getDateAndTimeOfPersonalization()!=null) {
+                textViewAdditionalDocumentDatePersonalization.setText(simpleDateFormat.format(additionalDocumentDetails.getDateAndTimeOfPersonalization()));
+            }
+            if(additionalDocumentDetails.getDateOfIssue()!=null) {
+                textViewAdditionalDocumentDateIssue.setText(simpleDateFormat.format(additionalDocumentDetails.getDateOfIssue()));
+            }
+
+            if(additionalDocumentDetails.getEndorsementsAndObservations()!=null) {
+                textViewAdditionalDocumentEndorsements.setText(additionalDocumentDetails.getEndorsementsAndObservations());
+            }
+
+            if(additionalDocumentDetails.getEndorsementsAndObservations()!=null) {
+                textViewAdditionalDocumentEndorsements.setText(additionalDocumentDetails.getEndorsementsAndObservations());
+            }
+
+            if(additionalDocumentDetails.getIssuingAuthority()!=null) {
+                textViewAdditionalDocumentIssuingAuthority.setText(additionalDocumentDetails.getIssuingAuthority());
+            }
+
+            if(additionalDocumentDetails.getNamesOfOtherPersons()!=null) {
+                textViewAdditionalDocumentOtherNames.setText(arrayToString(additionalDocumentDetails.getNamesOfOtherPersons()));
+            }
+
+            if(additionalDocumentDetails.getPersonalizationSystemSerialNumber()!=null) {
+                textViewAdditionalDocumentSystemSerialNumber.setText(additionalDocumentDetails.getPersonalizationSystemSerialNumber());
+            }
+
+            if(additionalDocumentDetails.getTaxOrExitRequirements()!=null) {
+                textViewAdditionalDocumentTaxOrExit.setText(additionalDocumentDetails.getTaxOrExitRequirements());
+            }
+        } else{
+            cardViewAdditionalDocumentInformation.setVisibility(View.GONE);
+        }
+
 
         if(passport.isChipAuthentication()){
             imageViewChipAuthentication.setImageResource(R.drawable.ic_check_circle_outline);

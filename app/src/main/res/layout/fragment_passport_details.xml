@@ -730,6 +730,248 @@
         </android.support.v7.widget.CardView>
 
 
+
+        <!-- Additional person Information Card -->
+        <android.support.v7.widget.CardView
+            xmlns:android="http://schemas.android.com/apk/res/android"
+            xmlns:app="http://schemas.android.com/apk/res-auto"
+            android:id="@+id/card_view_additional_document_information"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:cardCornerRadius="@dimen/cardview_default_radius"
+            app:cardElevation="3dp"
+            app:contentPadding="4dp"
+            android:layout_marginTop="@dimen/margin_tiny"
+            android:layout_marginLeft="@dimen/margin_medium"
+            android:layout_marginRight="@dimen/margin_medium"
+            android:layout_marginBottom="@dimen/margin_small"
+            android:foreground="?android:selectableItemBackground"
+            style="@style/CardViewStyle">
+
+            <TableLayout
+                android:layout_gravity="center"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:padding="@dimen/margin_small"
+                android:stretchColumns="1"
+                android:paddingBottom="@dimen/margin_small">
+
+                <TableLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:stretchColumns="1">
+
+                    <TableRow
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginLeft="@dimen/margin_small">
+
+                        <TextView
+                            android:id="@+id/label_additional_document_information"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:padding="@dimen/margin_tiny"
+                            android:text="@string/label_additional_document_information"
+                            android:layout_weight="1"
+                            android:textAppearance="@style/TextAppearance.AppCompat.Body2" />
+                    </TableRow>
+                </TableLayout>
+
+                <TableRow
+                    android:id="@+id/row_endorsements"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="@dimen/margin_small">
+
+                    <TextView
+                        android:id="@+id/label_endorsements"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:padding="@dimen/margin_tiny"
+                        android:gravity="end"
+                        android:text="@string/label_additional_document_information_endorsements_and_observations"
+                        android:layout_gravity="left"
+                        android:layout_marginRight="@dimen/margin_medium"/>
+
+                    <TextView
+                        android:id="@+id/value_endorsements"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:padding="@dimen/margin_tiny"
+                        android:text="@string/label_not_available"
+                        android:maxLines="2"
+                        android:layout_weight="1"
+                        android:textAppearance="@style/TextAppearance.AppCompat.Body2" />
+                </TableRow>
+
+                <TableRow
+                    android:id="@+id/row_date_personalization"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="@dimen/margin_small">
+
+                    <TextView
+                        android:id="@+id/label_date_personalization"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:padding="@dimen/margin_tiny"
+                        android:gravity="end"
+                        android:text="@string/label_additional_document_information_date_and_time_of_personalization"
+                        android:layout_gravity="left"
+                        android:layout_marginRight="@dimen/margin_medium"/>
+
+                    <TextView
+                        android:id="@+id/value_date_personalization"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:padding="@dimen/margin_tiny"
+                        android:text="@string/label_not_available"
+                        android:maxLines="2"
+                        android:layout_weight="1"
+                        android:textAppearance="@style/TextAppearance.AppCompat.Body2" />
+                </TableRow>
+
+                <TableRow
+                    android:id="@+id/row_date_issue"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="@dimen/margin_small">
+
+                    <TextView
+                        android:id="@+id/label_date_issue"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:padding="@dimen/margin_tiny"
+                        android:gravity="end"
+                        android:text="@string/label_additional_document_information_date_of_issue"
+                        android:layout_gravity="left"
+                        android:layout_marginRight="@dimen/margin_medium"/>
+
+                    <TextView
+                        android:id="@+id/value_date_issue"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:padding="@dimen/margin_tiny"
+                        android:text="@string/label_not_available"
+                        android:maxLines="2"
+                        android:layout_weight="1"
+                        android:textAppearance="@style/TextAppearance.AppCompat.Body2" />
+                </TableRow>
+
+                <TableRow
+                    android:id="@+id/row_issuing_authority"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="@dimen/margin_small">
+
+                    <TextView
+                        android:id="@+id/label_issuing_authority"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:padding="@dimen/margin_tiny"
+                        android:gravity="end"
+                        android:text="@string/label_additional_document_information_issuing_authority"
+                        android:layout_gravity="left"
+                        android:layout_marginRight="@dimen/margin_medium"/>
+
+                    <TextView
+                        android:id="@+id/value_issuing_authority"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:padding="@dimen/margin_tiny"
+                        android:text="@string/label_not_available"
+                        android:maxLines="2"
+                        android:layout_weight="1"
+                        android:textAppearance="@style/TextAppearance.AppCompat.Body2" />
+                </TableRow>
+
+                <TableRow
+                    android:id="@+id/row_names_other_persons"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="@dimen/margin_small">
+
+                    <TextView
+                        android:id="@+id/label_names_other_persons"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:padding="@dimen/margin_tiny"
+                        android:gravity="end"
+                        android:text="@string/label_additional_document_information_names_of_other_persons"
+                        android:layout_gravity="left"
+                        android:layout_marginRight="@dimen/margin_medium"/>
+
+                    <TextView
+                        android:id="@+id/value_names_other_persons"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:padding="@dimen/margin_tiny"
+                        android:text="@string/label_not_available"
+                        android:maxLines="2"
+                        android:layout_weight="1"
+                        android:textAppearance="@style/TextAppearance.AppCompat.Body2" />
+                </TableRow>
+
+                <TableRow
+                    android:id="@+id/row_system_serial_number"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="@dimen/margin_small">
+
+                    <TextView
+                        android:id="@+id/label_system_serial_number"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:padding="@dimen/margin_tiny"
+                        android:gravity="end"
+                        android:text="@string/label_additional_document_information_personalization_system_serial_number"
+                        android:layout_gravity="left"
+                        android:layout_marginRight="@dimen/margin_medium"/>
+
+                    <TextView
+                        android:id="@+id/value_system_serial_number"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:padding="@dimen/margin_tiny"
+                        android:text="@string/label_not_available"
+                        android:maxLines="2"
+                        android:layout_weight="1"
+                        android:textAppearance="@style/TextAppearance.AppCompat.Body2" />
+                </TableRow>
+
+                <TableRow
+                    android:id="@+id/row_tax_exit"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="@dimen/margin_small">
+
+                    <TextView
+                        android:id="@+id/label_tax_exit"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:padding="@dimen/margin_tiny"
+                        android:gravity="end"
+                        android:text="@string/label_additional_document_information_tax_or_exit_requirements"
+                        android:layout_gravity="left"
+                        android:layout_marginRight="@dimen/margin_medium"/>
+
+                    <TextView
+                        android:id="@+id/value_tax_exit"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:padding="@dimen/margin_tiny"
+                        android:text="@string/label_not_available"
+                        android:maxLines="2"
+                        android:layout_weight="1"
+                        android:textAppearance="@style/TextAppearance.AppCompat.Body2" />
+                </TableRow>
+
+            </TableLayout>
+        </android.support.v7.widget.CardView>
+
+
+
+
     </android.support.v7.widget.LinearLayoutCompat>
 </FrameLayout>
 </ScrollView>

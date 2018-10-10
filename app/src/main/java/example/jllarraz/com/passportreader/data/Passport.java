@@ -18,6 +18,7 @@ public class Passport implements Parcelable {
     List<Bitmap> fingerprints;
     PersonDetails personDetails;
     AdditionalPersonDetails additionalPersonDetails;
+    AdditionalDocumentDetails additionalDocumentDetails;
 
     public Passport(Parcel in) {
         fingerprints = new ArrayList<>();
@@ -32,6 +33,7 @@ public class Passport implements Parcelable {
         }
 
         this.signature = in.readInt()== 1 ? in.readParcelable(Bitmap.class.getClassLoader()) : null;
+        this.additionalDocumentDetails = in.readInt()== 1 ? in.readParcelable(AdditionalDocumentDetails.class.getClassLoader()) : null;
     }
 
     public Passport(){
@@ -102,6 +104,14 @@ public class Passport implements Parcelable {
         this.additionalPersonDetails = additionalPersonDetails;
     }
 
+    public AdditionalDocumentDetails getAdditionalDocumentDetails() {
+        return additionalDocumentDetails;
+    }
+
+    public void setAdditionalDocumentDetails(AdditionalDocumentDetails additionalDocumentDetails) {
+        this.additionalDocumentDetails = additionalDocumentDetails;
+    }
+
     @Override
     public int describeContents() {
         return 0;
@@ -140,6 +150,11 @@ public class Passport implements Parcelable {
         dest.writeInt(signature!=null ? 1 : 0);
         if(signature!=null) {
             dest.writeParcelable(signature, flags);
+        }
+
+        dest.writeInt(additionalDocumentDetails!=null ? 1 : 0);
+        if(additionalDocumentDetails!=null) {
+            dest.writeParcelable(additionalDocumentDetails, flags);
         }
     }
 
