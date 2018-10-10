@@ -19,15 +19,18 @@ import net.sf.scuba.smartcards.CardServiceException;
 import org.jmrtd.lds.icao.MRZInfo;
 
 import example.jllarraz.com.passportreader.R;
+import example.jllarraz.com.passportreader.common.IntentData;
 import example.jllarraz.com.passportreader.data.Passport;
 import example.jllarraz.com.passportreader.ui.fragments.NfcFragment;
 import example.jllarraz.com.passportreader.ui.fragments.PassportDetailsFragment;
 
 import static example.jllarraz.com.passportreader.common.IntentData.KEY_MRZ_INFO;
 
-public class NfcActivity extends FragmentActivity implements NfcFragment.NfcFragmentListener{
+public class NfcActivity extends FragmentActivity implements NfcFragment.NfcFragmentListener, PassportDetailsFragment.PassportDetailsFragmentListener {
 
     private static final String TAG = NfcActivity.class.getSimpleName();
+
+    private static final int REQUEST_VIEW_PICTURE=123;
 
     private MRZInfo mrzInfo = null;
 
@@ -135,5 +138,13 @@ public class NfcActivity extends FragmentActivity implements NfcFragment.NfcFrag
         Toast.makeText(this, getString(R.string.warning_enable_nfc), Toast.LENGTH_SHORT).show();
         Intent intent = new Intent(Settings.ACTION_WIRELESS_SETTINGS);
         startActivity(intent);
+    }
+
+    @Override
+    public void onImageSelected(Bitmap bitmap) {
+        Intent intentRequest = new Intent(this, PhotoActivity.class);
+        intentRequest.putExtra(IntentData.KEY_IMAGE, bitmap);
+        startActivityForResult(intentRequest, REQUEST_VIEW_PICTURE);
+
     }
 }

@@ -1,6 +1,7 @@
 package example.jllarraz.com.passportreader.ui.fragments;
 
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
@@ -99,6 +100,18 @@ public class PassportDetailsFragment extends Fragment{
 
         imageViewChipAuthentication =  inflatedView.findViewById(R.id.value_chip_authentication);
         imageViewTerminalAuthentication =  inflatedView.findViewById(R.id.value_terminal_authentication);
+
+
+        appCompatImageViewFace.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Bitmap bitmap = passport.getFace();
+                if(bitmap==null){
+                    bitmap = passport.getPortrait();
+                }
+                passportDetailsFragmentListener.onImageSelected(bitmap);
+            }
+        });
 
 
         return inflatedView;
@@ -220,7 +233,7 @@ public class PassportDetailsFragment extends Fragment{
     }
 
     public interface PassportDetailsFragmentListener{
-
+        void onImageSelected(Bitmap bitmap);
     }
 
 
