@@ -2,13 +2,11 @@ package example.jllarraz.com.passportreader.ui.activities;
 
 import android.app.PendingIntent;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.graphics.Bitmap;
 import android.nfc.NfcAdapter;
-import android.nfc.tech.IsoDep;
-import android.nfc.tech.NfcF;
 import android.os.Bundle;
 import android.provider.Settings;
+import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
 import android.widget.Toast;
@@ -19,23 +17,23 @@ import net.sf.scuba.smartcards.CardServiceException;
 import org.jmrtd.lds.icao.MRZInfo;
 
 import example.jllarraz.com.passportreader.R;
-import example.jllarraz.com.passportreader.common.IntentData;
 import example.jllarraz.com.passportreader.data.Passport;
 import example.jllarraz.com.passportreader.ui.fragments.NfcFragment;
 import example.jllarraz.com.passportreader.ui.fragments.PassportDetailsFragment;
+import example.jllarraz.com.passportreader.ui.fragments.PassportPhotoFragment;
 
 import static example.jllarraz.com.passportreader.common.IntentData.KEY_MRZ_INFO;
 
-public class NfcActivity extends FragmentActivity implements NfcFragment.NfcFragmentListener, PassportDetailsFragment.PassportDetailsFragmentListener {
+public class NfcActivity extends FragmentActivity implements NfcFragment.NfcFragmentListener, PassportDetailsFragment.PassportDetailsFragmentListener, PassportPhotoFragment.PassportPhotoFragmentListener {
 
     private static final String TAG = NfcActivity.class.getSimpleName();
 
-    private static final int REQUEST_VIEW_PICTURE=123;
-
     private MRZInfo mrzInfo = null;
+
 
     private static final String TAG_NFC="TAG_NFC";
     private static final String TAG_PASSPORT_DETAILS="TAG_PASSPORT_DETAILS";
+    private static final String TAG_PASSPORT_PICTURE="TAG_PASSPORT_PICTURE";
 
     private NfcAdapter nfcAdapter;
     private PendingIntent pendingIntent;
@@ -123,9 +121,7 @@ public class NfcActivity extends FragmentActivity implements NfcFragment.NfcFrag
 
     @Override
     public void onPassportRead(Passport passport) {
-        getSupportFragmentManager().beginTransaction()
-                .replace(R.id.container, PassportDetailsFragment.newInstance(passport), TAG_PASSPORT_DETAILS)
-                .commit();
+        showFragmentDetails(passport);
     }
 
     @Override
@@ -140,11 +136,24 @@ public class NfcActivity extends FragmentActivity implements NfcFragment.NfcFrag
         startActivity(intent);
     }
 
+
+    private void showFragmentDetails(Passport passport){
+        getSupportFragmentManager().beginTransaction()
+                .replace(R.id.container, PassportDetailsFragment.newInstance(passport))
+                .addToBackStack(TAG_PASSPORT_DETAILS)
+                .commit();
+    }
+
+    private void showFragmentPhoto(Bitmap bitmap){
+        getSupportFragmentManager().beginTransaction()
+                .replace(R.id.container, PassportPhotoFragment.newInstance(bitmap))
+                .addToBackStack(TAG_PASSPORT_PICTURE)
+                .commit();
+    }
+
+
     @Override
     public void onImageSelected(Bitmap bitmap) {
-        Intent intentRequest = new Intent(this, PhotoActivity.class);
-        intentRequest.putExtra(IntentData.KEY_IMAGE, bitmap);
-        startActivityForResult(intentRequest, REQUEST_VIEW_PICTURE);
-
+        showFragmentPhoto(bitmap);
     }
 }

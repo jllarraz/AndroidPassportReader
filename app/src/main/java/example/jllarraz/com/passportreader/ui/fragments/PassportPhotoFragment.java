@@ -11,7 +11,6 @@ import android.view.ViewGroup;
 
 import example.jllarraz.com.passportreader.R;
 import example.jllarraz.com.passportreader.common.IntentData;
-import example.jllarraz.com.passportreader.data.Passport;
 import example.jllarraz.com.passportreader.ui.views.TouchImageView;
 
 public class PassportPhotoFragment extends Fragment{

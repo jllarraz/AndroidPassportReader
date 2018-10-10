@@ -166,7 +166,9 @@ public class PassportDetailsFragment extends Fragment{
                 if(bitmap==null){
                     bitmap = passport.getPortrait();
                 }
-                passportDetailsFragmentListener.onImageSelected(bitmap);
+                if(passportDetailsFragmentListener!=null) {
+                    passportDetailsFragmentListener.onImageSelected(bitmap);
+                }
             }
         });
 

@@ -46,11 +46,6 @@
 
         </activity>
 
-        <activity android:name=".ui.activities.PhotoActivity"
-            android:screenOrientation="nosensor">
-
-        </activity>
-
 
     </application>
 
