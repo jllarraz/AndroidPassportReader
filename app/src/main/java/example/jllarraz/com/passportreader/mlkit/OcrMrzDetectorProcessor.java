@@ -43,7 +43,9 @@ public class OcrMrzDetectorProcessor extends VisionProcessorBase<FirebaseVisionT
 
     private static final String TAG = OcrMrzDetectorProcessor.class.getSimpleName();
 
-    private static String REGEX="[A-Z0-9<]{9}[0-9]{1}[A-Z<]{3}[0-9]{6}[0-9]{1}[FM<]{1}[0-9]{6}[0-9]{1}";
+    private static String REGEX_OLD_PASSPORT ="[A-Z0-9<]{9}[0-9]{1}[A-Z<]{3}[0-9]{6}[0-9]{1}[FM<]{1}[0-9]{6}[0-9]{1}";
+    private static String REGEX_IP_PASSPORT_LINE_1 ="\\bIP[A-Z<]{3}[A-Z0-9<]{9}[0-9]{1}";
+    private static String REGEX_IP_PASSPORT_LINE_2 ="[0-9]{6}[0-9]{1}[FM<]{1}[0-9]{6}[0-9]{1}[A-Z<]{3}";
 
     private final FirebaseVisionTextRecognizer detector;
 
@@ -88,33 +90,57 @@ public class OcrMrzDetectorProcessor extends VisionProcessorBase<FirebaseVisionT
             fullRead += temp + "-";
         }
         Log.d(TAG, "Read: "+fullRead);
-        Pattern patternLine2 = Pattern.compile(REGEX);
-        Matcher matcherLine2 = patternLine2.matcher(fullRead);
-        if(matcherLine2.find()) {
-            String group = matcherLine2.group(0);
-            String documentNumber = group.substring(0, 9);
-            String dateOfBirthDay = group.substring(13, 19);
-            String expirationDate = group.substring(21, 27);
+        Pattern patternLineOldPassportType = Pattern.compile(REGEX_OLD_PASSPORT);
+        Matcher matcherLineOldPassportType = patternLineOldPassportType.matcher(fullRead);
 
 
-            MRZInfo mrzInfo = new MRZInfo(
-                    "P",
-                    "ESP",
-                    "DUMMY",
-                    "DUMMY",
-                    documentNumber,
-                    "ESP",
-                    dateOfBirthDay,
-                    Gender.MALE,
-                    expirationDate,
-                    ""
-            );
+
+        if(matcherLineOldPassportType.find()) {
+            //Old passport format
+            String line2 = matcherLineOldPassportType.group(0);
+            String documentNumber = line2.substring(0, 9);
+            String dateOfBirthDay = line2.substring(13, 19);
+            String expirationDate = line2.substring(21, 27);
+            MRZInfo mrzInfo = createDummyMrz(documentNumber, dateOfBirthDay, expirationDate);
             ocrListener.onMRZRead(mrzInfo, timeRequired);
         } else {
-            ocrListener.onMRZReadFailure(timeRequired);
+            //Try with the new IP passport type
+            Pattern patternLineIPassportTypeLine1 = Pattern.compile(REGEX_IP_PASSPORT_LINE_1);
+            Matcher matcherLineIPassportTypeLine1 = patternLineIPassportTypeLine1.matcher(fullRead);
+            Pattern patternLineIPassportTypeLine2 = Pattern.compile(REGEX_IP_PASSPORT_LINE_2);
+            Matcher matcherLineIPassportTypeLine2 = patternLineIPassportTypeLine2.matcher(fullRead);
+            if(matcherLineIPassportTypeLine1.find() && matcherLineIPassportTypeLine2.find()){
+                String line1 = matcherLineIPassportTypeLine1.group(0);
+                String line2 = matcherLineIPassportTypeLine2.group(0);
+                String documentNumber = line1.substring(5, 14);
+                String dateOfBirthDay = line2.substring(0, 6);
+                String expirationDate = line2.substring(8, 14);
+                MRZInfo mrzInfo = createDummyMrz(documentNumber, dateOfBirthDay, expirationDate);
+                ocrListener.onMRZRead(mrzInfo, timeRequired);
+            } else {
+                //No success
+                ocrListener.onMRZReadFailure(timeRequired);
+            }
         }
 
 
+    }
+
+
+    protected MRZInfo createDummyMrz(String documentNumber, String dateOfBirthDay, String expirationDate){
+        MRZInfo mrzInfo = new MRZInfo(
+                "P",
+                "ESP",
+                "DUMMY",
+                "DUMMY",
+                documentNumber,
+                "ESP",
+                dateOfBirthDay,
+                Gender.MALE,
+                expirationDate,
+                ""
+        );
+        return mrzInfo;
     }
 
     @Override
