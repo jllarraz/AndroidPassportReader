@@ -40,6 +40,7 @@ import org.jmrtd.lds.ChipAuthenticationInfo;
 import org.jmrtd.lds.ChipAuthenticationPublicKeyInfo;
 import org.jmrtd.lds.LDSFileUtil;
 import org.jmrtd.lds.PACEInfo;
+import org.jmrtd.lds.SODFile;
 import org.jmrtd.lds.SecurityInfo;
 import org.jmrtd.lds.TerminalAuthenticationInfo;
 import org.jmrtd.lds.icao.DG11File;
@@ -65,6 +66,7 @@ import java.security.GeneralSecurityException;
 import java.security.KeyStore;
 import java.security.PublicKey;
 import java.security.Security;
+import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
@@ -73,6 +75,7 @@ import java.util.List;
 import java.util.Map;
 
 import javax.net.ssl.TrustManagerFactory;
+import javax.security.auth.x500.X500Principal;
 
 import example.jllarraz.com.passportreader.data.AdditionalDocumentDetails;
 import example.jllarraz.com.passportreader.data.AdditionalPersonDetails;
@@ -143,6 +146,23 @@ public final class NfcPassportAsyncTask extends AsyncTask<Void, Void, Boolean> {
                 //BAC
                 BACResult bacResult = ps.doBAC(bacKey);
                 passport.setBAC(true);
+
+                //SOD FILE
+                InputStream isSodFile = null;
+                try{
+                    isSodFile= ps.getInputStream(PassportService.EF_SOD);
+                    SODFile sodFile = (SODFile) LDSFileUtil.getLDSFile(PassportService.EF_SOD, isSodFile);
+                    passport.setSodFile(sodFile);
+                }catch (Exception e){
+                    e.printStackTrace();
+                }
+                finally {
+                    if(isSodFile!=null){
+                        isSodFile.close();
+                        isSodFile = null;
+                    }
+                }
+
 
                 // Basic data
                 InputStream isDG1 = null;
@@ -226,6 +246,10 @@ public final class NfcPassportAsyncTask extends AsyncTask<Void, Void, Boolean> {
                 if(eaccaResults.size()>0){
                     passport.setChipAuthentication(true);
                 }
+
+
+
+
 
 
                 //Picture

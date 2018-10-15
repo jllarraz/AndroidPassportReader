@@ -15,6 +15,11 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 
+import org.apache.commons.codec.binary.Hex;
+import org.jmrtd.lds.SODFile;
+
+import java.security.MessageDigest;
+import java.security.cert.X509Certificate;
 import java.text.SimpleDateFormat;
 import java.util.Iterator;
 import java.util.List;
@@ -27,6 +32,7 @@ import example.jllarraz.com.passportreader.data.AdditionalDocumentDetails;
 import example.jllarraz.com.passportreader.data.AdditionalPersonDetails;
 import example.jllarraz.com.passportreader.data.Passport;
 import example.jllarraz.com.passportreader.data.PersonDetails;
+import example.jllarraz.com.passportreader.utils.StringUtils;
 
 public class PassportDetailsFragment extends Fragment{
 
@@ -132,6 +138,34 @@ public class PassportDetailsFragment extends Fragment{
 
     @BindView(R.id.value_tax_exit)
     TextView textViewAdditionalDocumentTaxOrExit;
+
+
+    @BindView(R.id.card_view_document_signing_certificate)
+    CardView cardViewDocumentSigningCertificate;
+
+    @BindView(R.id.value_document_signing_certificate_serial_number)
+    TextView textViewDocumentSigningCertificateSerialNumber;
+
+    @BindView(R.id.value_document_signing_certificate_public_key_algorithm)
+    TextView textViewDocumentSigningCertificatePublicKeyAlgorithm;
+
+    @BindView(R.id.value_document_signing_certificate_signature_algorithm)
+    TextView textViewDocumentSigningCertificateSignatureAlgorithm;
+
+    @BindView(R.id.value_document_signing_certificate_thumbprint)
+    TextView textViewDocumentSigningCertificateThumbprint;
+
+    @BindView(R.id.value_document_signing_certificate_issuer)
+    TextView textViewDocumentSigningCertificateIssuer;
+
+    @BindView(R.id.value_document_signing_certificate_subject)
+    TextView textViewDocumentSigningCertificateSubject;
+
+    @BindView(R.id.value_document_signing_certificate_valid_from)
+    TextView textViewDocumentSigningCertificateValidFrom;
+
+    @BindView(R.id.value_document_signing_certificate_valid_to)
+    TextView textViewDocumentSigningCertificateValidTo;
 
 
 
@@ -322,6 +356,35 @@ public class PassportDetailsFragment extends Fragment{
             imageViewChip.setImageResource(R.drawable.ic_close_circle_outline);
             imageViewChip.setColorFilter(ContextCompat.getColor(getActivity(), android.R.color.holo_red_light), android.graphics.PorterDuff.Mode.SRC_IN);
         }
+
+        SODFile sodFile = passport.getSodFile();
+        if(sodFile!=null){
+            X509Certificate docSigningCertificate = sodFile.getDocSigningCertificate();
+            if(docSigningCertificate !=null){
+
+                textViewDocumentSigningCertificateSerialNumber.setText(docSigningCertificate.getSerialNumber().toString());
+                textViewDocumentSigningCertificatePublicKeyAlgorithm.setText(docSigningCertificate.getPublicKey().getAlgorithm());
+                textViewDocumentSigningCertificateSignatureAlgorithm.setText(docSigningCertificate.getSigAlgName());
+
+                try {
+                    textViewDocumentSigningCertificateThumbprint.setText(StringUtils.bytesToHex(MessageDigest.getInstance("SHA-1").digest(
+                            docSigningCertificate.getEncoded())).toUpperCase());
+                }catch (Exception e){
+                    e.printStackTrace();
+                }
+                textViewDocumentSigningCertificateIssuer.setText(docSigningCertificate.getIssuerDN().getName());
+                textViewDocumentSigningCertificateSubject.setText(docSigningCertificate.getSubjectDN().getName());
+                textViewDocumentSigningCertificateValidFrom.setText(simpleDateFormat.format(docSigningCertificate.getNotBefore()));
+                textViewDocumentSigningCertificateValidTo.setText(simpleDateFormat.format(docSigningCertificate.getNotAfter()));
+
+            } else{
+                cardViewDocumentSigningCertificate.setVisibility(View.GONE);
+            }
+
+        } else {
+            cardViewDocumentSigningCertificate.setVisibility(View.GONE);
+        }
+
 
 
     }

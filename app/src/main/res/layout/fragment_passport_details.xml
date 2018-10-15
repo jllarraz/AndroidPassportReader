@@ -1000,6 +1000,281 @@
 
 
 
+
+
+
+
+        <!-- Additional person Information Card -->
+        <android.support.v7.widget.CardView
+            xmlns:android="http://schemas.android.com/apk/res/android"
+            xmlns:app="http://schemas.android.com/apk/res-auto"
+            android:id="@+id/card_view_document_signing_certificate"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:cardCornerRadius="@dimen/cardview_default_radius"
+            app:cardElevation="3dp"
+            app:contentPadding="4dp"
+            android:layout_marginTop="@dimen/margin_tiny"
+            android:layout_marginLeft="@dimen/margin_medium"
+            android:layout_marginRight="@dimen/margin_medium"
+            android:layout_marginBottom="@dimen/margin_small"
+            android:foreground="?android:selectableItemBackground"
+            style="@style/CardViewStyle">
+
+            <TableLayout
+                android:layout_gravity="center"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:padding="@dimen/margin_small"
+                android:stretchColumns="1"
+                android:paddingBottom="@dimen/margin_small">
+
+                <TableLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:stretchColumns="1">
+
+                    <TableRow
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginLeft="@dimen/margin_small">
+
+                        <TextView
+                            android:id="@+id/label_document_signing_certificate"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:padding="@dimen/margin_tiny"
+                            android:text="@string/label_document_signing_certificate"
+                            android:layout_weight="1"
+                            android:textAppearance="@style/TextAppearance.AppCompat.Body2" />
+                    </TableRow>
+                </TableLayout>
+
+                <TableRow
+                    android:id="@+id/row_document_signing_certificate_serial_number"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="@dimen/margin_small">
+
+                    <TextView
+                        android:id="@+id/label_document_signing_certificate_serial_number"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:padding="@dimen/margin_tiny"
+                        android:gravity="end"
+                        android:text="@string/label_certificate_serial_number"
+                        android:layout_gravity="left"
+                        android:layout_marginRight="@dimen/margin_medium"/>
+
+                    <TextView
+                        android:id="@+id/value_document_signing_certificate_serial_number"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:padding="@dimen/margin_tiny"
+                        android:text="@string/label_not_available"
+                        android:maxLines="3"
+                        android:layout_weight="1"
+                        android:textAppearance="@style/TextAppearance.AppCompat.Body2" />
+                </TableRow>
+
+
+                <TableRow
+                    android:id="@+id/row_document_signing_certificate_public_key_algorithm"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="@dimen/margin_small">
+
+                    <TextView
+                        android:id="@+id/label_document_signing_certificate_public_key_algorithm"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:padding="@dimen/margin_tiny"
+                        android:gravity="end"
+                        android:text="@string/label_certificate_public_key_algorithm"
+                        android:layout_gravity="left"
+                        android:layout_marginRight="@dimen/margin_medium"/>
+
+                    <TextView
+                        android:id="@+id/value_document_signing_certificate_public_key_algorithm"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:padding="@dimen/margin_tiny"
+                        android:text="@string/label_not_available"
+                        android:maxLines="2"
+                        android:layout_weight="1"
+                        android:textAppearance="@style/TextAppearance.AppCompat.Body2" />
+                </TableRow>
+
+                <TableRow
+                    android:id="@+id/row_document_signing_certificate_signature_algorithm"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="@dimen/margin_small">
+
+                    <TextView
+                        android:id="@+id/label_document_signing_certificate_signature_algorithm"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:padding="@dimen/margin_tiny"
+                        android:gravity="end"
+                        android:text="@string/label_certificate_signature_algorithm"
+                        android:layout_gravity="left"
+                        android:layout_marginRight="@dimen/margin_medium"/>
+
+                    <TextView
+                        android:id="@+id/value_document_signing_certificate_signature_algorithm"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:padding="@dimen/margin_tiny"
+                        android:text="@string/label_not_available"
+                        android:maxLines="2"
+                        android:layout_weight="1"
+                        android:textAppearance="@style/TextAppearance.AppCompat.Body2" />
+                </TableRow>
+
+
+                <TableRow
+                    android:id="@+id/row_document_signing_certificate_thumbprint"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="@dimen/margin_small">
+
+                    <TextView
+                        android:id="@+id/label_document_signing_certificate_thumbprint"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:padding="@dimen/margin_tiny"
+                        android:gravity="end"
+                        android:text="@string/label_certificate_thumbprint"
+                        android:layout_gravity="left"
+                        android:layout_marginRight="@dimen/margin_medium"/>
+
+                    <TextView
+                        android:id="@+id/value_document_signing_certificate_thumbprint"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:padding="@dimen/margin_tiny"
+                        android:text="@string/label_not_available"
+                        android:maxLines="4"
+                        android:layout_weight="1"
+                        android:textAppearance="@style/TextAppearance.AppCompat.Body2" />
+                </TableRow>
+
+
+                <TableRow
+                    android:id="@+id/row_document_certificate_issuer"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="@dimen/margin_small">
+
+                    <TextView
+                        android:id="@+id/label_document_signing_certificate_issuer"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:padding="@dimen/margin_tiny"
+                        android:gravity="end"
+                        android:text="@string/label_certificate_issuer"
+                        android:layout_gravity="left"
+                        android:layout_marginRight="@dimen/margin_medium"/>
+
+                    <TextView
+                        android:id="@+id/value_document_signing_certificate_issuer"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:padding="@dimen/margin_tiny"
+                        android:text="@string/label_not_available"
+                        android:maxLines="6"
+                        android:layout_weight="1"
+                        android:textAppearance="@style/TextAppearance.AppCompat.Body2" />
+                </TableRow>
+
+                <TableRow
+                    android:id="@+id/row_document_certificate_subject"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="@dimen/margin_small">
+
+                    <TextView
+                        android:id="@+id/label_document_signing_certificate_subject"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:padding="@dimen/margin_tiny"
+                        android:gravity="end"
+                        android:text="@string/label_certificate_subject"
+                        android:layout_gravity="left"
+                        android:layout_marginRight="@dimen/margin_medium"/>
+
+                    <TextView
+                        android:id="@+id/value_document_signing_certificate_subject"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:padding="@dimen/margin_tiny"
+                        android:text="@string/label_not_available"
+                        android:maxLines="6"
+                        android:layout_weight="1"
+                        android:textAppearance="@style/TextAppearance.AppCompat.Body2" />
+                </TableRow>
+
+                <TableRow
+                    android:id="@+id/row_document_certificate_valid_from"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="@dimen/margin_small">
+
+                    <TextView
+                        android:id="@+id/label_document_signing_certificate_valid_from"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:padding="@dimen/margin_tiny"
+                        android:gravity="end"
+                        android:text="@string/label_certificate_valid_from"
+                        android:layout_gravity="left"
+                        android:layout_marginRight="@dimen/margin_medium"/>
+
+                    <TextView
+                        android:id="@+id/value_document_signing_certificate_valid_from"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:padding="@dimen/margin_tiny"
+                        android:text="@string/label_not_available"
+                        android:maxLines="2"
+                        android:layout_weight="1"
+                        android:textAppearance="@style/TextAppearance.AppCompat.Body2" />
+                </TableRow>
+
+                <TableRow
+                    android:id="@+id/row_document_certificate_valid_to"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="@dimen/margin_small">
+
+                    <TextView
+                        android:id="@+id/label_document_signing_certificate_valid_to"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:padding="@dimen/margin_tiny"
+                        android:gravity="end"
+                        android:text="@string/label_certificate_valid_to"
+                        android:layout_gravity="left"
+                        android:layout_marginRight="@dimen/margin_medium"/>
+
+                    <TextView
+                        android:id="@+id/value_document_signing_certificate_valid_to"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:padding="@dimen/margin_tiny"
+                        android:text="@string/label_not_available"
+                        android:maxLines="2"
+                        android:layout_weight="1"
+                        android:textAppearance="@style/TextAppearance.AppCompat.Body2" />
+                </TableRow>
+
+            </TableLayout>
+        </android.support.v7.widget.CardView>
+
+
+
+
     </android.support.v7.widget.LinearLayoutCompat>
 </FrameLayout>
 </ScrollView>

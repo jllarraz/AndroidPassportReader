@@ -59,6 +59,9 @@ dependencies {
     implementation 'com.jakewharton:butterknife:8.8.1'
     annotationProcessor 'com.jakewharton:butterknife-compiler:8.8.1'
 
+    //DatatypeConverter
+    implementation 'commons-codec:commons-codec:1.9'
+
 }
 
 apply plugin: 'com.google.gms.google-services'

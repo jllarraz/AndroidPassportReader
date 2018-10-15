@@ -82,4 +82,16 @@
     <string name="label_additional_document_information_personalization_system_serial_number">System serial number</string>
     <string name="label_additional_document_information_tax_or_exit_requirements">Tax or exit requirements</string>
 
+
+    <string name="label_document_signing_certificate">Document Signing Certificate</string>
+    <string name="label_country_signing_certificate">Country Signing Certificate</string>
+    <string name="label_certificate_serial_number">Serial number</string>
+    <string name="label_certificate_public_key_algorithm">Public key algorithm</string>
+    <string name="label_certificate_signature_algorithm">Signature algorithm</string>
+    <string name="label_certificate_thumbprint">Certificate thumbprint</string>
+    <string name="label_certificate_issuer">Issuer</string>
+    <string name="label_certificate_subject">Subject</string>
+    <string name="label_certificate_valid_from">Valid from</string>
+    <string name="label_certificate_valid_to">Valid to</string>
+
 </resources>

@@ -4,6 +4,8 @@ import android.graphics.Bitmap;
 import android.os.Parcel;
 import android.os.Parcelable;
 
+import org.jmrtd.lds.SODFile;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -13,6 +15,7 @@ public class Passport implements Parcelable {
     boolean isPACE = false;
     boolean isChipAuthentication = false;
 
+    SODFile sodFile;
     Bitmap face;
     Bitmap portrait;
     Bitmap signature;
@@ -36,6 +39,10 @@ public class Passport implements Parcelable {
         this.signature = in.readInt()== 1 ? in.readParcelable(Bitmap.class.getClassLoader()) : null;
         this.additionalDocumentDetails = in.readInt()== 1 ? in.readParcelable(AdditionalDocumentDetails.class.getClassLoader()) : null;
         this.isChipAuthentication = in.readInt()==1;
+
+        if(in.readInt()==1){
+            sodFile = (SODFile) in.readSerializable();
+        }
     }
 
     public Passport(){
@@ -122,6 +129,14 @@ public class Passport implements Parcelable {
         this.additionalDocumentDetails = additionalDocumentDetails;
     }
 
+    public SODFile getSodFile() {
+        return sodFile;
+    }
+
+    public void setSodFile(SODFile sodFile) {
+        this.sodFile = sodFile;
+    }
+
     @Override
     public int describeContents() {
         return 0;
@@ -168,6 +183,11 @@ public class Passport implements Parcelable {
         }
 
         dest.writeInt(isChipAuthentication ?1:0);
+
+        dest.writeInt(sodFile!=null ? 1 : 0);
+        if(sodFile!=null) {
+            dest.writeSerializable(sodFile);
+        }
     }
 
 
