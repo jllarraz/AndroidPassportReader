@@ -28,10 +28,10 @@ import org.jmrtd.lds.iso19794.FaceImageInfo;
 import org.jmrtd.lds.iso19794.FaceInfo;
 import org.jmrtd.lds.iso19794.FingerImageInfo;
 import org.jmrtd.lds.iso19794.FingerInfo;
-import org.jmrtd.protocol.CAResult;
+/*import org.jmrtd.protocol.CAResult;
 import org.jmrtd.protocol.DESedeSecureMessagingWrapper;
 import org.jmrtd.protocol.SecureMessagingWrapper;
-import org.jmrtd.protocol.TAResult;
+import org.jmrtd.protocol.TAResult;*/
 import org.spongycastle.jce.provider.BouncyCastleProvider;
 
 import java.io.ByteArrayInputStream;
@@ -105,6 +105,7 @@ public class PassportNfcUtils {
      *
      * @throws CardServiceException if CA failed or some error occurred
      */
+    /*
     public static CAResult doCA(PassportService ps, BigInteger keyId, PublicKey publicKey) throws CardServiceException {
         if (publicKey == null) { throw new IllegalArgumentException("Public key is null"); }
         try {
@@ -156,7 +157,7 @@ public class PassportNfcUtils {
             }
             ps.sendMSEKAT(ps.getWrapper(), keyData, idData);
 
-            /* Start secure messaging. */
+            *//* Start secure messaging. *//*
             SecretKey ksEnc = Util.deriveKey(secret, Util.ENC_MODE);
             SecretKey ksMac = Util.deriveKey(secret, Util.MAC_MODE);
             ps.setWrapper(new DESedeSecureMessagingWrapper(ksEnc, ksMac, 0L));
@@ -174,7 +175,7 @@ public class PassportNfcUtils {
             throw new CardServiceException(e.toString());
         }
     }
-
+*/
 
     /* From BSI-03110 v1.1, B.2:
      *
@@ -207,7 +208,7 @@ public class PassportNfcUtils {
      *
      * @throws CardServiceException on error
      */
-    public static synchronized TAResult doTA(PassportService ps, CVCPrincipal caReference, List<CardVerifiableCertificate> terminalCertificates,
+   /* public static synchronized TAResult doTA(PassportService ps, CVCPrincipal caReference, List<CardVerifiableCertificate> terminalCertificates,
                                       PrivateKey terminalKey, String taAlg, CAResult chipAuthenticationResult, String documentNumber) throws CardServiceException {
         try {
             if (terminalCertificates == null || terminalCertificates.size() < 1) {
@@ -215,14 +216,14 @@ public class PassportNfcUtils {
             }
 
             byte[] caKeyHash = chipAuthenticationResult.getKeyHash();
-            /* The key hash that resulted from CA. */
+            *//* The key hash that resulted from CA. *//*
             if (caKeyHash == null) {
                 throw new IllegalArgumentException("CA key hash is null");
             }
 
-            /* FIXME: check that terminalCertificates holds a (inverted, i.e. issuer before subject) chain. */
+            *//* FIXME: check that terminalCertificates holds a (inverted, i.e. issuer before subject) chain. *//*
 
-            /* Check if first cert is/has the expected CVCA, and remove it from chain if it is the CVCA. */
+            *//* Check if first cert is/has the expected CVCA, and remove it from chain if it is the CVCA. *//*
             CardVerifiableCertificate firstCert = terminalCertificates.get(0);
             CVCAuthorizationTemplate.Role firstCertRole = firstCert.getAuthorizationTemplate().getRole();
             if (CVCAuthorizationTemplate.Role.CVCA.equals(firstCertRole)) {
@@ -243,7 +244,7 @@ public class PassportNfcUtils {
                 caReference = firstCertAuthorityReference;
             }
 
-            /* Check if the last cert is an IS cert. */
+            *//* Check if the last cert is an IS cert. *//*
             CardVerifiableCertificate lastCert = terminalCertificates.get(terminalCertificates.size() - 1);
             CVCAuthorizationTemplate.Role lastCertRole = lastCert.getAuthorizationTemplate().getRole();
             if (!CVCAuthorizationTemplate.Role.IS.equals(lastCertRole)) {
@@ -251,22 +252,22 @@ public class PassportNfcUtils {
             }
             CardVerifiableCertificate terminalCert = lastCert;
 
-            /* Have the MRTD check our chain. */
+            *//* Have the MRTD check our chain. *//*
             for (CardVerifiableCertificate cert: terminalCertificates) {
                 try {
                     CVCPrincipal authorityReference = cert.getAuthorityReference();
 
-                    /* Step 1: MSE:SetDST */
-                    /* Manage Security Environment: Set for verification: Digital Signature Template,
+                    *//* Step 1: MSE:SetDST *//*
+                    *//* Manage Security Environment: Set for verification: Digital Signature Template,
                      * indicate authority of cert to check.
-                     */
+                     *//*
                     byte[] authorityRefBytes = Util.wrapDO((byte) 0x83, authorityReference.getName().getBytes("ISO-8859-1"));
                     ps.sendMSESetDST(ps.getWrapper(), authorityRefBytes);
 
-                    /* Cert body is already in TLV format. */
+                    *//* Cert body is already in TLV format. *//*
                     byte[] body = cert.getCertBodyData();
 
-                    /* Signature not yet in TLV format, prefix it with tag and length. */
+                    *//* Signature not yet in TLV format, prefix it with tag and length. *//*
                     byte[] signature = cert.getSignature();
                     ByteArrayOutputStream sigOut = new ByteArrayOutputStream();
                     TLVOutputStream tlvSigOut = new TLVOutputStream(sigOut);
@@ -275,12 +276,12 @@ public class PassportNfcUtils {
                     tlvSigOut.close();
                     signature = sigOut.toByteArray();
 
-                    /* Step 2: PSO:Verify Certificate */
+                    *//* Step 2: PSO:Verify Certificate *//*
                     ps.sendPSOExtendedLengthMode(ps.getWrapper(), body, signature);
                 } catch (CardServiceException cse) {
                     throw cse;
                 } catch (Exception e) {
-                    /* FIXME: Does this mean we failed to authenticate? -- MO */
+                    *//* FIXME: Does this mean we failed to authenticate? -- MO *//*
                     throw new CardServiceException(e.getMessage());
                 }
             }
@@ -289,17 +290,17 @@ public class PassportNfcUtils {
                 throw new CardServiceException("No terminal key");
             }
 
-            /* Step 3: MSE Set AT */
+            *//* Step 3: MSE Set AT *//*
             CVCPrincipal holderRef = terminalCert.getHolderReference();
             byte[] holderRefBytes = Util.wrapDO((byte) 0x83, holderRef.getName().getBytes("ISO-8859-1"));
-            /* Manage Security Environment: Set for external authentication: Authentication Template */
+            *//* Manage Security Environment: Set for external authentication: Authentication Template *//*
             ps.sendMSESetATExtAuth(ps.getWrapper(), holderRefBytes);
 
-            /* Step 4: send get challenge */
+            *//* Step 4: send get challenge *//*
             byte[] rPICC = ps.sendGetChallenge(ps.getWrapper());
 
-            /* Step 5: external authenticate. */
-            /* FIXME: idPICC should be public key in case of PACE. See BSI TR 03110 v2.03 4.4. */
+            *//* Step 5: external authenticate. *//*
+            *//* FIXME: idPICC should be public key in case of PACE. See BSI TR 03110 v2.03 4.4. *//*
             byte[] idPICC = new byte[documentNumber.length() + 1];
             System.arraycopy(documentNumber.getBytes("ISO-8859-1"), 0, idPICC, 0, documentNumber.length());
             idPICC[idPICC.length - 1] = (byte)MRZInfo.checkDigit(documentNumber);
@@ -356,7 +357,7 @@ public class PassportNfcUtils {
                     caResults.add(caResult);
                 } catch(CardServiceException cse) {
                     cse.printStackTrace();
-                    /* NOTE: Failed? Too bad, try next public key. */
+                    *//* NOTE: Failed? Too bad, try next public key. *//*
                     continue;
                 }
             }
@@ -415,7 +416,7 @@ public class PassportNfcUtils {
                         taResults.add(taResult);
                     } catch(CardServiceException cse) {
                         cse.printStackTrace();
-                        /* NOTE: Failed? Too bad, try next public key. */
+                        *//* NOTE: Failed? Too bad, try next public key. *//*
                         continue;
                     }
                 }
@@ -442,7 +443,7 @@ public class PassportNfcUtils {
         return taResults;
 
     }
-
+*/
 
 
     public static Bitmap retrieveFaceImage(Context context, DG2File dg2File) throws IOException {

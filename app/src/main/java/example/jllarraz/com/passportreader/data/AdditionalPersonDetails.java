@@ -10,7 +10,7 @@ import java.util.List;
 public class AdditionalPersonDetails implements Parcelable {
 
     String custodyInformation;
-    Date fullDateOfBirth;
+    String fullDateOfBirth;
     String nameOfHolder;
     List<String> otherNames;
     List<String> otherValidTDNumbers;
@@ -26,7 +26,6 @@ public class AdditionalPersonDetails implements Parcelable {
     String title;
 
     public AdditionalPersonDetails(){
-        fullDateOfBirth = new Date();
         otherNames = new ArrayList<>();
         otherValidTDNumbers = new ArrayList<>();
         permanentAddress = new ArrayList<>();
@@ -42,11 +41,11 @@ public class AdditionalPersonDetails implements Parcelable {
         this.custodyInformation = custodyInformation;
     }
 
-    public Date getFullDateOfBirth() {
+    public String getFullDateOfBirth() {
         return fullDateOfBirth;
     }
 
-    public void setFullDateOfBirth(Date fullDateOfBirth) {
+    public void setFullDateOfBirth(String fullDateOfBirth) {
         this.fullDateOfBirth = fullDateOfBirth;
     }
 
@@ -155,7 +154,7 @@ public class AdditionalPersonDetails implements Parcelable {
     }
 
     public AdditionalPersonDetails(Parcel in) {
-        fullDateOfBirth = new Date();
+
         otherNames = new ArrayList<>();
         otherValidTDNumbers = new ArrayList<>();
         permanentAddress = new ArrayList<>();
@@ -163,8 +162,7 @@ public class AdditionalPersonDetails implements Parcelable {
         tagPresenceList = new ArrayList<>();
 
         this.custodyInformation = in.readInt()== 1 ? in.readString() : null;
-        long readLong = in.readLong();
-        this.fullDateOfBirth = readLong == -1 ? null : new Date(readLong);
+        this.fullDateOfBirth = in.readInt()== 1 ? in.readString() : null;
         this.nameOfHolder = in.readInt()== 1 ? in.readString() : null;
         if(in.readInt() == 1){
             in.readList(otherNames, String.class.getClassLoader());
@@ -208,7 +206,11 @@ public class AdditionalPersonDetails implements Parcelable {
             dest.writeString(custodyInformation);
         }
 
-        dest.writeLong(this.fullDateOfBirth!= null ? this.fullDateOfBirth.getTime() : -1);
+        dest.writeInt(fullDateOfBirth!=null ? 1 : 0);
+        if(fullDateOfBirth!=null) {
+            dest.writeString(fullDateOfBirth);
+        }
+
 
         dest.writeInt(nameOfHolder!=null ? 1 : 0);
         if(nameOfHolder!=null) {

@@ -66,23 +66,23 @@
                 </TableLayout>
 
                 <TableRow
-                    android:id="@+id/row_chip_authentication"
+                    android:id="@+id/row_bac"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginLeft="@dimen/margin_small">
 
                     <TextView
-                        android:id="@+id/label_chip_authentication"
+                        android:id="@+id/label_bac"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:padding="@dimen/margin_tiny"
                         android:gravity="end"
-                        android:text="@string/label_authentication_chip"
+                        android:text="@string/label_authentication_bac"
                         android:layout_gravity="left"
                         android:layout_marginRight="@dimen/margin_medium"/>
 
                     <ImageView
-                        android:id="@+id/value_chip_authentication"
+                        android:id="@+id/value_bac"
                         android:layout_width="0dp"
                         android:layout_height="match_parent"
                         android:padding="@dimen/margin_tiny"
@@ -94,23 +94,23 @@
                 </TableRow>
 
                 <TableRow
-                    android:id="@+id/row_terminal_authentication"
+                    android:id="@+id/row_pace"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginLeft="@dimen/margin_small">
 
                     <TextView
-                        android:id="@+id/label_terminal_authentication"
+                        android:id="@+id/label_pace"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:padding="@dimen/margin_tiny"
                         android:gravity="end"
-                        android:text="@string/label_authentication_terminal"
+                        android:text="@string/label_authentication_pace"
                         android:layout_gravity="left"
                         android:layout_marginRight="@dimen/margin_medium"/>
 
                     <ImageView
-                        android:id="@+id/value_terminal_authentication"
+                        android:id="@+id/value_pace"
                         android:layout_width="0dp"
                         android:layout_height="match_parent"
                         android:padding="@dimen/margin_tiny"

@@ -11,8 +11,8 @@ import java.util.List;
 public class AdditionalDocumentDetails implements Parcelable {
 
     String endorsementsAndObservations;
-    Date dateAndTimeOfPersonalization;
-    Date dateOfIssue;
+    String dateAndTimeOfPersonalization;
+    String dateOfIssue;
     Bitmap imageOfFront;
     Bitmap imageOfRear;
     String issuingAuthority;
@@ -24,7 +24,6 @@ public class AdditionalDocumentDetails implements Parcelable {
 
 
     public AdditionalDocumentDetails(){
-        dateAndTimeOfPersonalization = new Date();
         namesOfOtherPersons = new ArrayList<>();
         tagPresenceList = new ArrayList<>();
     }
@@ -37,19 +36,19 @@ public class AdditionalDocumentDetails implements Parcelable {
         this.endorsementsAndObservations = endorsementsAndObservations;
     }
 
-    public Date getDateAndTimeOfPersonalization() {
+    public String getDateAndTimeOfPersonalization() {
         return dateAndTimeOfPersonalization;
     }
 
-    public void setDateAndTimeOfPersonalization(Date dateAndTimeOfPersonalization) {
+    public void setDateAndTimeOfPersonalization(String dateAndTimeOfPersonalization) {
         this.dateAndTimeOfPersonalization = dateAndTimeOfPersonalization;
     }
 
-    public Date getDateOfIssue() {
+    public String getDateOfIssue() {
         return dateOfIssue;
     }
 
-    public void setDateOfIssue(Date dateOfIssue) {
+    public void setDateOfIssue(String dateOfIssue) {
         this.dateOfIssue = dateOfIssue;
     }
 
@@ -118,16 +117,13 @@ public class AdditionalDocumentDetails implements Parcelable {
     }
 
     public AdditionalDocumentDetails(Parcel in) {
-        dateAndTimeOfPersonalization = new Date();
+
         namesOfOtherPersons = new ArrayList<>();
         tagPresenceList = new ArrayList<>();
 
         this.endorsementsAndObservations = in.readInt()== 1 ? in.readString() : null;
-        long readLong = in.readLong();
-        this.dateAndTimeOfPersonalization = readLong == -1 ? null : new Date(readLong);
-
-        long readLong2 = in.readLong();
-        this.dateOfIssue = readLong2 == -1 ? null : new Date(readLong2);
+        this.dateAndTimeOfPersonalization = in.readInt()== 1 ? in.readString() : null;
+        this.dateOfIssue = in.readInt()== 1 ? in.readString() : null;
 
         this.imageOfFront = in.readInt()== 1 ? in.readParcelable(Bitmap.class.getClassLoader()) : null;
         this.imageOfRear = in.readInt()== 1 ? in.readParcelable(Bitmap.class.getClassLoader()) : null;
@@ -160,8 +156,16 @@ public class AdditionalDocumentDetails implements Parcelable {
         if(endorsementsAndObservations !=null) {
             dest.writeString(endorsementsAndObservations);
         }
-        dest.writeLong(this.dateAndTimeOfPersonalization != null ? this.dateAndTimeOfPersonalization.getTime() : -1);
-        dest.writeLong(this.dateOfIssue != null ? this.dateOfIssue.getTime() : -1);
+
+        dest.writeInt(dateAndTimeOfPersonalization !=null ? 1 : 0);
+        if(dateAndTimeOfPersonalization !=null) {
+            dest.writeString(dateAndTimeOfPersonalization);
+        }
+
+        dest.writeInt(dateOfIssue !=null ? 1 : 0);
+        if(dateOfIssue !=null) {
+            dest.writeString(dateOfIssue);
+        }
 
         dest.writeInt(imageOfFront!=null ? 1 : 0);
         if(imageOfFront!=null) {

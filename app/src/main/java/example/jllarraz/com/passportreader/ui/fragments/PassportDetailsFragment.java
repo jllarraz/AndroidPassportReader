@@ -16,7 +16,6 @@ import android.widget.TextView;
 
 
 import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 
@@ -99,11 +98,11 @@ public class PassportDetailsFragment extends Fragment{
     @BindView(R.id.value_title)
     TextView textViewAdditionalTitle;
 
-    @BindView(R.id.value_chip_authentication)
-    ImageView imageViewChipAuthentication;
+    @BindView(R.id.value_bac)
+    ImageView imageViewBAC;
 
-    @BindView(R.id.value_terminal_authentication)
-    ImageView imageViewTerminalAuthentication;
+    @BindView(R.id.value_pace)
+    ImageView imageViewPACE;
 
 
 
@@ -219,7 +218,7 @@ public class PassportDetailsFragment extends Fragment{
             }
             if(additionalPersonDetails.getFullDateOfBirth()!=null) {
 
-                textViewAdditionalDateOfBirth.setText(simpleDateFormat.format(additionalPersonDetails.getFullDateOfBirth()));
+                textViewAdditionalDateOfBirth.setText(additionalPersonDetails.getFullDateOfBirth());
             }
             if(additionalPersonDetails.getOtherNames()!=null && additionalPersonDetails.getOtherNames().size()>0) {
                 textViewAdditionalOtherNames.setText(arrayToString(additionalPersonDetails.getOtherNames()));
@@ -263,10 +262,10 @@ public class PassportDetailsFragment extends Fragment{
             cardViewAdditionalDocumentInformation.setVisibility(View.VISIBLE);
 
             if(additionalDocumentDetails.getDateAndTimeOfPersonalization()!=null) {
-                textViewAdditionalDocumentDatePersonalization.setText(simpleDateFormat.format(additionalDocumentDetails.getDateAndTimeOfPersonalization()));
+                textViewAdditionalDocumentDatePersonalization.setText(additionalDocumentDetails.getDateAndTimeOfPersonalization());
             }
             if(additionalDocumentDetails.getDateOfIssue()!=null) {
-                textViewAdditionalDocumentDateIssue.setText(simpleDateFormat.format(additionalDocumentDetails.getDateOfIssue()));
+                textViewAdditionalDocumentDateIssue.setText(additionalDocumentDetails.getDateOfIssue());
             }
 
             if(additionalDocumentDetails.getEndorsementsAndObservations()!=null) {
@@ -297,20 +296,20 @@ public class PassportDetailsFragment extends Fragment{
         }
 
 
-        if(passport.isChipAuthentication()){
-            imageViewChipAuthentication.setImageResource(R.drawable.ic_check_circle_outline);
-            imageViewChipAuthentication.setColorFilter(ContextCompat.getColor(getActivity(), android.R.color.holo_green_light), android.graphics.PorterDuff.Mode.SRC_IN);
+        if(passport.isBAC()){
+            imageViewBAC.setImageResource(R.drawable.ic_check_circle_outline);
+            imageViewBAC.setColorFilter(ContextCompat.getColor(getActivity(), android.R.color.holo_green_light), android.graphics.PorterDuff.Mode.SRC_IN);
         }else{
-            imageViewChipAuthentication.setImageResource(R.drawable.ic_close_circle_outline);
-            imageViewChipAuthentication.setColorFilter(ContextCompat.getColor(getActivity(), android.R.color.holo_red_light), android.graphics.PorterDuff.Mode.SRC_IN);
+            imageViewBAC.setImageResource(R.drawable.ic_close_circle_outline);
+            imageViewBAC.setColorFilter(ContextCompat.getColor(getActivity(), android.R.color.holo_red_light), android.graphics.PorterDuff.Mode.SRC_IN);
         }
 
-        if(passport.isEAC()){
-            imageViewTerminalAuthentication.setImageResource(R.drawable.ic_check_circle_outline);
-            imageViewTerminalAuthentication.setColorFilter(ContextCompat.getColor(getActivity(), android.R.color.holo_green_light), android.graphics.PorterDuff.Mode.SRC_IN);
+        if(passport.isPACE()){
+            imageViewPACE.setImageResource(R.drawable.ic_check_circle_outline);
+            imageViewPACE.setColorFilter(ContextCompat.getColor(getActivity(), android.R.color.holo_green_light), android.graphics.PorterDuff.Mode.SRC_IN);
         }else{
-            imageViewTerminalAuthentication.setImageResource(R.drawable.ic_close_circle_outline);
-            imageViewTerminalAuthentication.setColorFilter(ContextCompat.getColor(getActivity(), android.R.color.holo_red_light), android.graphics.PorterDuff.Mode.SRC_IN);
+            imageViewPACE.setImageResource(R.drawable.ic_close_circle_outline);
+            imageViewPACE.setColorFilter(ContextCompat.getColor(getActivity(), android.R.color.holo_red_light), android.graphics.PorterDuff.Mode.SRC_IN);
         }
 
 

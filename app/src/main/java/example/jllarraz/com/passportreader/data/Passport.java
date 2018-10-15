@@ -9,8 +9,8 @@ import java.util.List;
 
 public class Passport implements Parcelable {
 
-    boolean isChipAuthentication = false;
-    boolean isEAC = false;
+    boolean isBAC = false;
+    boolean isPACE = false;
 
     Bitmap face;
     Bitmap portrait;
@@ -26,8 +26,8 @@ public class Passport implements Parcelable {
         this.portrait = in.readInt()== 1 ? in.readParcelable(Bitmap.class.getClassLoader()) : null;
         this.personDetails = in.readInt()== 1 ? in.readParcelable(PersonDetails.class.getClassLoader()) : null;
         this.additionalPersonDetails = in.readInt()== 1 ? in.readParcelable(AdditionalPersonDetails.class.getClassLoader()) : null;
-        this.isChipAuthentication = in.readInt()==1;
-        this.isEAC = in.readInt()==1;
+        this.isBAC = in.readInt()==1;
+        this.isPACE = in.readInt()==1;
         if(in.readInt()==1){
             in.readList(fingerprints, Bitmap.class.getClassLoader());
         }
@@ -64,20 +64,20 @@ public class Passport implements Parcelable {
         this.personDetails = personDetails;
     }
 
-    public boolean isChipAuthentication() {
-        return isChipAuthentication;
+    public boolean isBAC() {
+        return isBAC;
     }
 
-    public void setChipAuthentication(boolean chipAuthentication) {
-        isChipAuthentication = chipAuthentication;
+    public void setBAC(boolean BAC) {
+        isBAC = BAC;
     }
 
-    public boolean isEAC() {
-        return isEAC;
+    public boolean isPACE() {
+        return isPACE;
     }
 
-    public void setEAC(boolean EAC) {
-        isEAC = EAC;
+    public void setPACE(boolean PACE) {
+        isPACE = PACE;
     }
 
     public List<Bitmap> getFingerprints() {
@@ -139,8 +139,8 @@ public class Passport implements Parcelable {
             dest.writeParcelable(additionalPersonDetails, flags);
         }
 
-        dest.writeInt(isChipAuthentication?1:0);
-        dest.writeInt(isEAC?1:0);
+        dest.writeInt(isBAC ?1:0);
+        dest.writeInt(isPACE ?1:0);
 
         dest.writeInt(fingerprints!=null ? 1 : 0);
         if(fingerprints!=null) {
