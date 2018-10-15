@@ -64,6 +64,8 @@ import java.io.InputStream;
 import java.math.BigInteger;
 import java.security.GeneralSecurityException;
 import java.security.KeyStore;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
 import java.security.Security;
 import java.security.cert.X509Certificate;
@@ -73,6 +75,7 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import javax.net.ssl.TrustManagerFactory;
 import javax.security.auth.x500.X500Principal;
@@ -84,6 +87,7 @@ import example.jllarraz.com.passportreader.data.PersonDetails;
 import example.jllarraz.com.passportreader.utils.ImageUtil;
 import example.jllarraz.com.passportreader.utils.MRZUtil;
 import example.jllarraz.com.passportreader.utils.PassportNfcUtils;
+import example.jllarraz.com.passportreader.utils.StringUtils;
 
 public final class NfcPassportAsyncTask extends AsyncTask<Void, Void, Boolean> {
 
@@ -153,6 +157,18 @@ public final class NfcPassportAsyncTask extends AsyncTask<Void, Void, Boolean> {
                     isSodFile= ps.getInputStream(PassportService.EF_SOD);
                     SODFile sodFile = (SODFile) LDSFileUtil.getLDSFile(PassportService.EF_SOD, isSodFile);
                     passport.setSodFile(sodFile);
+
+                    //Necessary for passive authentication
+                    Map<Integer, byte[]> dataGroupHashes = sodFile.getDataGroupHashes();
+                    Set<Integer> integers = dataGroupHashes.keySet();
+                    Iterator<Integer> iterator = integers.iterator();
+                    while (iterator.hasNext()){
+                        Integer key = iterator.next();
+                        byte[] bytes = dataGroupHashes.get(key);
+                        passport.getDataGroupHashes().put(key, bytes);
+                    }
+
+
                 }catch (Exception e){
                     e.printStackTrace();
                 }
@@ -186,6 +202,13 @@ public final class NfcPassportAsyncTask extends AsyncTask<Void, Void, Boolean> {
                         personDetails.setGender(mrzInfo.getGender());
                         passport.setPersonDetails(personDetails);
 
+                        try {
+                            //Compute hash for passive authentication
+                            byte[] computeHash = computeHash(passport.getSodFile(), dg1.getEncoded());
+                            passport.getDataGroupComputedHashes().put(1, computeHash);
+                        }catch (Exception e){
+                            //Don't do anything
+                        }
                     }
                 }finally {
                     if(isDG1!=null){
@@ -200,6 +223,16 @@ public final class NfcPassportAsyncTask extends AsyncTask<Void, Void, Boolean> {
                 try {
                     isDG14= ps.getInputStream(PassportService.EF_DG14);
                     DG14File dg14 = (DG14File) LDSFileUtil.getLDSFile(PassportService.EF_DG14, isDG14);
+
+                    //Compute hash for passive authentication
+                    try{
+                        byte[] computeHash = computeHash(passport.getSodFile(), dg14.getEncoded());
+                        passport.getDataGroupComputedHashes().put(14, computeHash);
+                    }catch (Exception e){
+                        //Don't do anything
+                    }
+
+
                     ChipAuthenticationInfo chipAuthenticationInfo=null;
 
                     List<ChipAuthenticationPublicKeyInfo> chipAuthenticationPublicKeyInfos = new ArrayList<>();
@@ -267,6 +300,14 @@ public final class NfcPassportAsyncTask extends AsyncTask<Void, Void, Boolean> {
                         //Don't do anything
                         e.printStackTrace();
                     }
+
+                    //Compute hash for passive authentication
+                    try {
+                        byte[] computeHash = computeHash(passport.getSodFile(), dg2.getEncoded());
+                        passport.getDataGroupComputedHashes().put(2, computeHash);
+                    }catch (Exception e){
+                        //Don't do anything
+                    }
                 }finally {
                     if(isDg2!=null){
                         isDg2.close();
@@ -317,6 +358,10 @@ public final class NfcPassportAsyncTask extends AsyncTask<Void, Void, Boolean> {
                     DG5File dg5 = (DG5File)LDSFileUtil.getLDSFile(PassportService.EF_DG5, isDg5);
                     Bitmap portraitImage = PassportNfcUtils.retrievePortraitImage(context, dg5);
                     passport.setPortrait(portraitImage);
+
+                    //Compute hash for passive authentication
+                    byte[] computeHash = computeHash(passport.getSodFile(), dg5.getEncoded());
+                    passport.getDataGroupComputedHashes().put(5, computeHash);
                 }catch (Exception e){
                   //Don't do anything
                     Log.e(TAG, "Portrait image: "+e);
@@ -354,6 +399,13 @@ public final class NfcPassportAsyncTask extends AsyncTask<Void, Void, Boolean> {
                     additionalPersonDetails.setTitle(dg11.getTitle());
 
                     passport.setAdditionalPersonDetails(additionalPersonDetails);
+                    try{
+                        //Compute hash for passive authentication
+                        byte[] computeHash = computeHash(passport.getSodFile(), dg11.getEncoded());
+                        passport.getDataGroupComputedHashes().put(11, computeHash);
+                    }catch (Exception e){
+                        //Don't do anything
+                    }
 
                 }catch (Exception e){
                   //Don't do anything
@@ -390,6 +442,13 @@ public final class NfcPassportAsyncTask extends AsyncTask<Void, Void, Boolean> {
                     DG3File dg3 = (DG3File)LDSFileUtil.getLDSFile(PassportService.EF_DG3, isDg3);
                     List<Bitmap> bitmaps = PassportNfcUtils.retrieveFingerPrintImage(context, dg3);
                     passport.setFingerprints(bitmaps);
+                    try{
+                        //Compute hash for passive authentication
+                        byte[] computeHash = computeHash(passport.getSodFile(), dg3.getEncoded());
+                        passport.getDataGroupComputedHashes().put(3, computeHash);
+                    }catch (Exception e){
+                        //Don't do anything
+                    }
                 }catch (Exception e){
                     //Don't do anything
                     Log.e(TAG, "Fingerprint image: "+e);
@@ -407,6 +466,14 @@ public final class NfcPassportAsyncTask extends AsyncTask<Void, Void, Boolean> {
                     DG7File dg7 = (DG7File)LDSFileUtil.getLDSFile(PassportService.EF_DG7, isDg7);
                     Bitmap bitmap = PassportNfcUtils.retrieveSignatureImage(context, dg7);
                     passport.setSignature(bitmap);
+
+                    try{
+                        //Compute hash for passive authentication
+                        byte[] computeHash = computeHash(passport.getSodFile(), dg7.getEncoded());
+                        passport.getDataGroupComputedHashes().put(7, computeHash);
+                    }catch (Exception e){
+                        //Don't do anything
+                    }
                 }catch (Exception e){
                     //Don't do anything
                     Log.e(TAG, "Signature image: "+e);
@@ -420,7 +487,7 @@ public final class NfcPassportAsyncTask extends AsyncTask<Void, Void, Boolean> {
                 InputStream isDg12 = null;
                 try {
                     isDg12 = ps.getInputStream(PassportService.EF_DG12);
-                    DG12File dg12 = (DG12File)LDSFileUtil.getLDSFile(PassportService.EF_DG12, isDg12);
+                    DG12File dg12 = (DG12File) LDSFileUtil.getLDSFile(PassportService.EF_DG12, isDg12);
                     AdditionalDocumentDetails additionalDocumentDetails = new AdditionalDocumentDetails();
                     additionalDocumentDetails.setDateAndTimeOfPersonalization(dg12.getDateAndTimeOfPersonalization());
                     additionalDocumentDetails.setDateOfIssue(dg12.getDateOfIssue());
@@ -429,15 +496,15 @@ public final class NfcPassportAsyncTask extends AsyncTask<Void, Void, Boolean> {
                         byte[] imageOfFront = dg12.getImageOfFront();
                         Bitmap bitmapImageOfFront = BitmapFactory.decodeByteArray(imageOfFront, 0, imageOfFront.length);
                         additionalDocumentDetails.setImageOfFront(bitmapImageOfFront);
-                    }catch (Exception e){
-                        Log.e(TAG, "Additional document image front: "+e);
+                    } catch (Exception e) {
+                        Log.e(TAG, "Additional document image front: " + e);
                     }
                     try {
                         byte[] imageOfRear = dg12.getImageOfRear();
                         Bitmap bitmapImageOfRear = BitmapFactory.decodeByteArray(imageOfRear, 0, imageOfRear.length);
                         additionalDocumentDetails.setImageOfRear(bitmapImageOfRear);
-                    }catch (Exception e){
-                        Log.e(TAG, "Additional document image rear: "+e);
+                    } catch (Exception e) {
+                        Log.e(TAG, "Additional document image rear: " + e);
                     }
                     additionalDocumentDetails.setIssuingAuthority(dg12.getIssuingAuthority());
                     additionalDocumentDetails.setNamesOfOtherPersons(dg12.getNamesOfOtherPersons());
@@ -445,6 +512,13 @@ public final class NfcPassportAsyncTask extends AsyncTask<Void, Void, Boolean> {
                     additionalDocumentDetails.setTaxOrExitRequirements(dg12.getTaxOrExitRequirements());
 
                     passport.setAdditionalDocumentDetails(additionalDocumentDetails);
+                    try{
+                        //Compute hash for passive authentication
+                        byte[] computeHash = computeHash(passport.getSodFile(), dg12.getEncoded());
+                        passport.getDataGroupComputedHashes().put(12, computeHash);
+                    }catch (Exception e){
+                        //Don't do anything
+                    }
 
                 }catch (Exception e){
                     //Don't do anything
@@ -456,6 +530,9 @@ public final class NfcPassportAsyncTask extends AsyncTask<Void, Void, Boolean> {
                         isDg12 = null;
                     }
                 }
+
+                boolean passiveAuthentication = passiveAuthentication(passport.getDataGroupHashes(), passport.getDataGroupComputedHashes());
+                passport.setPassiveAuthentication(passiveAuthentication);
 
                 this.passport = passport;
             //TODO EAC
@@ -493,5 +570,28 @@ public final class NfcPassportAsyncTask extends AsyncTask<Void, Void, Boolean> {
   public interface NfcPassportAsyncTaskListener{
     void onPassportRead(Passport passport);
     void onCardException(CardServiceException cardException);
+  }
+
+  private byte[] computeHash(SODFile sodFile, byte[] data) throws NoSuchAlgorithmException {
+      String digestAlgorithm = passport.getSodFile().getDigestAlgorithm();
+      MessageDigest md = MessageDigest.getInstance(digestAlgorithm);
+      byte[] digest = md.digest(data);
+      return digest;
+  }
+
+  private static boolean passiveAuthentication(Map<Integer, byte[]> groupHash, Map<Integer, byte[]> groupComputed){
+      Set<Integer> integerSet = groupHash.keySet();
+      Iterator<Integer> iterator = integerSet.iterator();
+      while (iterator.hasNext()){
+          Integer key = iterator.next();
+          if(groupComputed.containsKey(key)){
+              String hashStored=StringUtils.bytesToHex(groupHash.get(key));
+              String hashComputed=StringUtils.bytesToHex(groupComputed.get(key));
+              if(!hashStored.equalsIgnoreCase(hashComputed)){
+                  return false;
+              }
+          }
+      }
+      return true;
   }
 }

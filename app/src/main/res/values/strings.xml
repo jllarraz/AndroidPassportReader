@@ -69,6 +69,7 @@
     <string name="label_authentication_bac">BAC</string>
     <string name="label_authentication_pace">PACE</string>
     <string name="label_authentication_chip">Chip</string>
+    <string name="label_authentication_passive">Passive</string>
 
 
     <string name="label_additional_document_information">Additional document information</string>

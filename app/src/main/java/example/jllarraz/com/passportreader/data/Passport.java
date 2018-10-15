@@ -7,13 +7,16 @@ import android.os.Parcelable;
 import org.jmrtd.lds.SODFile;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class Passport implements Parcelable {
 
     boolean isBAC = false;
     boolean isPACE = false;
     boolean isChipAuthentication = false;
+    boolean isPassiveAuthentication = false;
 
     SODFile sodFile;
     Bitmap face;
@@ -24,7 +27,14 @@ public class Passport implements Parcelable {
     AdditionalPersonDetails additionalPersonDetails;
     AdditionalDocumentDetails additionalDocumentDetails;
 
+
+    HashMap<Integer, byte[]> dataGroupHashes;
+    HashMap<Integer, byte[]> dataGroupComputedHashes;
+
     public Passport(Parcel in) {
+        dataGroupHashes = new HashMap<>();
+        dataGroupComputedHashes = new HashMap<>();
+
         fingerprints = new ArrayList<>();
         this.face = in.readInt()== 1 ? in.readParcelable(Bitmap.class.getClassLoader()) : null;
         this.portrait = in.readInt()== 1 ? in.readParcelable(Bitmap.class.getClassLoader()) : null;
@@ -43,10 +53,21 @@ public class Passport implements Parcelable {
         if(in.readInt()==1){
             sodFile = (SODFile) in.readSerializable();
         }
+        this.isChipAuthentication = in.readInt()==1;
+        this.isPassiveAuthentication = in.readInt()==1;
+
+        if(in.readInt()==1){
+            dataGroupHashes = (HashMap) in.readSerializable();
+        }
+        if(in.readInt()==1){
+            dataGroupComputedHashes = (HashMap) in.readSerializable();
+        }
     }
 
     public Passport(){
         fingerprints = new ArrayList<>();
+        dataGroupHashes = new HashMap<>();
+        dataGroupComputedHashes = new HashMap<>();
     }
 
     public Bitmap getFace() {
@@ -137,6 +158,31 @@ public class Passport implements Parcelable {
         this.sodFile = sodFile;
     }
 
+
+    public boolean isPassiveAuthentication() {
+        return isPassiveAuthentication;
+    }
+
+    public void setPassiveAuthentication(boolean passiveAuthentication) {
+        isPassiveAuthentication = passiveAuthentication;
+    }
+
+    public HashMap<Integer, byte[]> getDataGroupHashes() {
+        return dataGroupHashes;
+    }
+
+    public void setDataGroupHashes(HashMap<Integer, byte[]> dataGroupHashes) {
+        this.dataGroupHashes = dataGroupHashes;
+    }
+
+    public HashMap<Integer, byte[]> getDataGroupComputedHashes() {
+        return dataGroupComputedHashes;
+    }
+
+    public void setDataGroupComputedHashes(HashMap<Integer, byte[]> dataGroupComputedHashes) {
+        this.dataGroupComputedHashes = dataGroupComputedHashes;
+    }
+
     @Override
     public int describeContents() {
         return 0;
@@ -187,6 +233,18 @@ public class Passport implements Parcelable {
         dest.writeInt(sodFile!=null ? 1 : 0);
         if(sodFile!=null) {
             dest.writeSerializable(sodFile);
+        }
+
+        dest.writeInt(isPassiveAuthentication ?1:0);
+
+        dest.writeInt(dataGroupHashes!=null ? 1 : 0);
+        if(dataGroupHashes!=null) {
+            dest.writeSerializable(dataGroupHashes);
+        }
+
+        dest.writeInt(dataGroupComputedHashes!=null ? 1 : 0);
+        if(dataGroupComputedHashes!=null) {
+            dest.writeSerializable(dataGroupComputedHashes);
         }
     }
 
