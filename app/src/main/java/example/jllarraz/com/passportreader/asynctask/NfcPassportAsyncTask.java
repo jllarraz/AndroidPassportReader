@@ -35,13 +35,17 @@ import org.jmrtd.PassportService;
 import org.jmrtd.cert.CVCPrincipal;
 import org.jmrtd.lds.CVCAFile;
 import org.jmrtd.lds.CardAccessFile;
+import org.jmrtd.lds.CardSecurityFile;
+import org.jmrtd.lds.ChipAuthenticationInfo;
 import org.jmrtd.lds.ChipAuthenticationPublicKeyInfo;
 import org.jmrtd.lds.LDSFileUtil;
 import org.jmrtd.lds.PACEInfo;
 import org.jmrtd.lds.SecurityInfo;
+import org.jmrtd.lds.TerminalAuthenticationInfo;
 import org.jmrtd.lds.icao.DG11File;
 import org.jmrtd.lds.icao.DG12File;
 import org.jmrtd.lds.icao.DG14File;
+import org.jmrtd.lds.icao.DG15File;
 import org.jmrtd.lds.icao.DG1File;
 import org.jmrtd.lds.icao.DG2File;
 import org.jmrtd.lds.icao.DG3File;
@@ -49,7 +53,8 @@ import org.jmrtd.lds.icao.DG5File;
 import org.jmrtd.lds.icao.DG7File;
 import org.jmrtd.lds.icao.MRZInfo;
 import org.jmrtd.protocol.BACResult;
-
+import org.jmrtd.protocol.EACCAResult;
+import org.spongycastle.jce.provider.BouncyCastleProvider;
 
 
 import java.io.FileInputStream;
@@ -59,9 +64,11 @@ import java.math.BigInteger;
 import java.security.GeneralSecurityException;
 import java.security.KeyStore;
 import java.security.PublicKey;
+import java.security.Security;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -78,6 +85,11 @@ import example.jllarraz.com.passportreader.utils.PassportNfcUtils;
 public final class NfcPassportAsyncTask extends AsyncTask<Void, Void, Boolean> {
 
     private static final String TAG = NfcPassportAsyncTask.class.getSimpleName();
+
+    static {
+        Security.insertProviderAt(new org.spongycastle.jce.provider.BouncyCastleProvider(), 1);
+    }
+
 
     private Context context;
     private Tag tag;
@@ -125,12 +137,11 @@ public final class NfcPassportAsyncTask extends AsyncTask<Void, Void, Boolean> {
             BACKeySpec bacKey = new BACKey(mrzInfo.getDocumentNumber(), mrzInfo.getDateOfBirth(), mrzInfo.getDateOfExpiry());
 
 
-
             Passport passport = new Passport();
             try {
 
                 //BAC
-                ps.doBAC(bacKey);
+                BACResult bacResult = ps.doBAC(bacKey);
                 passport.setBAC(true);
 
                 // Basic data
@@ -161,6 +172,59 @@ public final class NfcPassportAsyncTask extends AsyncTask<Void, Void, Boolean> {
                         isDG1.close();
                         isDG1 = null;
                     }
+                }
+
+                //Chip Authentication
+                List<EACCAResult> eaccaResults = new ArrayList<>();
+                InputStream isDG14 = null;
+                try {
+                    isDG14= ps.getInputStream(PassportService.EF_DG14);
+                    DG14File dg14 = (DG14File) LDSFileUtil.getLDSFile(PassportService.EF_DG14, isDG14);
+                    ChipAuthenticationInfo chipAuthenticationInfo=null;
+
+                    List<ChipAuthenticationPublicKeyInfo> chipAuthenticationPublicKeyInfos = new ArrayList<>();
+                    ChipAuthenticationPublicKeyInfo chipAuthenticationPublicKeyInfo = null;
+                    Collection<SecurityInfo> securityInfos = dg14.getSecurityInfos();
+                    Iterator<SecurityInfo> securityInfoIterator = securityInfos.iterator();
+                    while (securityInfoIterator.hasNext()){
+                        SecurityInfo securityInfo = securityInfoIterator.next();
+                        if(securityInfo instanceof ChipAuthenticationInfo){
+                            chipAuthenticationInfo = (ChipAuthenticationInfo) securityInfo;
+                        } else if(securityInfo instanceof ChipAuthenticationPublicKeyInfo){
+                            chipAuthenticationPublicKeyInfos.add((ChipAuthenticationPublicKeyInfo) securityInfo);
+                        }
+                    }
+                    Iterator<ChipAuthenticationPublicKeyInfo> publicKeyInfoIterator = chipAuthenticationPublicKeyInfos.iterator();
+                    while (publicKeyInfoIterator.hasNext()){
+                        ChipAuthenticationPublicKeyInfo authenticationPublicKeyInfo = publicKeyInfoIterator.next();
+                        try {
+                            Log.i("EMRTD", "Chip Authentication starting");
+                            EACCAResult doEACCA = ps.doEACCA(chipAuthenticationInfo.getKeyId(), chipAuthenticationInfo.getObjectIdentifier(), chipAuthenticationInfo.getProtocolOIDString(), authenticationPublicKeyInfo.getSubjectPublicKey());
+                            eaccaResults.add(doEACCA);
+                            Log.i("EMRTD", "Chip Authentication succeeded");
+                        } catch(CardServiceException cse) {
+                            cse.printStackTrace();
+                            /* NOTE: Failed? Too bad, try next public key. */
+                        }
+                    }
+
+
+                }catch (Exception e){
+                    e.printStackTrace();
+                }finally {
+                    try {
+
+                        if(isDG14!=null){
+                            isDG14.close();
+                            isDG14 = null;
+                        }
+                    }catch (Exception e){
+                        e.printStackTrace();
+                    }
+                }
+
+                if(eaccaResults.size()>0){
+                    passport.setChipAuthentication(true);
                 }
 
 

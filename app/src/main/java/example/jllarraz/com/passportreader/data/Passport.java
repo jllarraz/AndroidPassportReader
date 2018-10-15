@@ -11,6 +11,7 @@ public class Passport implements Parcelable {
 
     boolean isBAC = false;
     boolean isPACE = false;
+    boolean isChipAuthentication = false;
 
     Bitmap face;
     Bitmap portrait;
@@ -34,6 +35,7 @@ public class Passport implements Parcelable {
 
         this.signature = in.readInt()== 1 ? in.readParcelable(Bitmap.class.getClassLoader()) : null;
         this.additionalDocumentDetails = in.readInt()== 1 ? in.readParcelable(AdditionalDocumentDetails.class.getClassLoader()) : null;
+        this.isChipAuthentication = in.readInt()==1;
     }
 
     public Passport(){
@@ -78,6 +80,14 @@ public class Passport implements Parcelable {
 
     public void setPACE(boolean PACE) {
         isPACE = PACE;
+    }
+
+    public boolean isChipAuthentication() {
+        return isChipAuthentication;
+    }
+
+    public void setChipAuthentication(boolean chipAuthentication) {
+        isChipAuthentication = chipAuthentication;
     }
 
     public List<Bitmap> getFingerprints() {
@@ -156,6 +166,8 @@ public class Passport implements Parcelable {
         if(additionalDocumentDetails!=null) {
             dest.writeParcelable(additionalDocumentDetails, flags);
         }
+
+        dest.writeInt(isChipAuthentication ?1:0);
     }
 
 

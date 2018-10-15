@@ -104,6 +104,9 @@ public class PassportDetailsFragment extends Fragment{
     @BindView(R.id.value_pace)
     ImageView imageViewPACE;
 
+    @BindView(R.id.value_chip)
+    ImageView imageViewChip;
+
 
 
     @BindView(R.id.card_view_additional_document_information)
@@ -310,6 +313,14 @@ public class PassportDetailsFragment extends Fragment{
         }else{
             imageViewPACE.setImageResource(R.drawable.ic_close_circle_outline);
             imageViewPACE.setColorFilter(ContextCompat.getColor(getActivity(), android.R.color.holo_red_light), android.graphics.PorterDuff.Mode.SRC_IN);
+        }
+
+        if(passport.isChipAuthentication()){
+            imageViewChip.setImageResource(R.drawable.ic_check_circle_outline);
+            imageViewChip.setColorFilter(ContextCompat.getColor(getActivity(), android.R.color.holo_green_light), android.graphics.PorterDuff.Mode.SRC_IN);
+        }else{
+            imageViewChip.setImageResource(R.drawable.ic_close_circle_outline);
+            imageViewChip.setColorFilter(ContextCompat.getColor(getActivity(), android.R.color.holo_red_light), android.graphics.PorterDuff.Mode.SRC_IN);
         }
 
 
