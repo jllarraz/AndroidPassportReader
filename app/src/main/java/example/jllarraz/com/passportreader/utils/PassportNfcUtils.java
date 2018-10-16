@@ -536,7 +536,7 @@ public class PassportNfcUtils {
 
 
 
-    private static EACCredentials getEACCredentials(CVCPrincipal caReference, List<KeyStore> cvcaStores) throws GeneralSecurityException {
+    public static EACCredentials getEACCredentials(CVCPrincipal caReference, List<KeyStore> cvcaStores) throws GeneralSecurityException {
         for (KeyStore cvcaStore: cvcaStores) {
             EACCredentials eacCredentials = getEACCredentials(caReference, cvcaStore);
             if (eacCredentials != null) { return eacCredentials; }

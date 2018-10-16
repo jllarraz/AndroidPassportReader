@@ -33,6 +33,7 @@ import org.jmrtd.PACEKeySpec;
 import org.jmrtd.PassportService;
 
 import org.jmrtd.cert.CVCPrincipal;
+import org.jmrtd.cert.CardVerifiableCertificate;
 import org.jmrtd.lds.CVCAFile;
 import org.jmrtd.lds.CardAccessFile;
 import org.jmrtd.lds.CardSecurityFile;
@@ -53,8 +54,11 @@ import org.jmrtd.lds.icao.DG3File;
 import org.jmrtd.lds.icao.DG5File;
 import org.jmrtd.lds.icao.DG7File;
 import org.jmrtd.lds.icao.MRZInfo;
+import org.jmrtd.protocol.AAResult;
 import org.jmrtd.protocol.BACResult;
 import org.jmrtd.protocol.EACCAResult;
+import org.jmrtd.protocol.EACTAResult;
+import org.jmrtd.protocol.PACEResult;
 import org.spongycastle.jce.provider.BouncyCastleProvider;
 
 
@@ -66,10 +70,13 @@ import java.security.GeneralSecurityException;
 import java.security.KeyStore;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.Security;
+import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.Iterator;
@@ -77,13 +84,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
+import javax.net.ssl.X509TrustManager;
 import javax.security.auth.x500.X500Principal;
 
 import example.jllarraz.com.passportreader.data.AdditionalDocumentDetails;
 import example.jllarraz.com.passportreader.data.AdditionalPersonDetails;
 import example.jllarraz.com.passportreader.data.Passport;
 import example.jllarraz.com.passportreader.data.PersonDetails;
+import example.jllarraz.com.passportreader.utils.EACCredentials;
 import example.jllarraz.com.passportreader.utils.ImageUtil;
 import example.jllarraz.com.passportreader.utils.MRZUtil;
 import example.jllarraz.com.passportreader.utils.PassportNfcUtils;
@@ -247,6 +257,7 @@ public final class NfcPassportAsyncTask extends AsyncTask<Void, Void, Boolean> {
                             chipAuthenticationPublicKeyInfos.add((ChipAuthenticationPublicKeyInfo) securityInfo);
                         }
                     }
+
                     Iterator<ChipAuthenticationPublicKeyInfo> publicKeyInfoIterator = chipAuthenticationPublicKeyInfos.iterator();
                     while (publicKeyInfoIterator.hasNext()){
                         ChipAuthenticationPublicKeyInfo authenticationPublicKeyInfo = publicKeyInfoIterator.next();
@@ -315,7 +326,7 @@ public final class NfcPassportAsyncTask extends AsyncTask<Void, Void, Boolean> {
                     }
                 }
 
-
+                PACEResult paceResult = null;
                 InputStream isCardAccessFile = null;
                 boolean paceSucceeded = false;
                 try {
@@ -332,7 +343,7 @@ public final class NfcPassportAsyncTask extends AsyncTask<Void, Void, Boolean> {
 
                     if (paceInfos != null && paceInfos.size() > 0) {
                         PACEInfo paceInfo = paceInfos.iterator().next();
-                        ps.doPACE(paceKeySpec, paceInfo.getObjectIdentifier(), PACEInfo.toParameterSpec(paceInfo.getParameterId()));
+                        paceResult = ps.doPACE(paceKeySpec, paceInfo.getObjectIdentifier(), PACEInfo.toParameterSpec(paceInfo.getParameterId()));
                         paceSucceeded = true;
                     }else {
                         paceSucceeded = true;
@@ -349,6 +360,93 @@ public final class NfcPassportAsyncTask extends AsyncTask<Void, Void, Boolean> {
                 passport.setPACE(paceSucceeded);
 
 
+                boolean activeAuthentication =false;
+                InputStream isDG15 = null;
+                try {
+                    isDG15 = ps.getInputStream(PassportService.EF_DG15);
+                    DG15File dg15 = (DG15File) LDSFileUtil.getLDSFile(PassportService.EF_DG15, isDG15);
+                    PublicKey publicKey = dg15.getPublicKey();
+                    byte[] challenge = new byte[8];
+                    SODFile sodFile = passport.getSodFile();
+                    AAResult aaResult = ps.doAA(publicKey, sodFile.getDigestAlgorithm(), sodFile.getSignerInfoDigestAlgorithm(), challenge);
+                    //TODO Verify response
+                    activeAuthentication =true;
+                } catch (Exception e){
+                    e.printStackTrace();
+                    activeAuthentication = false;
+                }
+                finally {
+                    if(isDG15!=null){
+                        isDG15.close();
+                        isDG15 = null;
+                    }
+                }
+                passport.setActiveAuthentication(activeAuthentication);
+
+                //We need these results for the EAC
+                if(paceResult!=null||eaccaResults.size()>1){
+                    List<EACTAResult> eactaResults = new ArrayList<>();
+                    InputStream isCvca=null;
+
+                    try {
+                        isCvca = ps.getInputStream(PassportService.EF_CVCA);
+                        CVCAFile cvca = (CVCAFile) LDSFileUtil.getLDSFile(PassportService.EF_CVCA, isCvca);
+                        CVCPrincipal[] possibleCVCAReferences = new CVCPrincipal[]{ cvca.getCAReference(), cvca.getAltCAReference() };
+
+                        //EAC
+                        //First we load our keystore
+                        //TODO configure real keystore
+                        KeyStore ks = KeyStore.getInstance(KeyStore.getDefaultType());
+                        // get user password and file input stream
+                        char[] password = "MY_PASSWORD".toCharArray();//Keystore password
+                        try (FileInputStream fis = new FileInputStream("keyStoreName")) {
+                            ks.load(fis, password);
+                        }
+                        List<KeyStore> keyStoreList = new ArrayList<>();
+                        keyStoreList.add(ks);
+
+
+                        for (CVCPrincipal caReference: possibleCVCAReferences) {
+                            EACCredentials eacCredentials = PassportNfcUtils.getEACCredentials(caReference, keyStoreList);
+                            if (eacCredentials == null) { continue; }
+
+                            PrivateKey privateKey = eacCredentials.getPrivateKey();
+                            Certificate[] chain = eacCredentials.getChain();
+                            List<CardVerifiableCertificate> terminalCerts = new ArrayList<CardVerifiableCertificate>(chain.length);
+                            for (Certificate c: chain) { terminalCerts.add((CardVerifiableCertificate)c); }
+
+                            try{
+                                if(paceResult==null) {
+                                    EACTAResult eactaResult = ps.doEACTA(caReference, terminalCerts, privateKey, null, eaccaResults.get(0), passport.getPersonDetails().getDocumentNumber());
+                                    eactaResults.add(eactaResult);
+                                } else{
+                                    EACTAResult eactaResult = ps.doEACTA(caReference, terminalCerts, privateKey, null, eaccaResults.get(0), paceResult);
+                                    eactaResults.add(eactaResult);
+                                }
+                            } catch(CardServiceException cse) {
+                                cse.printStackTrace();
+                                /* NOTE: Failed? Too bad, try next public key. */
+                                continue;
+                            }
+                            break;
+                        }
+                    } catch (Exception e){
+                        e.printStackTrace();
+                    }
+                    finally {
+                        if(isCvca!=null){
+                            isCvca.close();
+                            isCvca = null;
+                        }
+                    }
+
+                    if(eactaResults.size()>0){
+                        //TODO verify results
+                        passport.setEAC(true);
+                    }
+
+
+                }
 
                 //Portrait
                 //Get the picture
@@ -418,21 +516,7 @@ public final class NfcPassportAsyncTask extends AsyncTask<Void, Void, Boolean> {
                     }
                 }
 
-                /*
-                //EAC
-                //First we load our keystore
-                KeyStore ks = KeyStore.getInstance(KeyStore.getDefaultType());
-                // get user password and file input stream
-                char[] password = "MY_PASSWORD".toCharArray();//Keystore password
-                try (FileInputStream fis = new FileInputStream("keyStoreName")) {
-                  ks.load(fis, password);
-                }
-                List<KeyStore> keyStoreList = new ArrayList<>();
-                keyStoreList.add(ks);
 
-                //WE try to do EAC with the certificates in our Keystore
-                PassportNfcUtils.doEac(ps, dg1.getMRZInfo().getDocumentNumber(), keyStoreList);
-                */
 
                 //Finger prints
                 //Get the pictures

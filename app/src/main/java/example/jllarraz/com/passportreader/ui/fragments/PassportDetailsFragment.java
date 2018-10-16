@@ -116,6 +116,12 @@ public class PassportDetailsFragment extends Fragment{
     @BindView(R.id.value_passive)
     ImageView imageViewPassive;
 
+    @BindView(R.id.value_active)
+    ImageView imageViewActive;
+
+    @BindView(R.id.value_eac)
+    ImageView imageViewEac;
+
 
 
     @BindView(R.id.card_view_additional_document_information)
@@ -368,6 +374,23 @@ public class PassportDetailsFragment extends Fragment{
             imageViewPassive.setImageResource(R.drawable.ic_close_circle_outline);
             imageViewPassive.setColorFilter(ContextCompat.getColor(getActivity(), android.R.color.holo_red_light), android.graphics.PorterDuff.Mode.SRC_IN);
         }
+
+        if(passport.isActiveAuthentication()){
+            imageViewActive.setImageResource(R.drawable.ic_check_circle_outline);
+            imageViewActive.setColorFilter(ContextCompat.getColor(getActivity(), android.R.color.holo_green_light), android.graphics.PorterDuff.Mode.SRC_IN);
+        }else{
+            imageViewActive.setImageResource(R.drawable.ic_close_circle_outline);
+            imageViewActive.setColorFilter(ContextCompat.getColor(getActivity(), android.R.color.holo_red_light), android.graphics.PorterDuff.Mode.SRC_IN);
+        }
+
+        if(passport.isEAC()){
+            imageViewEac.setImageResource(R.drawable.ic_check_circle_outline);
+            imageViewEac.setColorFilter(ContextCompat.getColor(getActivity(), android.R.color.holo_green_light), android.graphics.PorterDuff.Mode.SRC_IN);
+        }else{
+            imageViewEac.setImageResource(R.drawable.ic_close_circle_outline);
+            imageViewEac.setColorFilter(ContextCompat.getColor(getActivity(), android.R.color.holo_red_light), android.graphics.PorterDuff.Mode.SRC_IN);
+        }
+
 
         SODFile sodFile = passport.getSodFile();
         if(sodFile!=null){

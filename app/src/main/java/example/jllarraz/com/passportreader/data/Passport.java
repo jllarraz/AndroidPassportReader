@@ -17,6 +17,8 @@ public class Passport implements Parcelable {
     boolean isPACE = false;
     boolean isChipAuthentication = false;
     boolean isPassiveAuthentication = false;
+    boolean isActiveAuthentication = false;
+    boolean isEAC = false;
 
     SODFile sodFile;
     Bitmap face;
@@ -62,6 +64,9 @@ public class Passport implements Parcelable {
         if(in.readInt()==1){
             dataGroupComputedHashes = (HashMap) in.readSerializable();
         }
+
+        this.isActiveAuthentication = in.readInt()==1;
+        this.isEAC = in.readInt()==1;
     }
 
     public Passport(){
@@ -183,6 +188,22 @@ public class Passport implements Parcelable {
         this.dataGroupComputedHashes = dataGroupComputedHashes;
     }
 
+    public boolean isActiveAuthentication() {
+        return isActiveAuthentication;
+    }
+
+    public void setActiveAuthentication(boolean activeAuthentication) {
+        isActiveAuthentication = activeAuthentication;
+    }
+
+    public boolean isEAC() {
+        return isEAC;
+    }
+
+    public void setEAC(boolean EAC) {
+        isEAC = EAC;
+    }
+
     @Override
     public int describeContents() {
         return 0;
@@ -246,6 +267,9 @@ public class Passport implements Parcelable {
         if(dataGroupComputedHashes!=null) {
             dest.writeSerializable(dataGroupComputedHashes);
         }
+
+        dest.writeInt(isActiveAuthentication ?1:0);
+        dest.writeInt(isEAC ?1:0);
     }
 
 
