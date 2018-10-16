@@ -61,7 +61,6 @@ public class PassportNfcUtils {
     private static final boolean IS_PKIX_REVOCATION_CHECING_ENABLED = false;
 
 
-
     public static Bitmap retrieveFaceImage(Context context, DG2File dg2File) throws IOException {
         List<FaceImageInfo> allFaceImageInfos = new ArrayList<>();
         List<FaceInfo> faceInfos = dg2File.getFaceInfos();
@@ -71,33 +70,16 @@ public class PassportNfcUtils {
 
         if (!allFaceImageInfos.isEmpty()) {
             FaceImageInfo faceImageInfo = allFaceImageInfos.iterator().next();
-
-            int imageLength = faceImageInfo.getImageLength();
-            DataInputStream dataInputStream = new DataInputStream(faceImageInfo.getImageInputStream());
-            byte[] buffer = new byte[imageLength];
-            dataInputStream.readFully(buffer, 0, imageLength);
-            InputStream inputStream = new ByteArrayInputStream(buffer, 0, imageLength);
-
-           // return ImageUtil.decodeImage(context, faceImageInfo.getMimeType(), inputStream);
-            return ImageUtil.decodeImage(inputStream, imageLength, faceImageInfo.getMimeType());
-
+            return toBitmap(faceImageInfo.getImageLength(), faceImageInfo.getImageInputStream(), faceImageInfo.getMimeType());
         }
         throw new IOException("Unable to decodeImage Image");
     }
 
-    public static Bitmap retrievePortraitImage(Context context, DG5File dg2File) throws IOException {
-        List<DisplayedImageInfo> faceInfos = dg2File.getImages();
+    public static Bitmap retrievePortraitImage(Context context, DG5File dg5File) throws IOException {
+        List<DisplayedImageInfo> faceInfos = dg5File.getImages();
         if (!faceInfos.isEmpty()) {
             DisplayedImageInfo faceImageInfo = faceInfos.iterator().next();
-
-            int imageLength = faceImageInfo.getImageLength();
-            DataInputStream dataInputStream = new DataInputStream(faceImageInfo.getImageInputStream());
-            byte[] buffer = new byte[imageLength];
-            dataInputStream.readFully(buffer, 0, imageLength);
-            InputStream inputStream = new ByteArrayInputStream(buffer, 0, imageLength);
-
-            return ImageUtil.decodeImage(inputStream, imageLength, faceImageInfo.getMimeType());
-
+            return toBitmap(faceImageInfo.getImageLength(), faceImageInfo.getImageInputStream(), faceImageInfo.getMimeType());
         }
         throw new IOException("Unable to decodeImage Image");
     }
@@ -105,16 +87,8 @@ public class PassportNfcUtils {
     public static Bitmap retrieveSignatureImage(Context context, DG7File dg7File) throws IOException {
         List<DisplayedImageInfo> displayedImageInfos = dg7File.getImages();
         if (!displayedImageInfos.isEmpty()) {
-            DisplayedImageInfo faceImageInfo = displayedImageInfos.iterator().next();
-
-            int imageLength = faceImageInfo.getImageLength();
-            DataInputStream dataInputStream = new DataInputStream(faceImageInfo.getImageInputStream());
-            byte[] buffer = new byte[imageLength];
-            dataInputStream.readFully(buffer, 0, imageLength);
-            InputStream inputStream = new ByteArrayInputStream(buffer, 0, imageLength);
-
-            return ImageUtil.decodeImage(inputStream, imageLength, faceImageInfo.getMimeType());
-
+            DisplayedImageInfo displayedImageInfo = displayedImageInfos.iterator().next();
+            return toBitmap(displayedImageInfo.getImageLength(), displayedImageInfo.getImageInputStream(), displayedImageInfo.getMimeType());
         }
         throw new IOException("Unable to decodeImage Image");
     }
@@ -131,13 +105,7 @@ public class PassportNfcUtils {
         Iterator<FingerImageInfo> iterator = allFingerImageInfos.iterator();
         while (iterator.hasNext()){
             FingerImageInfo fingerImageInfo = iterator.next();
-            int imageLength = fingerImageInfo.getImageLength();
-            DataInputStream dataInputStream = new DataInputStream(fingerImageInfo.getImageInputStream());
-            byte[] buffer = new byte[imageLength];
-            dataInputStream.readFully(buffer, 0, imageLength);
-            InputStream inputStream = new ByteArrayInputStream(buffer, 0, imageLength);
-
-            Bitmap bitmap = ImageUtil.decodeImage(inputStream, imageLength, fingerImageInfo.getMimeType());
+            Bitmap bitmap =  toBitmap(fingerImageInfo.getImageLength(), fingerImageInfo.getImageInputStream(), fingerImageInfo.getMimeType());
             fingerprintsImage.add(bitmap);
         }
 
@@ -149,7 +117,13 @@ public class PassportNfcUtils {
     }
 
 
-
+    private static Bitmap toBitmap(int imageLength, InputStream inputStream, String mimeType ) throws IOException {
+        DataInputStream dataInputStream = new DataInputStream(inputStream);
+        byte[] buffer = new byte[imageLength];
+        dataInputStream.readFully(buffer, 0, imageLength);
+        InputStream byteArrayInputStream = new ByteArrayInputStream(buffer, 0, imageLength);
+        return ImageUtil.decodeImage(byteArrayInputStream, imageLength, mimeType);
+    }
 
 
     public static EACCredentials getEACCredentials(CVCPrincipal caReference, List<KeyStore> cvcaStores) throws GeneralSecurityException {
