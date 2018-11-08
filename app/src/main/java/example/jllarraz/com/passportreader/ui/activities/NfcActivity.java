@@ -125,8 +125,8 @@ public class NfcActivity extends FragmentActivity implements NfcFragment.NfcFrag
     }
 
     @Override
-    public void onCardException(CardServiceException cardException) {
-        Toast.makeText(this, cardException.toString(), Toast.LENGTH_SHORT).show();
+    public void onCardException(Exception cardException) {
+        //Toast.makeText(this, cardException.toString(), Toast.LENGTH_SHORT).show();
         //onBackPressed();
     }
 

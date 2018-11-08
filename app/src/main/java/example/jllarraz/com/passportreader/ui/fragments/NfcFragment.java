@@ -20,8 +20,12 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import net.sf.scuba.smartcards.CardServiceException;
+import net.sf.scuba.smartcards.ISO7816;
 
 
+import org.jmrtd.AccessDeniedException;
+import org.jmrtd.BACDeniedException;
+import org.jmrtd.PACEException;
 import org.jmrtd.lds.icao.MRZInfo;
 import org.spongycastle.jce.provider.BouncyCastleProvider;
 
@@ -95,8 +99,47 @@ public class NfcFragment extends Fragment {
             }
 
             @Override
+            public void onAccessDeniedException(AccessDeniedException exception) {
+                Toast.makeText(getContext(), getString(R.string.warning_authentication_failed), Toast.LENGTH_SHORT).show();
+                exception.printStackTrace();
+                NfcFragment.this.onCardException(exception);
+                onNFCReadFinish();
+            }
+
+            @Override
+            public void onBACDeniedException(BACDeniedException exception) {
+                Toast.makeText(getContext(), exception.toString(), Toast.LENGTH_SHORT).show();
+                NfcFragment.this.onCardException(exception);
+                onNFCReadFinish();
+            }
+
+            @Override
+            public void onPACEException(PACEException exception) {
+                Toast.makeText(getContext(), exception.toString(), Toast.LENGTH_SHORT).show();
+                NfcFragment.this.onCardException(exception);
+                onNFCReadFinish();
+            }
+
+            @Override
             public void onCardException(CardServiceException cardException) {
+                int sw = cardException.getSW();
+                switch (sw){
+                    case ISO7816.SW_CLA_NOT_SUPPORTED:{
+                        Toast.makeText(getContext(), getString(R.string.warning_cla_not_supported), Toast.LENGTH_SHORT).show();
+                        break;
+                    }default:{
+                        Toast.makeText(getContext(), cardException.toString(), Toast.LENGTH_SHORT).show();
+                        break;
+                    }
+                }
                 NfcFragment.this.onCardException(cardException);
+                onNFCReadFinish();
+            }
+
+            @Override
+            public void onGeneralException(Exception exception) {
+                Toast.makeText(getContext(), exception.toString(), Toast.LENGTH_SHORT).show();
+                NfcFragment.this.onCardException(exception);
                 onNFCReadFinish();
             }
         });
@@ -165,7 +208,7 @@ public class NfcFragment extends Fragment {
         });
     }
 
-    protected void onCardException(CardServiceException cardException){
+    protected void onCardException(Exception cardException){
         mHandler.post(new Runnable() {
             @Override
             public void run() {
@@ -191,6 +234,6 @@ public class NfcFragment extends Fragment {
         void onEnableNfc();
         void onDisableNfc();
         void onPassportRead(Passport passport);
-        void onCardException(CardServiceException cardException);
+        void onCardException(Exception cardException);
     }
 }

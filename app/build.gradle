@@ -37,14 +37,14 @@ dependencies {
     androidTestImplementation 'com.android.support.test:runner:1.0.2'
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
     // ML Kit dependencies
-    implementation 'com.google.firebase:firebase-core:16.0.4'
-    implementation 'com.google.firebase:firebase-ml-common:16.1.4'
-    implementation 'com.google.firebase:firebase-ml-vision:17.0.1'
-    implementation 'com.google.firebase:firebase-ml-vision-image-label-model:16.2.0'
-    implementation 'com.google.firebase:firebase-ml-model-interpreter:16.2.2'
+    implementation 'com.google.firebase:firebase-core:16.0.5'
+    implementation 'com.google.firebase:firebase-ml-common:16.1.5'
+    implementation 'com.google.firebase:firebase-ml-vision:18.0.1'
+    implementation 'com.google.firebase:firebase-ml-vision-image-label-model:17.0.2'
+    implementation 'com.google.firebase:firebase-ml-model-interpreter:16.2.3'
 
     //NFC Passport
-    implementation 'org.jmrtd:jmrtd:0.7.4'
+    implementation 'org.jmrtd:jmrtd:0.7.5'
     implementation 'com.madgag.spongycastle:prov:1.54.0.0'
     implementation 'net.sf.scuba:scuba-sc-android:0.0.18';
     implementation group: 'org.ejbca.cvc', name: 'cert-cvc', version: '1.4.6'

@@ -97,4 +97,8 @@
     <string name="label_certificate_valid_from">Valid from</string>
     <string name="label_certificate_valid_to">Valid to</string>
 
+
+    <string name="warning_authentication_failed">Authentication has failed! Please try to scan the document again or introduce the data manually.</string>
+    <string name="warning_cla_not_supported">Impossible to read the document. Passport doesn\'t support CLA .</string>
+
 </resources>

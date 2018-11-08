@@ -101,6 +101,11 @@ public class OcrMrzDetectorProcessor extends VisionProcessorBase<FirebaseVisionT
             String documentNumber = line2.substring(0, 9);
             String dateOfBirthDay = line2.substring(13, 19);
             String expirationDate = line2.substring(21, 27);
+
+            //As O and 0 and really similar most of the countries just removed them from the passport, so for accuracy I am formatting it
+            documentNumber=documentNumber.replaceAll("O", "0");
+
+
             MRZInfo mrzInfo = createDummyMrz(documentNumber, dateOfBirthDay, expirationDate);
             ocrListener.onMRZRead(mrzInfo, timeRequired);
         } else {
@@ -115,6 +120,10 @@ public class OcrMrzDetectorProcessor extends VisionProcessorBase<FirebaseVisionT
                 String documentNumber = line1.substring(5, 14);
                 String dateOfBirthDay = line2.substring(0, 6);
                 String expirationDate = line2.substring(8, 14);
+
+                //As O and 0 and really similar most of the countries just removed them from the passport, so for accuracy I am formatting it
+                documentNumber=documentNumber.replaceAll("O", "0");
+
                 MRZInfo mrzInfo = createDummyMrz(documentNumber, dateOfBirthDay, expirationDate);
                 ocrListener.onMRZRead(mrzInfo, timeRequired);
             } else {
