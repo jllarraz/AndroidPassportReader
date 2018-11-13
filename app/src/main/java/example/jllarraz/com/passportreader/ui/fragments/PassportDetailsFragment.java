@@ -24,6 +24,8 @@ import java.text.SimpleDateFormat;
 import java.util.Iterator;
 import java.util.List;
 
+import javax.security.auth.x500.X500Principal;
+
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import example.jllarraz.com.passportreader.R;
@@ -394,7 +396,16 @@ public class PassportDetailsFragment extends Fragment{
 
         SODFile sodFile = passport.getSodFile();
         if(sodFile!=null){
+            X500Principal countrySigningCertificate = sodFile.getIssuerX500Principal();
+            String dnRFC2253 = countrySigningCertificate.getName(X500Principal.RFC2253);
+            String dnCANONICAL = countrySigningCertificate.getName(X500Principal.CANONICAL);
+            String dnRFC1779 = countrySigningCertificate.getName(X500Principal.RFC1779);
+
+            String name = countrySigningCertificate.getName();
+            //new X509Certificate(countrySigningCertificate);
+
             X509Certificate docSigningCertificate = sodFile.getDocSigningCertificate();
+
             if(docSigningCertificate !=null){
 
                 textViewDocumentSigningCertificateSerialNumber.setText(docSigningCertificate.getSerialNumber().toString());

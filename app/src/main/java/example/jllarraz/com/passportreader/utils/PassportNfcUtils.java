@@ -189,7 +189,7 @@ public class PassportNfcUtils {
      *
      * @return the certificate chain
      */
-    private static List<Certificate> getCertificateChain(X509Certificate docSigningCertificate,
+    public static List<Certificate> getCertificateChain(X509Certificate docSigningCertificate,
                                                          final X500Principal sodIssuer, final BigInteger sodSerialNumber,
                                                          List<CertStore> cscaStores, Set<TrustAnchor> cscaTrustAnchors) {
         List<Certificate> chain = new ArrayList<Certificate>();
