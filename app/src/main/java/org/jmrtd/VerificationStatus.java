@@ -1,5 +1,10 @@
 package org.jmrtd;
 
+import android.os.Parcel;
+import android.os.Parcelable;
+
+import com.fasterxml.jackson.core.util.InternCache;
+
 import net.sf.scuba.util.Hex;
 
 import org.jmrtd.protocol.EACCAResult;
@@ -9,9 +14,14 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
+import java.security.cert.Certificate;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
 
 /**
  * A data type for communicating document verification check information.
@@ -20,7 +30,7 @@ import java.util.Map;
  *
  * @version $Revision: 1559 $
  */
-public class VerificationStatus {
+public class VerificationStatus implements Parcelable {
 
     /**
      * Outcome of a verification process.
@@ -44,9 +54,9 @@ public class VerificationStatus {
     private String aaReason, bacReason, sacReason, csReason, htReason, dsReason, eacReason;
 
     /* By products of the verification process that may be useful for relying parties to display. */
-    private List triedBACEntries; /* As a result of BAC testing, this contains all tried BAC entries. */
-    private Map hashResults; /* As a result of HT testing, this contains stored and computed hashes. */
-    private List certificateChain; /* As a result of CS testing, this contains certificate chain from DSC to CSCA. */
+    private List<BACKey> triedBACEntries; /* As a result of BAC testing, this contains all tried BAC entries. */
+    private Map<Integer, HashMatchResult> hashResults; /* As a result of HT testing, this contains stored and computed hashes. */
+    private List<Certificate> certificateChain; /* As a result of CS testing, this contains certificate chain from DSC to CSCA. */
     private EACTAResult eacResult;
 
     /**
@@ -120,7 +130,7 @@ public class VerificationStatus {
      * @param reason a reason string
      * @param triedBACEntries the list of BAC entries that were tried
      */
-    public void setBAC(Verdict v, String reason, List triedBACEntries) {
+    public void setBAC(Verdict v, String reason, List<BACKey> triedBACEntries) {
         this.bac = v;
         this.bacReason = reason;
         this.triedBACEntries = triedBACEntries;
@@ -189,7 +199,7 @@ public class VerificationStatus {
      * @param reason the reason string
      * @param certificateChain the certificate chain between DS and CSCA
      */
-    public void setCS(Verdict v, String reason, List certificateChain) {
+    public void setCS(Verdict v, String reason, List<Certificate> certificateChain) {
         this.cs = v;
         this.csReason = reason;
         this.certificateChain = certificateChain;
@@ -248,7 +258,7 @@ public class VerificationStatus {
      *
      * @return a list of hash match results
      */
-    public Map getHashResults() {
+    public Map<Integer, HashMatchResult> getHashResults() {
         return hashResults;
     }
 
@@ -259,7 +269,7 @@ public class VerificationStatus {
      * @param reason the reason string
      * @param hashResults the hash match results
      */
-    public void setHT(Verdict v, String reason, Map hashResults) {
+    public void setHT(Verdict v, String reason, Map<Integer, HashMatchResult> hashResults) {
         this.ht = v;
         this.htReason = reason;
         this.hashResults = hashResults;
@@ -319,6 +329,136 @@ public class VerificationStatus {
         setHT(verdict, reason, null);
         setEAC(verdict, reason, null);
     }
+
+
+    public VerificationStatus(Parcel in) {
+        this.aa=Verdict.valueOf(in.readString());
+        this.bac=Verdict.valueOf(in.readString());
+        this.sac=Verdict.valueOf(in.readString());
+        this.cs=Verdict.valueOf(in.readString());
+        this.ht=Verdict.valueOf(in.readString());
+        this.ds=Verdict.valueOf(in.readString());
+        this.eac=Verdict.valueOf(in.readString());
+
+        this.aaReason=in.readInt()==1?in.readString():null;
+        this.bacReason=in.readInt()==1?in.readString():null;
+        this.sacReason=in.readInt()==1?in.readString():null;
+        this.csReason=in.readInt()==1?in.readString():null;
+        this.htReason=in.readInt()==1?in.readString():null;
+        this.dsReason=in.readInt()==1?in.readString():null;
+        this.eacReason=in.readInt()==1?in.readString():null;
+
+        if(in.readInt()==1){
+            triedBACEntries = new ArrayList<>();
+            in.readList(triedBACEntries, BACKey.class.getClassLoader());
+        }
+
+        if(in.readInt()==1){
+            hashResults= new TreeMap<>();
+            int size = in.readInt();
+            for(int i = 0; i < size; i++){
+                Integer key = in.readInt();
+                HashMatchResult value = (HashMatchResult) in.readSerializable();
+                hashResults.put(key,value);
+            }
+        }
+
+        if(in.readInt()==1){
+            certificateChain = new ArrayList();
+            in.readList(certificateChain, Certificate.class.getClassLoader());
+        }
+
+        if(in.readInt()==1){
+            eacResult= (EACTAResult) in.readSerializable();
+        }
+    }
+
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    @Override
+    public void writeToParcel(Parcel dest, int flags) {
+        dest.writeString(aa.name());
+        dest.writeString(bac.name());
+        dest.writeString(sac.name());
+        dest.writeString(cs.name());
+        dest.writeString(ht.name());
+        dest.writeString(ds.name());
+        dest.writeString(eac.name());
+
+        dest.writeInt(aaReason!=null?1:0);
+        if(aaReason!=null){
+            dest.writeString(aaReason);
+        }
+
+        dest.writeInt(bacReason!=null?1:0);
+        if(bacReason!=null){
+            dest.writeString(bacReason);
+        }
+
+        dest.writeInt(sacReason!=null?1:0);
+        if(sacReason!=null){
+            dest.writeString(sacReason);
+        }
+
+        dest.writeInt(csReason!=null?1:0);
+        if(csReason!=null){
+            dest.writeString(csReason);
+        }
+
+        dest.writeInt(htReason!=null?1:0);
+        if(htReason!=null){
+            dest.writeString(htReason);
+        }
+
+        dest.writeInt(dsReason!=null?1:0);
+        if(dsReason!=null){
+            dest.writeString(dsReason);
+        }
+
+        dest.writeInt(eacReason!=null?1:0);
+        if(eacReason!=null){
+            dest.writeString(eacReason);
+        }
+
+        dest.writeInt(triedBACEntries!=null?1:0);
+        if(triedBACEntries!=null){
+            dest.writeList(triedBACEntries);
+        }
+
+        dest.writeInt(hashResults!=null?1:0);
+        if(hashResults!=null){
+            dest.writeInt(hashResults.size());
+            for(Map.Entry<Integer,HashMatchResult> entry : hashResults.entrySet()){
+                dest.writeInt(entry.getKey());
+                dest.writeSerializable(entry.getValue());
+            }
+        }
+
+
+        dest.writeInt(certificateChain!=null?1:0);
+        if(certificateChain!=null){
+            dest.writeList(certificateChain);
+        }
+
+        dest.writeInt(eacResult!=null?1:0);
+        if(eacResult!=null){
+            dest.writeSerializable(eacResult);
+        }
+    }
+
+    public static final Creator CREATOR = new Creator<VerificationStatus>() {
+        public VerificationStatus createFromParcel(Parcel pc) {
+            return new VerificationStatus(pc);
+        }
+
+        public VerificationStatus[] newArray(int size) {
+            return new VerificationStatus[size];
+        }
+    };
+
 
     /**
      * The result of matching the stored and computed hashes of a single datagroup.

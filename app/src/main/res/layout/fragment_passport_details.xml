@@ -125,7 +125,8 @@
                 android:id="@+id/row_chip"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginLeft="@dimen/margin_small">
+                android:layout_marginLeft="@dimen/margin_small"
+                    android:visibility="gone">
 
                     <TextView
                         android:id="@+id/label_chip"
@@ -195,6 +196,34 @@
 
                     <ImageView
                         android:id="@+id/value_active"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:padding="@dimen/margin_tiny"
+                        android:src="@drawable/ic_close_circle_outline"
+                        android:layout_weight="1"
+                        android:tint="@android:color/holo_red_light"
+                        />
+
+                </TableRow>
+
+                <TableRow
+                    android:id="@+id/row_document_signing"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="@dimen/margin_small">
+
+                    <TextView
+                        android:id="@+id/label_document_signing"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:padding="@dimen/margin_tiny"
+                        android:gravity="end"
+                        android:text="@string/label_authentication_document_signing"
+                        android:layout_gravity="left"
+                        android:layout_marginRight="@dimen/margin_medium"/>
+
+                    <ImageView
+                        android:id="@+id/value_document_signing"
                         android:layout_width="0dp"
                         android:layout_height="match_parent"
                         android:padding="@dimen/margin_tiny"

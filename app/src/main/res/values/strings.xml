@@ -72,6 +72,7 @@
     <string name="label_authentication_passive">Passive</string>
     <string name="label_authentication_active">Active</string>
     <string name="label_authentication_eac">EAC</string>
+    <string name="label_authentication_document_signing">Document Signing</string>
 
 
     <string name="label_additional_document_information">Additional document information</string>

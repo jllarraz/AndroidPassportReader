@@ -114,23 +114,8 @@ public final class NfcPassportAsyncTask extends AsyncTask<Void, Void, Boolean> {
 
             passport = new Passport();
 
-            if(verifySecurity.getAA() == VerificationStatus.Verdict.SUCCEEDED){
-                passport.setActiveAuthentication(true);
-            }
-            if(verifySecurity.getBAC() == VerificationStatus.Verdict.SUCCEEDED){
-                passport.setBAC(true);
-            }
-            if(verifySecurity.getSAC() == VerificationStatus.Verdict.SUCCEEDED){
-                passport.setPACE(true);
-            }
-
-            if(verifySecurity.getEAC() == VerificationStatus.Verdict.SUCCEEDED){
-                passport.setEAC(true);
-            }
-
-            if(verifySecurity.getHT() == VerificationStatus.Verdict.SUCCEEDED){
-                passport.setPassiveAuthentication(true);
-            }
+            passport.setFeatureStatus(passportNFC.getFeatures());
+            passport.setVerificationStatus(passportNFC.getVerificationStatus());
 
 
             passport.setSodFile(passportNFC.getSodFile());

@@ -2,7 +2,6 @@ package example.jllarraz.com.passportreader.utils;
 
 import android.util.Log;
 
-import net.sf.scuba.smartcards.CardFileInputStream;
 import net.sf.scuba.smartcards.CardServiceException;
 
 import org.bouncycastle.asn1.ASN1Encodable;
@@ -19,9 +18,6 @@ import org.jmrtd.Util;
 import org.jmrtd.cert.CVCPrincipal;
 import org.jmrtd.cert.CardVerifiableCertificate;
 
-import java.io.ByteArrayInputStream;
-import java.io.DataInputStream;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigInteger;
@@ -86,7 +82,6 @@ import org.jmrtd.protocol.EACCAResult;
 import org.jmrtd.protocol.EACTAResult;
 import org.jmrtd.protocol.PACEResult;
 
-import example.jllarraz.com.passportreader.data.PersonDetails;
 
 public class PassportNFC {
 
@@ -94,8 +89,8 @@ public class PassportNFC {
 
     private static final Provider BC_PROVIDER = JMRTDSecurityProvider.getBouncyCastleProvider();
 
-    private final static List EMPTY_TRIED_BAC_ENTRY_LIST = Collections.emptyList();
-    private final static List EMPTY_CERTIFICATE_CHAIN = Collections.emptyList();
+    private final static List<BACKey> EMPTY_TRIED_BAC_ENTRY_LIST = Collections.emptyList();
+    private final static List<Certificate> EMPTY_CERTIFICATE_CHAIN = Collections.emptyList();
 
     /** The hash function for DG hashes. */
     private MessageDigest digest;
@@ -125,18 +120,18 @@ public class PassportNFC {
     private Random random;
 
 
-    COMFile comFile = null;
-    SODFile sodFile = null;
-    DG1File dg1File = null;
-    DG2File dg2File = null;
-    DG3File dg3File = null;
-    DG5File dg5File = null;
-    DG7File dg7File = null;
-    DG11File dg11File = null;
-    DG12File dg12File = null;
-    DG14File dg14File = null;
-    DG15File dg15File = null;
-    CVCAFile cvcaFile = null;
+    private COMFile comFile = null;
+    private SODFile sodFile = null;
+    private DG1File dg1File = null;
+    private DG2File dg2File = null;
+    private DG3File dg3File = null;
+    private DG5File dg5File = null;
+    private DG7File dg7File = null;
+    private DG11File dg11File = null;
+    private DG12File dg12File = null;
+    private DG14File dg14File = null;
+    private DG15File dg15File = null;
+    private CVCAFile cvcaFile = null;
 
 
     private PassportNFC() throws GeneralSecurityException {
@@ -171,22 +166,19 @@ public class PassportNFC {
         this.service = ps;
         this.trustManager = trustManager;
 
-        boolean hasSAC = false;
+        boolean hasSAC;
         boolean isSACSucceeded = false;
         PACEResult paceResult = null;
         try {
             service.open();
 
             /* Find out whether this MRTD supports SAC. */
-            PACEInfo paceInfo = null;
             try {
                 Log.i(TAG, "Inspecting card access file");
                 CardAccessFile cardAccessFile = new CardAccessFile(ps.getInputStream(PassportService.EF_CARD_ACCESS));
                 Collection<SecurityInfo> securityInfos = cardAccessFile.getSecurityInfos();
-                Iterator<SecurityInfo> securityInfoIterator = securityInfos.iterator();
-                while (securityInfoIterator.hasNext()){
-                    SecurityInfo securityInfo = securityInfoIterator.next();
-                    if(securityInfo instanceof PACEInfo){
+                for (SecurityInfo securityInfo : securityInfos) {
+                    if (securityInfo instanceof PACEInfo) {
                         featureStatus.setSAC(FeatureStatus.Verdict.PRESENT);
                     }
                 }
@@ -241,7 +233,7 @@ public class PassportNFC {
         
         if (hasBAC && !(hasSAC && isSACSucceeded)) {
             BACKey bacKey = new BACKey(mrzInfo.getDocumentNumber(), mrzInfo.getDateOfBirth(), mrzInfo.getDateOfExpiry());
-            List triedBACEntries = new ArrayList();
+            List<BACKey> triedBACEntries = new ArrayList<>();
             triedBACEntries.add(bacKey);
             try {
                 doBAC(service, mrzInfo);
@@ -254,7 +246,7 @@ public class PassportNFC {
 
         /* Pre-read these files that are always present. */
         
-        Collection<Integer> dgNumbersAlreadyRead = new TreeSet<Integer>();
+        Collection<Integer> dgNumbersAlreadyRead = new TreeSet<>();
 
         try {
             comFile = getComFile(ps);
@@ -279,7 +271,7 @@ public class PassportNFC {
         }
 
         /* Get the list of DGs from EF.SOd, we don't trust EF.COM. */
-        List<Integer> dgNumbers = new ArrayList<Integer>();
+        List<Integer> dgNumbers = new ArrayList<>();
         if (sodFile != null) {
             dgNumbers.addAll(sodFile.getDataGroupHashes().keySet());
         } else if (comFile != null) {
@@ -292,17 +284,17 @@ public class PassportNFC {
 
         Log.i(TAG, "Found DGs: " + dgNumbers);
 
-        Map hashResults = verificationStatus.getHashResults();
+        Map<Integer, VerificationStatus.HashMatchResult> hashResults = verificationStatus.getHashResults();
         if (hashResults == null) {
-            hashResults = new TreeMap();
+            hashResults = new TreeMap<>();
         }
 
         if (sodFile != null) {
             /* Initial hash results: we know the stored hashes, but not the computed hashes yet. */
-            Map storedHashes = sodFile.getDataGroupHashes();
+            Map<Integer, byte[]> storedHashes = sodFile.getDataGroupHashes();
             for (int dgNumber: dgNumbers) {
-                byte[] storedHash = (byte[]) storedHashes.get(dgNumber);
-                VerificationStatus.HashMatchResult hashResult = (VerificationStatus.HashMatchResult) hashResults.get(dgNumber);
+                byte[] storedHash = storedHashes.get(dgNumber);
+                VerificationStatus.HashMatchResult hashResult = hashResults.get(dgNumber);
                 if (hashResult != null) { continue; }
                 if (dgNumbersAlreadyRead.contains(dgNumber)) {
                     hashResult = verifyHash(dgNumber);
@@ -622,7 +614,7 @@ public class PassportNFC {
      * @param fid the FID of the new file
      * @param bytes the contents of the new file
      */
-    public void putFile(short fid, byte[] bytes) {
+    private void putFile(short fid, byte[] bytes) {
         if (bytes == null) { return; }
         try {
             //lds.add(fid, new ByteArrayInputStream(bytes), bytes.length);
@@ -641,16 +633,16 @@ public class PassportNFC {
      *
      * @param newCertificate a certificate
      */
-    public void updateCOMSODFile(X509Certificate newCertificate) {
+    private void updateCOMSODFile(X509Certificate newCertificate) {
         try {
             String digestAlg = sodFile.getDigestAlgorithm();
             String signatureAlg = sodFile.getDigestEncryptionAlgorithm();
             X509Certificate cert = newCertificate != null ? newCertificate : sodFile.getDocSigningCertificate();
             byte[] signature = sodFile.getEncryptedDigest();
-            Map<Integer, byte[]> dgHashes = new TreeMap<Integer, byte[]>();
+            Map<Integer, byte[]> dgHashes = new TreeMap<>();
 
             List<Integer> dgFids = LDSFileUtil.getDataGroupNumbers(sodFile);
-            MessageDigest digest = null;
+            MessageDigest digest;
             digest = MessageDigest.getInstance(digestAlg);
             for (int fid : dgFids) {
                 if (fid != PassportService.EF_COM && fid != PassportService.EF_SOD && fid != PassportService.EF_CVCA) {
@@ -660,7 +652,7 @@ public class PassportNFC {
                     }
                     byte tag = dg.getEncoded()[0];
                     dgHashes.put(LDSFileUtil.lookupDataGroupNumberByTag(tag), digest.digest(dg.getEncoded()));
-                    comFile.insertTag((int)(tag & 0xFF));
+                    comFile.insertTag(tag & 0xFF);
                 }
             }
             if(docSigningPrivateKey != null) {
@@ -676,7 +668,7 @@ public class PassportNFC {
     ///////////////////////////////////
 
     /** Check active authentication. */
-    public void verifyAA() {
+    private void verifyAA() {
         if (dg15File == null || service == null) {
             verificationStatus.setAA(VerificationStatus.Verdict.FAILED, "AA failed");
             return;
@@ -691,12 +683,10 @@ public class PassportNFC {
             if ("EC".equals(pubKeyAlgorithm) || "ECDSA".equals(pubKeyAlgorithm)) {
                 
               //  List activeAuthenticationInfos = dg14File.getActiveAuthenticationInfos();
-                List<ActiveAuthenticationInfo> activeAuthenticationInfoList = new ArrayList<ActiveAuthenticationInfo>();
+                List<ActiveAuthenticationInfo> activeAuthenticationInfoList = new ArrayList<>();
                 Collection<SecurityInfo> securityInfos = dg14File.getSecurityInfos();
-                Iterator<SecurityInfo> iterator = securityInfos.iterator();
-                while (iterator.hasNext()){
-                    SecurityInfo securityInfo = iterator.next();
-                    if(securityInfo instanceof ActiveAuthenticationInfo){
+                for (SecurityInfo securityInfo : securityInfos) {
+                    if (securityInfo instanceof ActiveAuthenticationInfo) {
                         activeAuthenticationInfoList.add((ActiveAuthenticationInfo) securityInfo);
                     }
                 }
@@ -741,29 +731,24 @@ public class PassportNFC {
             String pubKeyAlgorithm = publicKey.getAlgorithm();
             if ("RSA".equals(pubKeyAlgorithm)) {
                 /* FIXME: check that digestAlgorithm = "SHA1" in this case, check (and re-initialize) rsaAASignature (and rsaAACipher). */
-                if (!"SHA1".equalsIgnoreCase(digestAlgorithm)
-                        || !"SHA-1".equalsIgnoreCase(digestAlgorithm)
-                        || !"SHA1WithRSA/ISO9796-2".equalsIgnoreCase(signatureAlgorithm)) {
-                    Log.w(TAG, "Unexpected algorithms for RSA AA: "
-                            + "digest algorithm = " + (digestAlgorithm == null ? "null" : digestAlgorithm)
-                            + ", signature algorithm = " + (signatureAlgorithm == null ? "null" : signatureAlgorithm));
+                Log.w(TAG, "Unexpected algorithms for RSA AA: "
+                        + "digest algorithm = " + (digestAlgorithm == null ? "null" : digestAlgorithm)
+                        + ", signature algorithm = " + (signatureAlgorithm == null ? "null" : signatureAlgorithm));
 
-                    rsaAADigest = MessageDigest.getInstance(digestAlgorithm); /* NOTE: for output length measurement only. -- MO */
-                    rsaAASignature = Signature.getInstance(signatureAlgorithm, BC_PROVIDER);
-                }
+                rsaAADigest = MessageDigest.getInstance(digestAlgorithm); /* NOTE: for output length measurement only. -- MO */
+                rsaAASignature = Signature.getInstance(signatureAlgorithm, BC_PROVIDER);
 
                 RSAPublicKey rsaPublicKey = (RSAPublicKey)publicKey;
                 rsaAACipher.init(Cipher.DECRYPT_MODE, rsaPublicKey);
                 rsaAASignature.initVerify(rsaPublicKey);
 
                 int digestLength = rsaAADigest.getDigestLength(); /* SHA1 should be 20 bytes = 160 bits */
-                assert(digestLength == 20);
+                if ((digestLength != 20)) throw new AssertionError();
                 byte[] plaintext = rsaAACipher.doFinal(response);
                 byte[] m1 = Util.recoverMessage(digestLength, plaintext);
                 rsaAASignature.update(m1);
                 rsaAASignature.update(challenge);
-                boolean success = rsaAASignature.verify(response);
-                return success;
+                return rsaAASignature.verify(response);
             } else if ("EC".equals(pubKeyAlgorithm) || "ECDSA".equals(pubKeyAlgorithm)) {
                 ECPublicKey ecdsaPublicKey = (ECPublicKey)publicKey;
 
@@ -812,7 +797,7 @@ public class PassportNFC {
      *
      * TODO: Check the cert stores (notably PKD) to fetch document signer certificate (if not embedded in SOd) and check its validity before checking the signature.
      */
-    public void verifyDS() {
+    private void verifyDS() {
         try {
             verificationStatus.setDS(VerificationStatus.Verdict.UNKNOWN, "Unknown");
 
@@ -842,7 +827,7 @@ public class PassportNFC {
     /**
      * Checks the certificate chain.
      */
-    public void verifyCS() {
+    private void verifyCS() {
         try {
 
             List<Certificate> chain = new ArrayList<Certificate>();
@@ -925,11 +910,11 @@ public class PassportNFC {
     /**
      * Checks hashes in the SOd correspond to hashes we compute.
      */
-    public void verifyHT() {
+    private void verifyHT() {
         /* Compare stored hashes to computed hashes. */
-        Map hashResults = verificationStatus.getHashResults();
+        Map<Integer, VerificationStatus.HashMatchResult> hashResults = verificationStatus.getHashResults();
         if (hashResults == null) {
-            hashResults = new TreeMap();
+            hashResults = new TreeMap<>();
         }
 
         if (sodFile == null) {
@@ -950,9 +935,9 @@ public class PassportNFC {
     }
 
     private VerificationStatus.HashMatchResult verifyHash(int dgNumber) {
-        Map hashResults = verificationStatus.getHashResults();
+        Map<Integer, VerificationStatus.HashMatchResult> hashResults = verificationStatus.getHashResults();
         if (hashResults == null) {
-            hashResults = new TreeMap();
+            hashResults = new TreeMap<>();
         }
         return verifyHash(dgNumber, hashResults);
     }
@@ -1307,8 +1292,7 @@ public class PassportNFC {
         InputStream isComFile = null;
         try{
             isComFile= ps.getInputStream(PassportService.EF_COM);
-            COMFile comFile = (COMFile) LDSFileUtil.getLDSFile(PassportService.EF_COM, isComFile);
-            return comFile;
+            return (COMFile) LDSFileUtil.getLDSFile(PassportService.EF_COM, isComFile);
         }
         finally {
             if(isComFile!=null){
@@ -1323,8 +1307,7 @@ public class PassportNFC {
         InputStream isSodFile = null;
         try{
             isSodFile= ps.getInputStream(PassportService.EF_SOD);
-            SODFile sodFile = (SODFile) LDSFileUtil.getLDSFile(PassportService.EF_SOD, isSodFile);
-            return  sodFile;
+            return (SODFile) LDSFileUtil.getLDSFile(PassportService.EF_SOD, isSodFile);
         }
         finally {
             if(isSodFile!=null){
@@ -1339,8 +1322,7 @@ public class PassportNFC {
         InputStream isDG1 = null;
         try {
             isDG1 = ps.getInputStream(PassportService.EF_DG1);
-            DG1File dg1 = (DG1File) LDSFileUtil.getLDSFile(PassportService.EF_DG1, isDG1);
-            return dg1;
+            return (DG1File) LDSFileUtil.getLDSFile(PassportService.EF_DG1, isDG1);
         }finally {
             if(isDG1!=null){
                 isDG1.close();
@@ -1354,8 +1336,7 @@ public class PassportNFC {
         InputStream isDG2 = null;
         try {
             isDG2 = ps.getInputStream(PassportService.EF_DG2);
-            DG2File dg2 = (DG2File) LDSFileUtil.getLDSFile(PassportService.EF_DG2, isDG2);
-            return dg2;
+            return (DG2File) LDSFileUtil.getLDSFile(PassportService.EF_DG2, isDG2);
         }finally {
             if(isDG2!=null){
                 isDG2.close();
@@ -1369,8 +1350,7 @@ public class PassportNFC {
         InputStream isDG3 = null;
         try {
             isDG3 = ps.getInputStream(PassportService.EF_DG3);
-            DG3File dg3 = (DG3File) LDSFileUtil.getLDSFile(PassportService.EF_DG3, isDG3);
-            return dg3;
+            return (DG3File) LDSFileUtil.getLDSFile(PassportService.EF_DG3, isDG3);
         }finally {
             if(isDG3!=null){
                 isDG3.close();
@@ -1384,8 +1364,7 @@ public class PassportNFC {
         InputStream isDG5 = null;
         try {
             isDG5 = ps.getInputStream(PassportService.EF_DG5);
-            DG5File dg5 = (DG5File) LDSFileUtil.getLDSFile(PassportService.EF_DG5, isDG5);
-            return dg5;
+            return (DG5File) LDSFileUtil.getLDSFile(PassportService.EF_DG5, isDG5);
         }finally {
             if(isDG5!=null){
                 isDG5.close();
@@ -1399,8 +1378,7 @@ public class PassportNFC {
         InputStream isDG7 = null;
         try {
             isDG7 = ps.getInputStream(PassportService.EF_DG7);
-            DG7File dg7 = (DG7File) LDSFileUtil.getLDSFile(PassportService.EF_DG7, isDG7);
-            return dg7;
+            return (DG7File) LDSFileUtil.getLDSFile(PassportService.EF_DG7, isDG7);
         }finally {
             if(isDG7!=null){
                 isDG7.close();
@@ -1414,8 +1392,7 @@ public class PassportNFC {
         InputStream isDG11 = null;
         try {
             isDG11 = ps.getInputStream(PassportService.EF_DG11);
-            DG11File dg11 = (DG11File) LDSFileUtil.getLDSFile(PassportService.EF_DG11, isDG11);
-            return dg11;
+            return (DG11File) LDSFileUtil.getLDSFile(PassportService.EF_DG11, isDG11);
         }finally {
             if(isDG11!=null){
                 isDG11.close();
@@ -1429,8 +1406,7 @@ public class PassportNFC {
         InputStream isDG12 = null;
         try {
             isDG12 = ps.getInputStream(PassportService.EF_DG12);
-            DG12File dg12 = (DG12File) LDSFileUtil.getLDSFile(PassportService.EF_DG12, isDG12);
-            return dg12;
+            return (DG12File) LDSFileUtil.getLDSFile(PassportService.EF_DG12, isDG12);
         }finally {
             if(isDG12!=null){
                 isDG12.close();
@@ -1444,8 +1420,7 @@ public class PassportNFC {
         InputStream isDG14 = null;
         try {
             isDG14 = ps.getInputStream(PassportService.EF_DG14);
-            DG14File dg14 = (DG14File) LDSFileUtil.getLDSFile(PassportService.EF_DG14, isDG14);
-            return dg14;
+            return (DG14File) LDSFileUtil.getLDSFile(PassportService.EF_DG14, isDG14);
         }finally {
             if(isDG14!=null){
                 isDG14.close();
@@ -1459,8 +1434,7 @@ public class PassportNFC {
         InputStream isDG15 = null;
         try {
             isDG15 = ps.getInputStream(PassportService.EF_DG15);
-            DG15File dg15 = (DG15File) LDSFileUtil.getLDSFile(PassportService.EF_DG15, isDG15);
-            return dg15;
+            return (DG15File) LDSFileUtil.getLDSFile(PassportService.EF_DG15, isDG15);
         }finally {
             if(isDG15!=null){
                 isDG15.close();
@@ -1474,8 +1448,7 @@ public class PassportNFC {
         InputStream isEF_CVCA = null;
         try {
             isEF_CVCA = ps.getInputStream(PassportService.EF_CVCA);
-            CVCAFile cvcaFile = (CVCAFile) LDSFileUtil.getLDSFile(PassportService.EF_CVCA, isEF_CVCA);
-            return cvcaFile;
+            return (CVCAFile) LDSFileUtil.getLDSFile(PassportService.EF_CVCA, isEF_CVCA);
         }finally {
             if(isEF_CVCA!=null){
                 isEF_CVCA.close();

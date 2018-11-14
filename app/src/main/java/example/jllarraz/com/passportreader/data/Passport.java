@@ -4,6 +4,8 @@ import android.graphics.Bitmap;
 import android.os.Parcel;
 import android.os.Parcelable;
 
+import org.jmrtd.FeatureStatus;
+import org.jmrtd.VerificationStatus;
 import org.jmrtd.lds.SODFile;
 
 import java.util.ArrayList;
@@ -13,66 +15,54 @@ import java.util.Map;
 
 public class Passport implements Parcelable {
 
-    boolean isBAC = false;
-    boolean isPACE = false;
-    boolean isChipAuthentication = false;
-    boolean isPassiveAuthentication = false;
-    boolean isActiveAuthentication = false;
-    boolean isEAC = false;
-
-    SODFile sodFile;
-    Bitmap face;
-    Bitmap portrait;
-    Bitmap signature;
-    List<Bitmap> fingerprints;
-    PersonDetails personDetails;
-    AdditionalPersonDetails additionalPersonDetails;
-    AdditionalDocumentDetails additionalDocumentDetails;
-
-
-    HashMap<Integer, byte[]> dataGroupHashes;
-    HashMap<Integer, byte[]> dataGroupComputedHashes;
+    private SODFile sodFile;
+    private Bitmap face;
+    private Bitmap portrait;
+    private Bitmap signature;
+    private List<Bitmap> fingerprints;
+    private PersonDetails personDetails;
+    private AdditionalPersonDetails additionalPersonDetails;
+    private AdditionalDocumentDetails additionalDocumentDetails;
+    private FeatureStatus featureStatus;
+    private VerificationStatus verificationStatus;
 
     public Passport(Parcel in) {
-        dataGroupHashes = new HashMap<>();
-        dataGroupComputedHashes = new HashMap<>();
+
 
         fingerprints = new ArrayList<>();
         this.face = in.readInt()== 1 ? in.readParcelable(Bitmap.class.getClassLoader()) : null;
         this.portrait = in.readInt()== 1 ? in.readParcelable(Bitmap.class.getClassLoader()) : null;
         this.personDetails = in.readInt()== 1 ? in.readParcelable(PersonDetails.class.getClassLoader()) : null;
         this.additionalPersonDetails = in.readInt()== 1 ? in.readParcelable(AdditionalPersonDetails.class.getClassLoader()) : null;
-        this.isBAC = in.readInt()==1;
-        this.isPACE = in.readInt()==1;
+
         if(in.readInt()==1){
             in.readList(fingerprints, Bitmap.class.getClassLoader());
         }
 
         this.signature = in.readInt()== 1 ? in.readParcelable(Bitmap.class.getClassLoader()) : null;
         this.additionalDocumentDetails = in.readInt()== 1 ? in.readParcelable(AdditionalDocumentDetails.class.getClassLoader()) : null;
-        this.isChipAuthentication = in.readInt()==1;
-
         if(in.readInt()==1){
             sodFile = (SODFile) in.readSerializable();
         }
-        this.isChipAuthentication = in.readInt()==1;
-        this.isPassiveAuthentication = in.readInt()==1;
 
         if(in.readInt()==1){
-            dataGroupHashes = (HashMap) in.readSerializable();
-        }
-        if(in.readInt()==1){
-            dataGroupComputedHashes = (HashMap) in.readSerializable();
+            featureStatus = in.readParcelable(FeatureStatus.class.getClassLoader());
         }
 
-        this.isActiveAuthentication = in.readInt()==1;
-        this.isEAC = in.readInt()==1;
+        if(in.readInt()==1){
+            featureStatus = in.readParcelable(FeatureStatus.class.getClassLoader());
+        }
+
+        if(in.readInt()==1){
+            verificationStatus = in.readParcelable(VerificationStatus.class.getClassLoader());
+        }
+
     }
 
     public Passport(){
         fingerprints = new ArrayList<>();
-        dataGroupHashes = new HashMap<>();
-        dataGroupComputedHashes = new HashMap<>();
+        featureStatus=new FeatureStatus();
+        verificationStatus = new VerificationStatus();
     }
 
     public Bitmap getFace() {
@@ -97,30 +87,6 @@ public class Passport implements Parcelable {
 
     public void setPersonDetails(PersonDetails personDetails) {
         this.personDetails = personDetails;
-    }
-
-    public boolean isBAC() {
-        return isBAC;
-    }
-
-    public void setBAC(boolean BAC) {
-        isBAC = BAC;
-    }
-
-    public boolean isPACE() {
-        return isPACE;
-    }
-
-    public void setPACE(boolean PACE) {
-        isPACE = PACE;
-    }
-
-    public boolean isChipAuthentication() {
-        return isChipAuthentication;
-    }
-
-    public void setChipAuthentication(boolean chipAuthentication) {
-        isChipAuthentication = chipAuthentication;
     }
 
     public List<Bitmap> getFingerprints() {
@@ -163,45 +129,20 @@ public class Passport implements Parcelable {
         this.sodFile = sodFile;
     }
 
-
-    public boolean isPassiveAuthentication() {
-        return isPassiveAuthentication;
+    public FeatureStatus getFeatureStatus() {
+        return featureStatus;
     }
 
-    public void setPassiveAuthentication(boolean passiveAuthentication) {
-        isPassiveAuthentication = passiveAuthentication;
+    public void setFeatureStatus(FeatureStatus featureStatus) {
+        this.featureStatus = featureStatus;
     }
 
-    public HashMap<Integer, byte[]> getDataGroupHashes() {
-        return dataGroupHashes;
+    public VerificationStatus getVerificationStatus() {
+        return verificationStatus;
     }
 
-    public void setDataGroupHashes(HashMap<Integer, byte[]> dataGroupHashes) {
-        this.dataGroupHashes = dataGroupHashes;
-    }
-
-    public HashMap<Integer, byte[]> getDataGroupComputedHashes() {
-        return dataGroupComputedHashes;
-    }
-
-    public void setDataGroupComputedHashes(HashMap<Integer, byte[]> dataGroupComputedHashes) {
-        this.dataGroupComputedHashes = dataGroupComputedHashes;
-    }
-
-    public boolean isActiveAuthentication() {
-        return isActiveAuthentication;
-    }
-
-    public void setActiveAuthentication(boolean activeAuthentication) {
-        isActiveAuthentication = activeAuthentication;
-    }
-
-    public boolean isEAC() {
-        return isEAC;
-    }
-
-    public void setEAC(boolean EAC) {
-        isEAC = EAC;
+    public void setVerificationStatus(VerificationStatus verificationStatus) {
+        this.verificationStatus = verificationStatus;
     }
 
     @Override
@@ -231,9 +172,6 @@ public class Passport implements Parcelable {
             dest.writeParcelable(additionalPersonDetails, flags);
         }
 
-        dest.writeInt(isBAC ?1:0);
-        dest.writeInt(isPACE ?1:0);
-
         dest.writeInt(fingerprints!=null ? 1 : 0);
         if(fingerprints!=null) {
             dest.writeList(fingerprints);
@@ -249,27 +187,21 @@ public class Passport implements Parcelable {
             dest.writeParcelable(additionalDocumentDetails, flags);
         }
 
-        dest.writeInt(isChipAuthentication ?1:0);
-
         dest.writeInt(sodFile!=null ? 1 : 0);
         if(sodFile!=null) {
             dest.writeSerializable(sodFile);
         }
 
-        dest.writeInt(isPassiveAuthentication ?1:0);
-
-        dest.writeInt(dataGroupHashes!=null ? 1 : 0);
-        if(dataGroupHashes!=null) {
-            dest.writeSerializable(dataGroupHashes);
+        dest.writeInt(featureStatus!=null ? 1 : 0);
+        if(featureStatus!=null) {
+            dest.writeParcelable(featureStatus, flags);
         }
 
-        dest.writeInt(dataGroupComputedHashes!=null ? 1 : 0);
-        if(dataGroupComputedHashes!=null) {
-            dest.writeSerializable(dataGroupComputedHashes);
+        dest.writeInt(verificationStatus!=null ? 1 : 0);
+        if(verificationStatus!=null) {
+            dest.writeParcelable(verificationStatus, flags);
         }
 
-        dest.writeInt(isActiveAuthentication ?1:0);
-        dest.writeInt(isEAC ?1:0);
     }
 
 

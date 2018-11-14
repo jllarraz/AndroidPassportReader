@@ -12,10 +12,13 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.TableRow;
 import android.widget.TextView;
 
 
 import org.apache.commons.codec.binary.Hex;
+import org.jmrtd.FeatureStatus;
+import org.jmrtd.VerificationStatus;
 import org.jmrtd.lds.SODFile;
 
 import java.security.MessageDigest;
@@ -123,6 +126,30 @@ public class PassportDetailsFragment extends Fragment{
 
     @BindView(R.id.value_eac)
     ImageView imageViewEac;
+
+    @BindView(R.id.value_document_signing)
+    ImageView imageViewDocumentSigning;
+
+    @BindView(R.id.row_bac)
+    TableRow tableRowBac;
+
+    @BindView(R.id.row_pace)
+    TableRow tableRowPace;
+
+    @BindView(R.id.row_chip)
+    TableRow tableRowChip;
+
+    @BindView(R.id.row_passive)
+    TableRow tableRowPassive;
+
+    @BindView(R.id.row_active)
+    TableRow tableRowActive;
+
+    @BindView(R.id.row_document_signing)
+    TableRow tableRowDocumentSigning;
+
+    @BindView(R.id.row_eac)
+    TableRow tableRowEac;
 
 
 
@@ -343,55 +370,9 @@ public class PassportDetailsFragment extends Fragment{
             cardViewAdditionalDocumentInformation.setVisibility(View.GONE);
         }
 
-
-        if(passport.isBAC()){
-            imageViewBAC.setImageResource(R.drawable.ic_check_circle_outline);
-            imageViewBAC.setColorFilter(ContextCompat.getColor(getActivity(), android.R.color.holo_green_light), android.graphics.PorterDuff.Mode.SRC_IN);
-        }else{
-            imageViewBAC.setImageResource(R.drawable.ic_close_circle_outline);
-            imageViewBAC.setColorFilter(ContextCompat.getColor(getActivity(), android.R.color.holo_red_light), android.graphics.PorterDuff.Mode.SRC_IN);
-        }
-
-        if(passport.isPACE()){
-            imageViewPACE.setImageResource(R.drawable.ic_check_circle_outline);
-            imageViewPACE.setColorFilter(ContextCompat.getColor(getActivity(), android.R.color.holo_green_light), android.graphics.PorterDuff.Mode.SRC_IN);
-        }else{
-            imageViewPACE.setImageResource(R.drawable.ic_close_circle_outline);
-            imageViewPACE.setColorFilter(ContextCompat.getColor(getActivity(), android.R.color.holo_red_light), android.graphics.PorterDuff.Mode.SRC_IN);
-        }
-
-        if(passport.isChipAuthentication()){
-            imageViewChip.setImageResource(R.drawable.ic_check_circle_outline);
-            imageViewChip.setColorFilter(ContextCompat.getColor(getActivity(), android.R.color.holo_green_light), android.graphics.PorterDuff.Mode.SRC_IN);
-        }else{
-            imageViewChip.setImageResource(R.drawable.ic_close_circle_outline);
-            imageViewChip.setColorFilter(ContextCompat.getColor(getActivity(), android.R.color.holo_red_light), android.graphics.PorterDuff.Mode.SRC_IN);
-        }
+        displayAuthenticationStatus(passport.getVerificationStatus(), passport.getFeatureStatus());
 
 
-        if(passport.isPassiveAuthentication()){
-            imageViewPassive.setImageResource(R.drawable.ic_check_circle_outline);
-            imageViewPassive.setColorFilter(ContextCompat.getColor(getActivity(), android.R.color.holo_green_light), android.graphics.PorterDuff.Mode.SRC_IN);
-        }else{
-            imageViewPassive.setImageResource(R.drawable.ic_close_circle_outline);
-            imageViewPassive.setColorFilter(ContextCompat.getColor(getActivity(), android.R.color.holo_red_light), android.graphics.PorterDuff.Mode.SRC_IN);
-        }
-
-        if(passport.isActiveAuthentication()){
-            imageViewActive.setImageResource(R.drawable.ic_check_circle_outline);
-            imageViewActive.setColorFilter(ContextCompat.getColor(getActivity(), android.R.color.holo_green_light), android.graphics.PorterDuff.Mode.SRC_IN);
-        }else{
-            imageViewActive.setImageResource(R.drawable.ic_close_circle_outline);
-            imageViewActive.setColorFilter(ContextCompat.getColor(getActivity(), android.R.color.holo_red_light), android.graphics.PorterDuff.Mode.SRC_IN);
-        }
-
-        if(passport.isEAC()){
-            imageViewEac.setImageResource(R.drawable.ic_check_circle_outline);
-            imageViewEac.setColorFilter(ContextCompat.getColor(getActivity(), android.R.color.holo_green_light), android.graphics.PorterDuff.Mode.SRC_IN);
-        }else{
-            imageViewEac.setImageResource(R.drawable.ic_close_circle_outline);
-            imageViewEac.setColorFilter(ContextCompat.getColor(getActivity(), android.R.color.holo_red_light), android.graphics.PorterDuff.Mode.SRC_IN);
-        }
 
 
         SODFile sodFile = passport.getSodFile();
@@ -430,9 +411,80 @@ public class PassportDetailsFragment extends Fragment{
         } else {
             cardViewDocumentSigningCertificate.setVisibility(View.GONE);
         }
+    }
 
 
+    private void displayAuthenticationStatus(VerificationStatus verificationStatus, FeatureStatus featureStatus){
 
+        if(featureStatus.hasBAC()==FeatureStatus.Verdict.PRESENT){
+            tableRowBac.setVisibility(View.VISIBLE);
+        } else {
+            tableRowBac.setVisibility(View.GONE);
+        }
+
+        if(featureStatus.hasAA()==FeatureStatus.Verdict.PRESENT){
+            tableRowActive.setVisibility(View.VISIBLE);
+        } else {
+            tableRowActive.setVisibility(View.GONE);
+        }
+
+        if(featureStatus.hasSAC()==FeatureStatus.Verdict.PRESENT){
+            tableRowPace.setVisibility(View.VISIBLE);
+        } else {
+            tableRowPace.setVisibility(View.GONE);
+        }
+
+        if(featureStatus.hasEAC()==FeatureStatus.Verdict.PRESENT){
+            tableRowEac.setVisibility(View.VISIBLE);
+        } else {
+            tableRowEac.setVisibility(View.GONE);
+        }
+
+        displayVerificationStatusIcon(imageViewBAC, verificationStatus.getBAC());
+        displayVerificationStatusIcon(imageViewPACE, verificationStatus.getSAC());
+        displayVerificationStatusIcon(imageViewPassive, verificationStatus.getHT());
+        displayVerificationStatusIcon(imageViewActive, verificationStatus.getAA());
+        displayVerificationStatusIcon(imageViewDocumentSigning, verificationStatus.getDS());
+        displayVerificationStatusIcon(imageViewEac, verificationStatus.getEAC());
+    }
+
+    private void displayVerificationStatusIcon(ImageView imageView, VerificationStatus.Verdict verdict){
+        if(verdict==null){
+            verdict=VerificationStatus.Verdict.UNKNOWN;
+        }
+        int resourceIconId;
+        int resourceColorId;
+        switch (verdict){
+            case SUCCEEDED:{
+                resourceIconId=R.drawable.ic_check_circle_outline;
+                resourceColorId=android.R.color.holo_green_light;
+                break;
+            }
+            case FAILED:{
+                resourceIconId=R.drawable.ic_close_circle_outline;
+                resourceColorId=android.R.color.holo_red_light;
+                break;
+            }
+            case NOT_PRESENT:{
+                resourceIconId=R.drawable.ic_close_circle_outline;
+                resourceColorId=android.R.color.darker_gray;
+                break;
+            }
+            case NOT_CHECKED:{
+                resourceIconId=R.drawable.ic_help_circle_outline;
+                resourceColorId=android.R.color.holo_orange_light;
+                break;
+            }
+            case UNKNOWN:
+            default:{
+                resourceIconId=R.drawable.ic_close_circle_outline;
+                resourceColorId=android.R.color.darker_gray;
+                break;
+            }
+        }
+
+        imageView.setImageResource(resourceIconId);
+        imageView.setColorFilter(ContextCompat.getColor(getActivity(), resourceColorId), android.graphics.PorterDuff.Mode.SRC_IN);
     }
 
 
