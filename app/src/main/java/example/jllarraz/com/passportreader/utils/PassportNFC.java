@@ -1148,11 +1148,12 @@ public class PassportNFC {
         Log.i(TAG, "digestEncryptionAlgorithm = " + digestEncryptionAlgorithm);
 
         Signature sig = null;
-        try {
+        sig = Signature.getInstance(digestEncryptionAlgorithm, BC_PROVIDER);
+        /*try {
             sig = Signature.getInstance(digestEncryptionAlgorithm);
         } catch (Exception e) {
             sig = Signature.getInstance(digestEncryptionAlgorithm, BC_PROVIDER);
-        }
+        }*/
         sig.initVerify(docSigningCert);
         sig.update(eContent);
         return sig.verify(signature);

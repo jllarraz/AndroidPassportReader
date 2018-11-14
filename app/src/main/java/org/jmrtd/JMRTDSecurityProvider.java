@@ -77,9 +77,11 @@ public class JMRTDSecurityProvider extends Provider {
 	private static final Provider JMRTD_PROVIDER = new JMRTDSecurityProvider();
 
 	static {
+		Security.insertProviderAt(new org.spongycastle.jce.provider.BouncyCastleProvider(), 1);
+		/*
 				if (BC_PROVIDER != null) { Security.insertProviderAt(BC_PROVIDER, 1); }
 				if (SC_PROVIDER != null) { Security.insertProviderAt(SC_PROVIDER, 2); }
-				if (JMRTD_PROVIDER != null) { Security.insertProviderAt(JMRTD_PROVIDER, 3); }
+				if (JMRTD_PROVIDER != null) { Security.insertProviderAt(JMRTD_PROVIDER, 3); }*/
 	}
 
 	private JMRTDSecurityProvider() {
