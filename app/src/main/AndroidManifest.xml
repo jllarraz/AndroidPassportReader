@@ -33,7 +33,8 @@
         </activity>
 
         <activity android:name=".ui.activities.NfcActivity"
-            android:screenOrientation="nosensor">
+            android:screenOrientation="nosensor"
+            android:keepScreenOn="true">
 
         </activity>
 
