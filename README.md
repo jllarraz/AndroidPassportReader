@@ -34,8 +34,9 @@ This project is based in the information and tutorials found in
 
 You must put your phone horizontal when you try to read the passports MRZ.
 
-This is an example of how the app performs.
-https://youtu.be/kuIkZ1ZktCk
+This is are examples of how the app performs.
+https://youtu.be/ZmRl_-3RH2U (Full read)
+https://youtu.be/kuIkZ1ZktCk (Just OCR)
 
 ## License
 
