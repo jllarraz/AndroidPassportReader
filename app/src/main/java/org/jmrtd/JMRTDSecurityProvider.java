@@ -125,7 +125,10 @@ public class JMRTDSecurityProvider extends Provider {
 			replicateFromProvider("Signature", "SHA224withRSA", getBouncyCastleProvider());
 			replicateFromProvider("Signature", "SHA224withRSA/ISO9796-2", getBouncyCastleProvider());
 
-			/* Testing 0.4.7 -- MO */			
+            replicateFromProvider("Signature", "SHA256withRSA/PSS", getBouncyCastleProvider());
+
+
+            /* Testing 0.4.7 -- MO */
 			//			replicateFromProvider("KeyStore", "UBER", getBouncyCastleProvider());
 			//			replicateFromProvider("KeyPairGenerator", "ECDHC", getBouncyCastleProvider());
 			//			replicateFromProvider("KeyPairGenerator", "ECDSA", getBouncyCastleProvider());

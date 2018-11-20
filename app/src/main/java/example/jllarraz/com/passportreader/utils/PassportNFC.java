@@ -38,6 +38,8 @@ import java.security.cert.TrustAnchor;
 import java.security.cert.X509Certificate;
 import java.security.interfaces.ECPublicKey;
 import java.security.interfaces.RSAPublicKey;
+import java.security.spec.MGF1ParameterSpec;
+import java.security.spec.PSSParameterSpec;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -1148,7 +1150,14 @@ public class PassportNFC {
         Log.i(TAG, "digestEncryptionAlgorithm = " + digestEncryptionAlgorithm);
 
         Signature sig = null;
+
         sig = Signature.getInstance(digestEncryptionAlgorithm, BC_PROVIDER);
+        if(digestEncryptionAlgorithm.endsWith("withRSA/PSS")){
+            int saltLength = findSaltRSA_PSS(digestEncryptionAlgorithm, docSigningCert, eContent, signature);//Unknown salt so we try multiples until we get a success or failure
+            MGF1ParameterSpec mgf1ParameterSpec = new MGF1ParameterSpec("SHA-256");
+            PSSParameterSpec pssParameterSpec = new PSSParameterSpec("SHA-256", "MGF1",mgf1ParameterSpec , saltLength, 1);
+            sig.setParameter(pssParameterSpec);
+        }
         /*try {
             sig = Signature.getInstance(digestEncryptionAlgorithm);
         } catch (Exception e) {
@@ -1158,7 +1167,35 @@ public class PassportNFC {
         sig.update(eContent);
         return sig.verify(signature);
     }
-    
+
+
+    private int findSaltRSA_PSS(String digestEncryptionAlgorithm, Certificate docSigningCert, byte[] eContent, byte[] signature){
+        //Using brute force
+        for(int i=0;i<513;i++) {
+            try {
+                Signature sig = null;
+
+                sig = Signature.getInstance(digestEncryptionAlgorithm, BC_PROVIDER);
+                if (digestEncryptionAlgorithm.endsWith("withRSA/PSS")) {
+                    int saltLength = i;
+                    MGF1ParameterSpec mgf1ParameterSpec = new MGF1ParameterSpec("SHA-256");
+                    PSSParameterSpec pssParameterSpec = new PSSParameterSpec("SHA-256", "MGF1", mgf1ParameterSpec, saltLength, 1);
+                    sig.setParameter(pssParameterSpec);
+                }
+
+                sig.initVerify(docSigningCert);
+                sig.update(eContent);
+                boolean verify = sig.verify(signature);
+                if(verify){
+                    return i;
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        return 0;//Unable to find it
+    }
+
 
 
     ////////////////////////////
