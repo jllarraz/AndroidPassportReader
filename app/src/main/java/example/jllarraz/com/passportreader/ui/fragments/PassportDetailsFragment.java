@@ -434,6 +434,12 @@ public class PassportDetailsFragment extends Fragment{
             tableRowPace.setVisibility(View.GONE);
         }
 
+        if(featureStatus.hasCA()==FeatureStatus.Verdict.PRESENT){
+            tableRowChip.setVisibility(View.VISIBLE);
+        } else {
+            tableRowChip.setVisibility(View.GONE);
+        }
+
         if(featureStatus.hasEAC()==FeatureStatus.Verdict.PRESENT){
             tableRowEac.setVisibility(View.VISIBLE);
         } else {
@@ -445,6 +451,7 @@ public class PassportDetailsFragment extends Fragment{
         displayVerificationStatusIcon(imageViewPassive, verificationStatus.getHT());
         displayVerificationStatusIcon(imageViewActive, verificationStatus.getAA());
         displayVerificationStatusIcon(imageViewDocumentSigning, verificationStatus.getDS());
+        displayVerificationStatusIcon(imageViewChip, verificationStatus.getCA());
         displayVerificationStatusIcon(imageViewEac, verificationStatus.getEAC());
     }
 

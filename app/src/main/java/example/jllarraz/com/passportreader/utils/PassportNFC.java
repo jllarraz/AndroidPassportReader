@@ -311,18 +311,31 @@ public class PassportNFC {
         /* Check EAC support by DG14 presence. */
         if (dgNumbers.contains(14)) {
             featureStatus.setEAC(FeatureStatus.Verdict.PRESENT);
+            featureStatus.setCA(FeatureStatus.Verdict.PRESENT);
         } else {
             featureStatus.setEAC(FeatureStatus.Verdict.NOT_PRESENT);
+            featureStatus.setCA(FeatureStatus.Verdict.NOT_PRESENT);
         }
-        boolean hasEAC = featureStatus.hasEAC() == FeatureStatus.Verdict.PRESENT;
-        List<KeyStore> cvcaKeyStores = trustManager.getCVCAStores();
-        if (hasEAC && cvcaKeyStores != null && cvcaKeyStores.size() > 0) {
+
+        boolean hasCA = featureStatus.hasCA() == FeatureStatus.Verdict.PRESENT;
+        if(hasCA){
             try {
                 List<EACCAResult> eaccaResults = doEACCA(ps, mrzInfo, dg14File, sodFile);
-                List<EACTAResult> eactaResults = doEACTA(ps, mrzInfo, cvcaFile, paceResult, eaccaResults, cvcaKeyStores);
+                verificationStatus.setCA(VerificationStatus.Verdict.SUCCEEDED, "EAC succeeded", eaccaResults.get(0));
+            }catch (Exception e){
+                verificationStatus.setCA(VerificationStatus.Verdict.FAILED, "CA Failed", null);
+            }
+        }
+
+        boolean hasEAC = featureStatus.hasEAC() == FeatureStatus.Verdict.PRESENT;
+        List<KeyStore> cvcaKeyStores = trustManager.getCVCAStores();
+        if (hasEAC && cvcaKeyStores != null && cvcaKeyStores.size() > 0 && verificationStatus.getCA() == VerificationStatus.Verdict.SUCCEEDED) {
+            try {
+                List<EACTAResult> eactaResults = doEACTA(ps, mrzInfo, cvcaFile, paceResult, verificationStatus.getCAResult(), cvcaKeyStores);
                 verificationStatus.setEAC(VerificationStatus.Verdict.SUCCEEDED, "EAC succeeded", eactaResults.get(0));
             }catch (Exception e){
                 e.printStackTrace();
+                verificationStatus.setEAC(VerificationStatus.Verdict.FAILED, "EAC Failed", null);
             }
             dgNumbersAlreadyRead.add(14);
         }
@@ -1279,18 +1292,15 @@ public class PassportNFC {
         return eaccaResults;
     }
 
-    private List<EACTAResult> doEACTA(PassportService ps, MRZInfo mrzInfo, CVCAFile cvcaFile, PACEResult paceResult, List<EACCAResult> eaccaResults, List<KeyStore> cvcaKeyStores) throws IOException, CardServiceException, GeneralSecurityException, IllegalArgumentException, NullPointerException {
+    private List<EACTAResult> doEACTA(PassportService ps, MRZInfo mrzInfo, CVCAFile cvcaFile, PACEResult paceResult, EACCAResult eaccaResult, List<KeyStore> cvcaKeyStores) throws IOException, CardServiceException, GeneralSecurityException, IllegalArgumentException, NullPointerException {
         if(cvcaFile ==null){
             throw new NullPointerException("CVCAFile is null");
         }
 
-        if(eaccaResults ==null){
+        if(eaccaResult ==null){
             throw new NullPointerException("EACCAResult is null");
         }
 
-        if(eaccaResults.size()==0){
-            throw new IllegalArgumentException("EACCAResult has no entries");
-        }
 
         List<EACTAResult> eactaResults = new ArrayList<>();
         CVCPrincipal[] possibleCVCAReferences = new CVCPrincipal[]{ cvcaFile.getCAReference(), cvcaFile.getAltCAReference() };
@@ -1307,10 +1317,10 @@ public class PassportNFC {
 
             try{
                 if(paceResult==null) {
-                    EACTAResult eactaResult = ps.doEACTA(caReference, terminalCerts, privateKey, null, eaccaResults.get(0), mrzInfo.getDocumentNumber());
+                    EACTAResult eactaResult = ps.doEACTA(caReference, terminalCerts, privateKey, null, eaccaResult, mrzInfo.getDocumentNumber());
                     eactaResults.add(eactaResult);
                 } else{
-                    EACTAResult eactaResult = ps.doEACTA(caReference, terminalCerts, privateKey, null, eaccaResults.get(0), paceResult);
+                    EACTAResult eactaResult = ps.doEACTA(caReference, terminalCerts, privateKey, null, eaccaResult, paceResult);
                     eactaResults.add(eactaResult);
                 }
             } catch(CardServiceException cse) {

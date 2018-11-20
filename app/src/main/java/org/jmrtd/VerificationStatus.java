@@ -3,8 +3,6 @@ package org.jmrtd;
 import android.os.Parcel;
 import android.os.Parcelable;
 
-import com.fasterxml.jackson.core.util.InternCache;
-
 import net.sf.scuba.util.Hex;
 
 import org.jmrtd.protocol.EACCAResult;
@@ -17,10 +15,8 @@ import java.io.Serializable;
 import java.security.cert.Certificate;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.TreeMap;
 
 /**
@@ -48,16 +44,17 @@ public class VerificationStatus implements Parcelable {
     };
 
     /* Verdict for this verification feature. */
-    private Verdict aa, bac, sac, cs, ht, ds, eac;
+    private Verdict aa, bac, sac, cs, ht, ds, eac, ca;
 
     /* Textual reason for the verdict. */
-    private String aaReason, bacReason, sacReason, csReason, htReason, dsReason, eacReason;
+    private String aaReason, bacReason, sacReason, csReason, htReason, dsReason, eacReason, caReason;
 
     /* By products of the verification process that may be useful for relying parties to display. */
     private List<BACKey> triedBACEntries; /* As a result of BAC testing, this contains all tried BAC entries. */
     private Map<Integer, HashMatchResult> hashResults; /* As a result of HT testing, this contains stored and computed hashes. */
     private List<Certificate> certificateChain; /* As a result of CS testing, this contains certificate chain from DSC to CSCA. */
-    private EACTAResult eacResult;
+    private EACTAResult eactaResult;
+    private EACCAResult eaccaResult;
 
     /**
      * Constructs a new status with all verdicts
@@ -299,7 +296,7 @@ public class VerificationStatus implements Parcelable {
      * @return the EAC result
      */
     public EACTAResult getEACResult() {
-        return eacResult;
+        return eactaResult;
     }
 
     /**
@@ -312,7 +309,48 @@ public class VerificationStatus implements Parcelable {
     public void setEAC(Verdict v, String reason, EACTAResult eacResult) {
         this.eac = v;
         this.eacReason = reason;
-        this.eacResult = eacResult;
+        this.eactaResult = eacResult;
+    }
+
+
+    /**
+     * Gets the CA verdict.
+     *
+     * @return the CA status
+     */
+    public Verdict getCA() {
+        return ca;
+    }
+
+    /**
+     * Gets the CA reason string.
+     *
+     * @return a reasons string
+     */
+    public String getCAReason() {
+        return caReason;
+    }
+
+    /**
+     * Gets the CA result.
+     *
+     * @return the CA result
+     */
+    public EACCAResult getCAResult() {
+        return eaccaResult;
+    }
+
+    /**
+     * Sets the CA verdict.
+     *
+     * @param v the status to set
+     * @param eaccaResult the CA result
+     * @param reason reason string
+     */
+    public void setCA(Verdict v, String reason, EACCAResult eaccaResult) {
+        this.ca = v;
+        this.caReason = reason;
+        this.eaccaResult = eaccaResult;
     }
 
     /**
@@ -339,6 +377,7 @@ public class VerificationStatus implements Parcelable {
         this.ht=Verdict.valueOf(in.readString());
         this.ds=Verdict.valueOf(in.readString());
         this.eac=Verdict.valueOf(in.readString());
+        this.ca=Verdict.valueOf(in.readString());
 
         this.aaReason=in.readInt()==1?in.readString():null;
         this.bacReason=in.readInt()==1?in.readString():null;
@@ -347,6 +386,7 @@ public class VerificationStatus implements Parcelable {
         this.htReason=in.readInt()==1?in.readString():null;
         this.dsReason=in.readInt()==1?in.readString():null;
         this.eacReason=in.readInt()==1?in.readString():null;
+        this.caReason=in.readInt()==1?in.readString():null;
 
         if(in.readInt()==1){
             triedBACEntries = new ArrayList<>();
@@ -369,7 +409,11 @@ public class VerificationStatus implements Parcelable {
         }
 
         if(in.readInt()==1){
-            eacResult= (EACTAResult) in.readSerializable();
+            eactaResult = (EACTAResult) in.readSerializable();
+        }
+
+        if(in.readInt()==1){
+            eaccaResult = (EACCAResult) in.readSerializable();
         }
     }
 
@@ -387,6 +431,7 @@ public class VerificationStatus implements Parcelable {
         dest.writeString(ht.name());
         dest.writeString(ds.name());
         dest.writeString(eac.name());
+        dest.writeString(ca.name());
 
         dest.writeInt(aaReason!=null?1:0);
         if(aaReason!=null){
@@ -423,6 +468,11 @@ public class VerificationStatus implements Parcelable {
             dest.writeString(eacReason);
         }
 
+        dest.writeInt(caReason!=null?1:0);
+        if(caReason!=null){
+            dest.writeString(caReason);
+        }
+
         dest.writeInt(triedBACEntries!=null?1:0);
         if(triedBACEntries!=null){
             dest.writeList(triedBACEntries);
@@ -443,9 +493,14 @@ public class VerificationStatus implements Parcelable {
             dest.writeList(certificateChain);
         }
 
-        dest.writeInt(eacResult!=null?1:0);
-        if(eacResult!=null){
-            dest.writeSerializable(eacResult);
+        dest.writeInt(eactaResult !=null?1:0);
+        if(eactaResult !=null){
+            dest.writeSerializable(eactaResult);
+        }
+
+        dest.writeInt(eaccaResult !=null?1:0);
+        if(eaccaResult !=null){
+            dest.writeSerializable(eaccaResult);
         }
     }
 

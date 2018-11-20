@@ -25,13 +25,14 @@ public class FeatureStatus implements Parcelable {
         NOT_PRESENT;	/* Not present */
     };
 
-    private Verdict hasSAC, hasBAC, hasAA, hasEAC;
+    private Verdict hasSAC, hasBAC, hasAA, hasEAC, hasCA;
 
     public FeatureStatus() {
         this.hasSAC = Verdict.UNKNOWN;
         this.hasBAC = Verdict.UNKNOWN;
         this.hasAA = Verdict.UNKNOWN;
         this.hasEAC = Verdict.UNKNOWN;
+        this.hasCA = Verdict.UNKNOWN;
     }
 
     public void setSAC(Verdict hasSAC) {
@@ -67,11 +68,20 @@ public class FeatureStatus implements Parcelable {
         return hasEAC;
     }
 
+    public void setCA(Verdict hasCA) {
+        this.hasCA = hasCA;
+    }
+
+    public Verdict hasCA() {
+        return hasCA;
+    }
+
     public FeatureStatus(Parcel in) {
         this.hasSAC=Verdict.valueOf(in.readString());
         this.hasBAC=Verdict.valueOf(in.readString());
         this.hasAA=Verdict.valueOf(in.readString());
         this.hasEAC=Verdict.valueOf(in.readString());
+        this.hasCA=Verdict.valueOf(in.readString());
     }
 
     @Override
@@ -85,6 +95,7 @@ public class FeatureStatus implements Parcelable {
         dest.writeString(this.hasBAC.name());
         dest.writeString(this.hasAA.name());
         dest.writeString(this.hasEAC.name());
+        dest.writeString(this.hasCA.name());
     }
 
     public static final Creator CREATOR = new Creator<FeatureStatus>() {
