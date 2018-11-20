@@ -206,7 +206,17 @@ public class PassportDetailsFragment extends Fragment{
     TextView textViewDocumentSigningCertificateValidTo;
 
 
+    @BindView(R.id.card_view_warning)
+    CardView cardViewWarning;
 
+    @BindView(R.id.iconWarning)
+    ImageView imageWarning;
+
+    @BindView(R.id.textWarningTitle)
+    TextView textViewWarningTitle;
+
+    @BindView(R.id.textWarningMessage)
+    TextView textWarningMessage;
 
 
     public static PassportDetailsFragment newInstance(Passport passport) {
@@ -371,7 +381,7 @@ public class PassportDetailsFragment extends Fragment{
         }
 
         displayAuthenticationStatus(passport.getVerificationStatus(), passport.getFeatureStatus());
-
+        displayWarningTitle(passport.getVerificationStatus(), passport.getFeatureStatus());
 
 
 
@@ -411,6 +421,60 @@ public class PassportDetailsFragment extends Fragment{
         } else {
             cardViewDocumentSigningCertificate.setVisibility(View.GONE);
         }
+    }
+
+    private void displayWarningTitle(VerificationStatus verificationStatus, FeatureStatus featureStatus){
+        int colorCard=android.R.color.holo_green_light;
+        String message="";
+        String title="";
+        if(featureStatus.hasCA()==FeatureStatus.Verdict.PRESENT){
+            if(verificationStatus.getCA()==VerificationStatus.Verdict.SUCCEEDED && verificationStatus.getHT() == VerificationStatus.Verdict.SUCCEEDED){
+                //Everything is fine
+                colorCard=android.R.color.holo_green_light;
+                title=getString(R.string.document_valid_passport);
+                message=getString(R.string.document_chip_content_success);
+            } else if(verificationStatus.getCA()==VerificationStatus.Verdict.FAILED){
+                //Chip authentication failed
+                colorCard=android.R.color.holo_red_light;
+                title=getString(R.string.document_invalid_passport);
+                message=getString(R.string.document_chip_failure);
+            } else if(verificationStatus.getHT()==VerificationStatus.Verdict.FAILED){
+                //Document information
+                colorCard=android.R.color.holo_red_light;
+                title=getString(R.string.document_invalid_passport);
+                message=getString(R.string.document_document_failure);
+            }else{
+                //Unknown
+                colorCard=android.R.color.darker_gray;
+                title=getString(R.string.document_unknown_passport_title);
+                message=getString(R.string.document_unknown_passport_message);
+            }
+        } else if(featureStatus.hasCA()==FeatureStatus.Verdict.NOT_PRESENT){
+            if(verificationStatus.getHT()==VerificationStatus.Verdict.SUCCEEDED){
+                //Document information is fine
+                colorCard=android.R.color.holo_green_light;
+                title=getString(R.string.document_valid_passport);
+                message=getString(R.string.document_content_success);
+            }else if(verificationStatus.getHT()==VerificationStatus.Verdict.FAILED){
+                //Document information
+                colorCard=android.R.color.holo_red_light;
+                title=getString(R.string.document_invalid_passport);
+                message=getString(R.string.document_document_failure);
+            }else{
+                //Unknown
+                colorCard=android.R.color.darker_gray;
+                title=getString(R.string.document_unknown_passport_title);
+                message=getString(R.string.document_unknown_passport_message);
+            }
+        } else {
+            //Unknown
+            colorCard=android.R.color.darker_gray;
+            title=getString(R.string.document_unknown_passport_title);
+            message=getString(R.string.document_unknown_passport_message);
+        }
+        cardViewWarning.setCardBackgroundColor(getResources().getColor(colorCard));
+        textViewWarningTitle.setText(title);
+        textWarningMessage.setText(message);
     }
 
 

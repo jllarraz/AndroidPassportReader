@@ -102,4 +102,13 @@
     <string name="warning_authentication_failed">Authentication has failed! Please try to scan the document again or introduce the data manually.</string>
     <string name="warning_cla_not_supported">Impossible to read the document. Passport doesn\'t support CLA .</string>
 
+    <string name="document_valid_passport">Valid passport</string>
+    <string name="document_invalid_passport">Invalid Passport</string>
+    <string name="document_unknown_passport_title">Unknown Passport</string>
+    <string name="document_chip_content_success">The passport chip and content are valid</string>
+    <string name="document_content_success">The passport content is valid</string>
+    <string name="document_chip_failure">The passport chip is invalid</string>
+    <string name="document_document_failure">The passport document information is invalid</string>
+    <string name="document_unknown_passport_message">Unable to authenticate the passport</string>
+
 </resources>

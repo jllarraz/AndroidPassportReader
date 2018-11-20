@@ -18,6 +18,66 @@
         android:layout_height="wrap_content"
         android:orientation="vertical">
 
+        <android.support.v7.widget.CardView
+            xmlns:android="http://schemas.android.com/apk/res/android"
+            xmlns:app="http://schemas.android.com/apk/res-auto"
+            android:id="@+id/card_view_warning"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:cardCornerRadius="@dimen/cardview_default_radius"
+            app:cardElevation="3dp"
+            app:contentPadding="4dp"
+            android:layout_marginTop="@dimen/margin_tiny"
+            android:layout_marginLeft="@dimen/margin_medium"
+            android:layout_marginRight="@dimen/margin_medium"
+            android:layout_marginBottom="@dimen/margin_small"
+            android:foreground="?android:selectableItemBackground"
+            app:cardBackgroundColor="@android:color/holo_green_light"
+            style="@style/CardViewStyle">
+
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:padding="@dimen/margin_small">
+
+                <ImageView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:id="@+id/iconWarning"
+                    android:src="@drawable/ic_passport"
+                    android:tint="@color/white"
+                    android:layout_centerVertical="true"/>
+
+                <TextView
+                    android:id="@+id/textWarningTitle"
+                    android:layout_marginLeft="@dimen/margin_small"
+                    android:layout_marginRight="@dimen/margin_small"
+                    android:layout_marginBottom="@dimen/margin_small"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_toRightOf="@+id/iconWarning"
+                    android:layout_alignParentTop="true"
+                    android:text="@string/document_valid_passport"
+                    android:textColor="@color/white"
+                    style="@style/Text.SubHead"
+                    />
+
+                <TextView
+                    android:id="@+id/textWarningMessage"
+                    android:layout_marginLeft="@dimen/margin_small"
+                    android:layout_marginRight="@dimen/margin_small"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_toRightOf="@+id/iconWarning"
+                    android:layout_below="@+id/textWarningTitle"
+                    android:text="@string/document_chip_content_success"
+                    android:textColor="@color/white"
+                    style="@style/Text.Body3"
+                    />
+
+            </RelativeLayout>
+
+        </android.support.v7.widget.CardView>
 
         <!-- Authentication Information Card -->
         <android.support.v7.widget.CardView
