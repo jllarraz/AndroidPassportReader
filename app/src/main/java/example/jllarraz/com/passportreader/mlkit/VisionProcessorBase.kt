@@ -16,12 +16,10 @@ package example.jllarraz.com.passportreader.mlkit
 import android.graphics.Bitmap
 import android.media.Image
 
-import com.google.android.gms.tasks.OnFailureListener
-import com.google.android.gms.tasks.OnSuccessListener
 import com.google.android.gms.tasks.Task
 import com.google.firebase.ml.vision.common.FirebaseVisionImage
 import com.google.firebase.ml.vision.common.FirebaseVisionImageMetadata
-import com.google.firebase.ml.vision.text.FirebaseVisionText
+import io.fotoapparat.preview.Frame
 
 
 import org.jmrtd.lds.icao.MRZInfo
@@ -58,6 +56,25 @@ abstract class VisionProcessorBase<T> : VisionImageProcessor {
             return
         }
         detectInVisionImage(FirebaseVisionImage.fromBitmap(bitmap), null, ocrListener)
+    }
+
+    // Bitmap version
+    override fun process(frame: Frame, ocrListener: OcrListener) {
+        if (shouldThrottle.get()) {
+            return
+        }
+
+        val frameMetadata = FrameMetadata.Builder()
+                .setWidth(frame.size.width)
+                .setHeight(frame.size.height)
+                .setRotation(frame.rotation).build()
+        val metadata = FirebaseVisionImageMetadata.Builder()
+                .setFormat(FirebaseVisionImageMetadata.IMAGE_FORMAT_NV21)
+                .setWidth(frameMetadata.width)
+                .setHeight(frameMetadata.height)
+                .setRotation(frameMetadata.rotation)
+                .build()
+        detectInVisionImage(FirebaseVisionImage.fromByteArray(frame.image, metadata), frameMetadata, ocrListener)
     }
 
     /**

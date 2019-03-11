@@ -17,6 +17,7 @@ import android.graphics.Bitmap
 import android.media.Image
 
 import com.google.firebase.ml.common.FirebaseMLException
+import io.fotoapparat.preview.Frame
 
 import java.nio.ByteBuffer
 
@@ -29,6 +30,9 @@ interface VisionImageProcessor {
 
     /** Processes the bitmap images.  */
     fun process(bitmap: Bitmap, ocrListener: VisionProcessorBase.OcrListener)
+
+    /** Processes the bitmap images.  */
+    fun process(frame:Frame, ocrListener: VisionProcessorBase.OcrListener)
 
     /** Processes the images.  */
     fun process(bitmap: Image, rotation: Int, ocrListener: VisionProcessorBase.OcrListener)

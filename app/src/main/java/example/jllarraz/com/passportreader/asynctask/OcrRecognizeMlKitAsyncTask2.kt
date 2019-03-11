@@ -16,16 +16,19 @@
 package example.jllarraz.com.passportreader.asynctask
 
 import android.content.Context
-import android.graphics.Bitmap
 import android.os.AsyncTask
 
 import example.jllarraz.com.passportreader.mlkit.VisionImageProcessor
 import example.jllarraz.com.passportreader.mlkit.VisionProcessorBase
+import io.fotoapparat.preview.Frame
 
-class OcrRecognizeMlKitAsyncTask(private val context: Context, private val frameProcessor: VisionImageProcessor, private val bitmap: Bitmap, private val ocrListener: VisionProcessorBase.OcrListener) : AsyncTask<Void, Void, Boolean>() {
+class OcrRecognizeMlKitAsyncTask2(private val context: Context,
+                                  private val frameProcessor: VisionImageProcessor,
+                                  private val frame: Frame,
+                                  private val ocrListener: VisionProcessorBase.OcrListener) : AsyncTask<Void, Void, Boolean>() {
 
     override fun doInBackground(vararg arg0: Void): Boolean {
-        frameProcessor.process(bitmap, ocrListener)
+        frameProcessor.process(frame, ocrListener)
         return true
     }
 

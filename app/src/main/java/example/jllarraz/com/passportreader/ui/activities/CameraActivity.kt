@@ -25,16 +25,16 @@ import org.jmrtd.lds.icao.MRZInfo
 
 import example.jllarraz.com.passportreader.R
 import example.jllarraz.com.passportreader.common.IntentData
-import example.jllarraz.com.passportreader.ui.fragments.Camera2MLKitFragment
+import example.jllarraz.com.passportreader.ui.fragments.CameraMLKitFragment
 
-class CameraActivity : AppCompatActivity(), Camera2MLKitFragment.Camera2MLKitFragmentListener {
+class CameraActivity : AppCompatActivity(), CameraMLKitFragment.Camera2MLKitFragmentListener {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_camera)
         if (null == savedInstanceState) {
             supportFragmentManager.beginTransaction()
-                    .replace(R.id.container, Camera2MLKitFragment())
+                    .replace(R.id.container, CameraMLKitFragment())
                     .commit()
         }
     }
