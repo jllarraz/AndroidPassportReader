@@ -27,7 +27,7 @@ import example.jllarraz.com.passportreader.R
 import example.jllarraz.com.passportreader.common.IntentData
 import example.jllarraz.com.passportreader.ui.fragments.CameraMLKitFragment
 
-class CameraActivity : AppCompatActivity(), CameraMLKitFragment.Camera2MLKitFragmentListener {
+class CameraActivity : AppCompatActivity(), CameraMLKitFragment.CameraMLKitFragmentListener {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
