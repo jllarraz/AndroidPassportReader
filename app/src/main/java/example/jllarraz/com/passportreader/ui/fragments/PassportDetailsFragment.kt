@@ -3,44 +3,27 @@ package example.jllarraz.com.passportreader.ui.fragments
 import android.content.Context
 import android.graphics.Bitmap
 import android.os.Bundle
-import android.os.Parcelable
-import android.support.v4.app.Fragment
-import android.support.v4.app.FragmentActivity
-import android.support.v4.content.ContextCompat
-import android.support.v7.widget.AppCompatImageView
-import android.support.v7.widget.CardView
+import androidx.core.content.ContextCompat
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
-import android.widget.TableRow
-import android.widget.TextView
-
-
-import org.apache.commons.codec.binary.Hex
 import org.jmrtd.FeatureStatus
 import org.jmrtd.VerificationStatus
-import org.jmrtd.lds.SODFile
 
 import java.security.MessageDigest
-import java.security.cert.X509Certificate
 import java.text.SimpleDateFormat
 
 import javax.security.auth.x500.X500Principal
 
-import butterknife.BindView
-import butterknife.ButterKnife
 import example.jllarraz.com.passportreader.R
 import example.jllarraz.com.passportreader.common.IntentData
-import example.jllarraz.com.passportreader.data.AdditionalDocumentDetails
-import example.jllarraz.com.passportreader.data.AdditionalPersonDetails
 import example.jllarraz.com.passportreader.data.Passport
-import example.jllarraz.com.passportreader.data.PersonDetails
 import example.jllarraz.com.passportreader.utils.StringUtils
 import kotlinx.android.synthetic.main.fragment_passport_details.*
 import java.util.*
 
-class PassportDetailsFragment : Fragment() {
+class PassportDetailsFragment : androidx.fragment.app.Fragment() {
 
     private var passportDetailsFragmentListener: PassportDetailsFragmentListener? = null
 
@@ -62,8 +45,6 @@ class PassportDetailsFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
-        ButterKnife.bind(this, view)
 
         val arguments = arguments
         if (arguments!!.containsKey(IntentData.KEY_PASSPORT)) {

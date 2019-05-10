@@ -43,13 +43,11 @@ import org.jmrtd.JMRTDSecurityProvider
 class KeyStoreCertStoreParameters(val keyStore: KeyStore) : Cloneable, CertStoreParameters {
 
     @Throws(KeyStoreException::class)
-    constructor(uri: URI, password: CharArray) : this(uri, DEFAULT_ALGORITHM, password) {
-    }
+    constructor(uri: URI, password: CharArray) : this(uri, DEFAULT_ALGORITHM, password)
 
     @Throws(KeyStoreException::class)
     @JvmOverloads
-    constructor(uri: URI, algorithm: String = DEFAULT_ALGORITHM, password: CharArray = DEFAULT_PASSWORD) : this(readKeyStore(uri, algorithm, password)) {
-    }
+    constructor(uri: URI, algorithm: String = DEFAULT_ALGORITHM, password: CharArray = DEFAULT_PASSWORD) : this(readKeyStore(uri, algorithm, password))
 
     /**
      * Makes a shallow copy of this object as this

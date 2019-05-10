@@ -32,15 +32,13 @@ package org.jmrtd.cert
  */
 class PKDMasterListCertStoreParameters : PKDCertStoreParameters {
 
-    constructor() : super() {}
+    constructor() : super()
 
     @JvmOverloads
-    constructor(serverName: String, baseDN: String = DEFAULT_BASE_DN) : super(serverName, baseDN) {
-    }
+    constructor(serverName: String, baseDN: String = DEFAULT_BASE_DN) : super(serverName, baseDN)
 
     @JvmOverloads
-    constructor(serverName: String, port: Int, baseDN: String = DEFAULT_BASE_DN) : super(serverName, port, baseDN) {
-    }
+    constructor(serverName: String, port: Int, baseDN: String = DEFAULT_BASE_DN) : super(serverName, port, baseDN)
 
     companion object {
 

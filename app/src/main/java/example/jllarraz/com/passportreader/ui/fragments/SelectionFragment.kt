@@ -3,9 +3,9 @@ package example.jllarraz.com.passportreader.ui.fragments
 import android.content.Context
 import android.graphics.Bitmap
 import android.os.Bundle
-import android.support.v4.app.Fragment
-import android.support.v4.app.FragmentActivity
-import android.support.v7.widget.AppCompatEditText
+import androidx.fragment.app.Fragment
+import androidx.fragment.app.FragmentActivity
+import androidx.appcompat.widget.AppCompatEditText
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -28,7 +28,7 @@ import example.jllarraz.com.passportreader.common.IntentData
 import example.jllarraz.com.passportreader.ui.validators.DateRule
 import example.jllarraz.com.passportreader.ui.validators.DocumentNumberRule
 
-class SelectionFragment : Fragment(), Validator.ValidationListener {
+class SelectionFragment : androidx.fragment.app.Fragment(), Validator.ValidationListener {
 
     private var radioGroup: RadioGroup? = null
     private var linearLayoutManual: LinearLayout? = null

@@ -6,8 +6,8 @@ import android.graphics.Bitmap
 import android.nfc.NfcAdapter
 import android.os.Bundle
 import android.provider.Settings
-import android.support.v4.app.Fragment
-import android.support.v4.app.FragmentActivity
+import androidx.fragment.app.Fragment
+import androidx.fragment.app.FragmentActivity
 import android.widget.Toast
 
 import net.sf.scuba.smartcards.CardServiceException
@@ -24,7 +24,7 @@ import example.jllarraz.com.passportreader.ui.fragments.PassportPhotoFragment
 
 import example.jllarraz.com.passportreader.common.IntentData.KEY_MRZ_INFO
 
-class NfcActivity : FragmentActivity(), NfcFragment.NfcFragmentListener, PassportDetailsFragment.PassportDetailsFragmentListener, PassportPhotoFragment.PassportPhotoFragmentListener {
+class NfcActivity : androidx.fragment.app.FragmentActivity(), NfcFragment.NfcFragmentListener, PassportDetailsFragment.PassportDetailsFragmentListener, PassportPhotoFragment.PassportPhotoFragmentListener {
 
     private var mrzInfo: MRZInfo? = null
 

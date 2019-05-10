@@ -40,7 +40,7 @@ import android.widget.Scroller
 
 
 
-class TouchImageView : android.support.v7.widget.AppCompatImageView {
+class TouchImageView : androidx.appcompat.widget.AppCompatImageView {
 
     //
     // Scale of image ranges from minScale to maxScale, where minScale == 1
@@ -213,7 +213,7 @@ class TouchImageView : android.support.v7.widget.AppCompatImageView {
         superMinScale = SUPER_MIN_MULTIPLIER * minScale
         superMaxScale = SUPER_MAX_MULTIPLIER * maxScale
         imageMatrix = matrixInternal
-        setScaleType(ImageView.ScaleType.MATRIX)
+        scaleType = ImageView.ScaleType.MATRIX
         setState(State.NONE)
         onDrawReady = false
         super.setOnTouchListener(PrivateOnTouchListener())

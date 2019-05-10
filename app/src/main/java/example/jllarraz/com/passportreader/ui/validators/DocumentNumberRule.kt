@@ -1,7 +1,7 @@
 package example.jllarraz.com.passportreader.ui.validators
 
 import android.content.Context
-import android.support.v7.widget.AppCompatEditText
+import androidx.appcompat.widget.AppCompatEditText
 import android.widget.EditText
 
 import com.mobsandgeeks.saripaar.QuickRule

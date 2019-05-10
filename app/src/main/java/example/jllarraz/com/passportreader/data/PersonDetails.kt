@@ -25,7 +25,7 @@ class PersonDetails : Parcelable {
     var optionalData2: String? = null
     var gender: Gender? = Gender.UNKNOWN
 
-    constructor() {}
+    constructor()
 
     constructor(`in`: Parcel) {
 

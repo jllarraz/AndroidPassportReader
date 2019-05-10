@@ -3,8 +3,8 @@ package example.jllarraz.com.passportreader.ui.fragments
 import android.content.Context
 import android.graphics.Bitmap
 import android.os.Bundle
-import android.support.v4.app.Fragment
-import android.support.v4.app.FragmentActivity
+import androidx.fragment.app.Fragment
+import androidx.fragment.app.FragmentActivity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -14,7 +14,7 @@ import example.jllarraz.com.passportreader.common.IntentData
 import example.jllarraz.com.passportreader.ui.views.TouchImageView
 import kotlinx.android.synthetic.main.fragment_photo.*
 
-class PassportPhotoFragment : Fragment() {
+class PassportPhotoFragment : androidx.fragment.app.Fragment() {
 
     private var passportPhotoFragmentListener: PassportPhotoFragmentListener? = null
 

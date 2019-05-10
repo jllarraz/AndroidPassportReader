@@ -32,7 +32,4 @@ class OcrRecognizeMlKitAsyncTask2(private val context: Context,
         return true
     }
 
-    override fun onPostExecute(result: Boolean?) {
-        super.onPostExecute(result)
-    }
 }

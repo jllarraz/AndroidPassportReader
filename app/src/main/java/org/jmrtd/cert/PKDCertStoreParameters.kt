@@ -45,7 +45,7 @@ open class PKDCertStoreParameters @JvmOverloads constructor(
          */
         val baseDN: String = DEFAULT_BASE_DN) : Cloneable, CertStoreParameters {
 
-    constructor(serverName: String, baseDN: String) : this(serverName, DEFAULT_PORT, baseDN) {}
+    constructor(serverName: String, baseDN: String) : this(serverName, DEFAULT_PORT, baseDN)
 
     /**
      * Makes a copy of this object.

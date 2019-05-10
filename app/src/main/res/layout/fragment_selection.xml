@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<android.support.v4.widget.NestedScrollView
+<androidx.core.widget.NestedScrollView
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/scroll_view"
@@ -18,7 +18,7 @@
         android:orientation="vertical"
         >
 
-    <android.support.v7.widget.AppCompatTextView
+    <androidx.appcompat.widget.AppCompatTextView
         android:id="@+id/titleRadioGroup"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -32,14 +32,14 @@
         style="@style/ToogleGroup"
         android:orientation="horizontal">
 
-        <android.support.v7.widget.AppCompatRadioButton
+        <androidx.appcompat.widget.AppCompatRadioButton
             android:layout_marginLeft="1dp"
             android:id="@+id/radioButtonManual"
             android:text="@string/selection_manual"
             style="@style/ToogleButton.Left"
             />
 
-        <android.support.v7.widget.AppCompatRadioButton
+        <androidx.appcompat.widget.AppCompatRadioButton
             android:layout_marginRight="1dp"
             android:id="@+id/radioButtonOcr"
             android:text="@string/selection_automatic"
@@ -57,13 +57,13 @@
         android:layout_marginTop="22dp"
         >
 
-            <android.support.design.widget.TextInputLayout
+            <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/textInputLayoutDocumentNumber"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 >
 
-                <android.support.v7.widget.AppCompatEditText
+                <androidx.appcompat.widget.AppCompatEditText
                     android:id="@+id/documentNumber"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -73,15 +73,15 @@
                     android:maxLength="9"
                     android:maxLines="3" />
 
-            </android.support.design.widget.TextInputLayout>
+            </com.google.android.material.textfield.TextInputLayout>
 
-            <android.support.design.widget.TextInputLayout
+            <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/textInputLayoutDocumentExpiration"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 >
 
-                <android.support.v7.widget.AppCompatEditText
+                <androidx.appcompat.widget.AppCompatEditText
                     android:id="@+id/documentExpiration"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -91,15 +91,15 @@
                     android:maxLength="6"
                     android:maxLines="3" />
 
-            </android.support.design.widget.TextInputLayout>
+            </com.google.android.material.textfield.TextInputLayout>
 
-        <android.support.design.widget.TextInputLayout
+        <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/textInputLayoutDateOfBirth"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             >
 
-            <android.support.v7.widget.AppCompatEditText
+            <androidx.appcompat.widget.AppCompatEditText
                 android:id="@+id/documentDateOfBirth"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -109,7 +109,7 @@
                 android:maxLength="6"
                 android:maxLines="3" />
 
-        </android.support.design.widget.TextInputLayout>
+        </com.google.android.material.textfield.TextInputLayout>
 
         <Button
             android:id="@+id/buttonReadNfc"
@@ -132,4 +132,4 @@
 
     </LinearLayout>
 
-</android.support.v4.widget.NestedScrollView>
+</androidx.core.widget.NestedScrollView>

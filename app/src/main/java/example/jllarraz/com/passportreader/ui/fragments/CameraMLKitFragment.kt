@@ -25,9 +25,9 @@ import android.graphics.Color
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
-import android.support.v4.app.ActivityCompat
-import android.support.v4.app.DialogFragment
-import android.support.v4.app.Fragment
+import androidx.core.app.ActivityCompat
+import androidx.fragment.app.DialogFragment
+import androidx.fragment.app.Fragment
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -47,7 +47,7 @@ import io.fotoapparat.preview.Frame
 import io.fotoapparat.util.FrameProcessor
 import kotlinx.android.synthetic.main.fragment_camera_mrz.*
 
-class CameraMLKitFragment : Fragment(), ActivityCompat.OnRequestPermissionsResultCallback {
+class CameraMLKitFragment : androidx.fragment.app.Fragment(), ActivityCompat.OnRequestPermissionsResultCallback {
 
 
     /**
@@ -76,7 +76,7 @@ class CameraMLKitFragment : Fragment(), ActivityCompat.OnRequestPermissionsResul
                     isDecoding = true
                     val ocrRecognizeMlKitAsyncTask = OcrRecognizeMlKitAsyncTask2(context!!.applicationContext,
                             frameProcessor!!,
-                            frame!!,
+                            frame,
                             object : VisionProcessorBase.OcrListener {
                                 override fun onMRZRead(mrzInfo: MRZInfo, timeRequired: Long) {
                                     mHandler.post {
@@ -133,10 +133,6 @@ class CameraMLKitFragment : Fragment(), ActivityCompat.OnRequestPermissionsResul
                 )
                 .build()
 
-    }
-
-    override fun onActivityCreated(savedInstanceState: Bundle?) {
-        super.onActivityCreated(savedInstanceState)
     }
 
     override fun onResume() {
@@ -219,7 +215,7 @@ class CameraMLKitFragment : Fragment(), ActivityCompat.OnRequestPermissionsResul
     /**
      * Shows an error message dialog.
      */
-    class ErrorDialog : DialogFragment() {
+    class ErrorDialog : androidx.fragment.app.DialogFragment() {
 
         override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
             val activity = activity
@@ -247,7 +243,7 @@ class CameraMLKitFragment : Fragment(), ActivityCompat.OnRequestPermissionsResul
     /**
      * Shows OK/Cancel confirmation dialog about camera permission.
      */
-    class ConfirmationDialog : DialogFragment() {
+    class ConfirmationDialog : androidx.fragment.app.DialogFragment() {
 
         override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
             val parent = parentFragment

@@ -9,8 +9,8 @@ import android.nfc.tech.IsoDep
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
-import android.support.v4.app.Fragment
-import android.support.v4.app.FragmentActivity
+import androidx.fragment.app.Fragment
+import androidx.fragment.app.FragmentActivity
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -39,7 +39,7 @@ import example.jllarraz.com.passportreader.common.IntentData
 import example.jllarraz.com.passportreader.data.Passport
 
 
-class NfcFragment : Fragment() {
+class NfcFragment : androidx.fragment.app.Fragment() {
 
     private var mrzInfo: MRZInfo? = null
     private var nfcFragmentListener: NfcFragmentListener? = null
