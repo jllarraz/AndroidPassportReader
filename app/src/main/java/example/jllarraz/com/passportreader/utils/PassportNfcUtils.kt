@@ -6,15 +6,12 @@ import android.util.Log
 
 import org.jmrtd.cert.CVCPrincipal
 import org.jmrtd.cert.CardVerifiableCertificate
-import org.jmrtd.lds.DisplayedImageInfo
 import org.jmrtd.lds.icao.DG2File
 import org.jmrtd.lds.icao.DG3File
 import org.jmrtd.lds.icao.DG5File
 import org.jmrtd.lds.icao.DG7File
 import org.jmrtd.lds.iso19794.FaceImageInfo
-import org.jmrtd.lds.iso19794.FaceInfo
 import org.jmrtd.lds.iso19794.FingerImageInfo
-import org.jmrtd.lds.iso19794.FingerInfo
 import org.spongycastle.jce.provider.BouncyCastleProvider
 
 import java.io.ByteArrayInputStream
@@ -24,15 +21,12 @@ import java.io.InputStream
 
 import java.math.BigInteger
 import java.security.GeneralSecurityException
-import java.security.Key
 import java.security.KeyStore
 import java.security.PrivateKey
 import java.security.Security
-import java.security.cert.CertPath
 import java.security.cert.CertPathBuilder
 import java.security.cert.CertPathBuilderException
 import java.security.cert.CertStore
-import java.security.cert.CertStoreParameters
 import java.security.cert.Certificate
 import java.security.cert.CollectionCertStoreParameters
 import java.security.cert.PKIXBuilderParameters

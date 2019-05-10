@@ -6,17 +6,13 @@ import net.sf.scuba.smartcards.CardServiceException
 
 import org.bouncycastle.asn1.ASN1Encodable
 import org.bouncycastle.asn1.ASN1Integer
-import org.bouncycastle.asn1.ASN1Sequence
 import org.bouncycastle.asn1.DERSequence
 import org.jmrtd.BACKey
-import org.jmrtd.BACKeySpec
 import org.jmrtd.JMRTDSecurityProvider
 import org.jmrtd.MRTDTrustStore
 import org.jmrtd.PACEKeySpec
 import org.jmrtd.PassportService
 import org.jmrtd.Util
-import org.jmrtd.cert.CVCPrincipal
-import org.jmrtd.cert.CardVerifiableCertificate
 
 import java.io.IOException
 import java.io.InputStream
@@ -26,15 +22,12 @@ import java.security.KeyStore
 import java.security.MessageDigest
 import java.security.NoSuchAlgorithmException
 import java.security.PrivateKey
-import java.security.Provider
 import java.security.PublicKey
 import java.security.SecureRandom
 import java.security.Security
 import java.security.Signature
-import java.security.cert.CertStore
 import java.security.cert.Certificate
 import java.security.cert.CertificateException
-import java.security.cert.TrustAnchor
 import java.security.cert.X509Certificate
 import java.security.interfaces.ECPublicKey
 import java.security.interfaces.RSAPublicKey
@@ -52,6 +45,7 @@ import javax.security.auth.x500.X500Principal
 
 import org.jmrtd.FeatureStatus
 import org.jmrtd.VerificationStatus
+import org.jmrtd.cert.CardVerifiableCertificate
 import org.jmrtd.lds.AbstractTaggedLDSFile
 import org.jmrtd.lds.ActiveAuthenticationInfo
 import org.jmrtd.lds.CVCAFile
@@ -73,7 +67,6 @@ import org.jmrtd.lds.icao.DG3File
 import org.jmrtd.lds.icao.DG5File
 import org.jmrtd.lds.icao.DG7File
 import org.jmrtd.lds.icao.MRZInfo
-import org.jmrtd.protocol.AAResult
 import org.jmrtd.protocol.BACResult
 import org.jmrtd.protocol.EACCAResult
 import org.jmrtd.protocol.EACTAResult
