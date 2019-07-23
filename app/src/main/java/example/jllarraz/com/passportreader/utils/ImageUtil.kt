@@ -1,12 +1,7 @@
 package example.jllarraz.com.passportreader.utils
 
 import android.content.Context
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
-import android.graphics.Color
-import android.graphics.ImageFormat
-import android.graphics.Rect
-import android.graphics.YuvImage
+import android.graphics.*
 import android.media.Image
 import android.util.Log
 
@@ -116,6 +111,12 @@ object ImageUtil {
         } else {
             return BitmapFactory.decodeStream(inputStream)
         }
+    }
+
+    fun rotateBitmap(source: Bitmap, angle: Float): Bitmap {
+        val matrix = Matrix()
+        matrix.postRotate(angle)
+        return Bitmap.createBitmap(source, 0, 0, source.width, source.height, matrix, true)
     }
 
     /* ONLY PRIVATE METHODS BELOW */

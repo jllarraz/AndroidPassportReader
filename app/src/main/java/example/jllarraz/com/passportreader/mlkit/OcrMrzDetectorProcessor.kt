@@ -15,6 +15,7 @@
  */
 package example.jllarraz.com.passportreader.mlkit
 
+import android.graphics.Bitmap
 import android.util.Log
 
 import com.google.android.gms.tasks.Task
@@ -29,7 +30,6 @@ import net.sf.scuba.data.Gender
 import org.jmrtd.lds.icao.MRZInfo
 
 import java.io.IOException
-import java.util.regex.Matcher
 import java.util.regex.Pattern
 
 
@@ -37,7 +37,7 @@ import java.util.regex.Pattern
  * A very simple Processor which receives detected TextBlocks and adds them to the overlay
  * as OcrGraphics.
  */
-class OcrMrzDetectorProcessor : VisionProcessorBase<FirebaseVisionText>() {
+class OcrMrzDetectorProcessor(val callback: MRZCallback) : VisionProcessorBase<FirebaseVisionText>() {
 
     private val detector: FirebaseVisionTextRecognizer
 
@@ -64,7 +64,8 @@ class OcrMrzDetectorProcessor : VisionProcessorBase<FirebaseVisionText>() {
             results: FirebaseVisionText,
             frameMetadata: FrameMetadata?,
             timeRequired: Long,
-            ocrListener: VisionProcessorBase.OcrListener) {
+            bitmap: Bitmap
+            ) {
 
         var fullRead = ""
         val blocks = results.textBlocks
@@ -97,7 +98,7 @@ class OcrMrzDetectorProcessor : VisionProcessorBase<FirebaseVisionText>() {
 
 
             val mrzInfo = createDummyMrz(documentNumber, dateOfBirthDay, expirationDate)
-            ocrListener.onMRZRead(mrzInfo, timeRequired)
+            callback.onMRZRead(mrzInfo, timeRequired)
         } else {
             //Try with the new IP passport type
             val patternLineIPassportTypeLine1 = Pattern.compile(REGEX_IP_PASSPORT_LINE_1)
@@ -115,10 +116,10 @@ class OcrMrzDetectorProcessor : VisionProcessorBase<FirebaseVisionText>() {
                 documentNumber = documentNumber.replace("O".toRegex(), "0")
 
                 val mrzInfo = createDummyMrz(documentNumber, dateOfBirthDay, expirationDate)
-                ocrListener.onMRZRead(mrzInfo, timeRequired)
+                callback.onMRZRead(mrzInfo, timeRequired)
             } else {
                 //No success
-                ocrListener.onMRZReadFailure(timeRequired)
+                callback.onMRZReadFailure(timeRequired)
             }
         }
 
@@ -141,9 +142,15 @@ class OcrMrzDetectorProcessor : VisionProcessorBase<FirebaseVisionText>() {
         )
     }
 
-    override fun onFailure(e: Exception, timeRequired: Long, ocrListener: VisionProcessorBase.OcrListener) {
+    override fun onFailure(e: Exception, timeRequired: Long) {
         Log.w(TAG, "Text detection failed.$e")
-        ocrListener.onFailure(e, timeRequired)
+        callback.onFailure(e, timeRequired)
+    }
+
+    interface MRZCallback {
+        fun onMRZRead(mrzInfo: MRZInfo, timeRequired: Long)
+        fun onMRZReadFailure(timeRequired: Long)
+        fun onFailure(e: Exception, timeRequired: Long)
     }
 
     companion object {

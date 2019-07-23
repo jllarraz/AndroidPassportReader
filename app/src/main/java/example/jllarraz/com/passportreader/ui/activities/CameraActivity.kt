@@ -27,16 +27,14 @@ import example.jllarraz.com.passportreader.R
 import example.jllarraz.com.passportreader.common.IntentData
 import example.jllarraz.com.passportreader.ui.fragments.CameraMLKitFragment
 
-class CameraActivity : AppCompatActivity(), CameraMLKitFragment.CameraMLKitFragmentListener {
+class CameraActivity : AppCompatActivity(), CameraMLKitFragment.CameraMLKitCallback {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_camera)
-        if (null == savedInstanceState) {
-            supportFragmentManager.beginTransaction()
-                    .replace(R.id.container, CameraMLKitFragment())
-                    .commit()
-        }
+        supportFragmentManager.beginTransaction()
+                .replace(R.id.container, CameraMLKitFragment())
+                .commit()
     }
 
     override fun onBackPressed() {

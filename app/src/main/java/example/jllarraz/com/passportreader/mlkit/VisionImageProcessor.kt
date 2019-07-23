@@ -26,16 +26,16 @@ interface VisionImageProcessor {
 
     /** Processes the images with the underlying machine learning models.  */
     @Throws(FirebaseMLException::class)
-    fun process(data: ByteBuffer, frameMetadata: FrameMetadata, ocrListener: VisionProcessorBase.OcrListener)
+    fun process(data: ByteBuffer, frameMetadata: FrameMetadata):Boolean
 
     /** Processes the bitmap images.  */
-    fun process(bitmap: Bitmap, ocrListener: VisionProcessorBase.OcrListener)
+    fun process(bitmap: Bitmap, rotation:Int):Boolean
 
     /** Processes the bitmap images.  */
-    fun process(frame:Frame, ocrListener: VisionProcessorBase.OcrListener)
+    fun process(frame:Frame, rotation:Int):Boolean
 
     /** Processes the images.  */
-    fun process(bitmap: Image, rotation: Int, ocrListener: VisionProcessorBase.OcrListener)
+    fun process(image: Image, rotation: Int):Boolean
 
     /** Stops the underlying machine learning model and release resources.  */
     fun stop()

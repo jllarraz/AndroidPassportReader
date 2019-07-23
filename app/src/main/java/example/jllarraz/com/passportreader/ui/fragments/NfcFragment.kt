@@ -2,15 +2,11 @@ package example.jllarraz.com.passportreader.ui.fragments
 
 import android.content.Context
 import android.content.Intent
-import android.graphics.Bitmap
 import android.nfc.NfcAdapter
 import android.nfc.Tag
-import android.nfc.tech.IsoDep
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
-import androidx.fragment.app.Fragment
-import androidx.fragment.app.FragmentActivity
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -34,9 +30,10 @@ import java.security.Security
 
 
 import example.jllarraz.com.passportreader.R
-import example.jllarraz.com.passportreader.asynctask.NfcPassportAsyncTask
 import example.jllarraz.com.passportreader.common.IntentData
 import example.jllarraz.com.passportreader.data.Passport
+import example.jllarraz.com.passportreader.utils.NFCDocumentTag
+import io.reactivex.disposables.CompositeDisposable
 
 
 class NfcFragment : androidx.fragment.app.Fragment() {
@@ -49,6 +46,7 @@ class NfcFragment : androidx.fragment.app.Fragment() {
     private var progressBar: ProgressBar? = null
 
     internal var mHandler = Handler(Looper.getMainLooper())
+    var disposable = CompositeDisposable()
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
                               savedInstanceState: Bundle?): View? {
@@ -79,56 +77,60 @@ class NfcFragment : androidx.fragment.app.Fragment() {
             return
         }
         val tag = intent.getParcelableExtra<Tag>(NfcAdapter.EXTRA_TAG) ?: return
-        onNFCSReadStart()
-        val nfcPassportAsyncTask = NfcPassportAsyncTask(context!!.applicationContext, tag, mrzInfo!!, object : NfcPassportAsyncTask.NfcPassportAsyncTaskListener {
+        val subscribe = NFCDocumentTag().handleTag(context!!, tag, mrzInfo!!, object : NFCDocumentTag.PassportCallback {
+
+            override fun onPassportReadStart() {
+                onNFCSReadStart()
+            }
+
+            override fun onPassportReadFinish() {
+                onNFCReadFinish()
+            }
+
             override fun onPassportRead(passport: Passport?) {
                 this@NfcFragment.onPassportRead(passport)
-                onNFCReadFinish()
+
             }
 
             override fun onAccessDeniedException(exception: AccessDeniedException) {
                 Toast.makeText(context, getString(R.string.warning_authentication_failed), Toast.LENGTH_SHORT).show()
                 exception.printStackTrace()
                 this@NfcFragment.onCardException(exception)
-                onNFCReadFinish()
+
             }
 
             override fun onBACDeniedException(exception: BACDeniedException) {
                 Toast.makeText(context, exception.toString(), Toast.LENGTH_SHORT).show()
                 this@NfcFragment.onCardException(exception)
-                onNFCReadFinish()
             }
 
             override fun onPACEException(exception: PACEException) {
                 Toast.makeText(context, exception.toString(), Toast.LENGTH_SHORT).show()
                 this@NfcFragment.onCardException(exception)
-                onNFCReadFinish()
             }
 
-            override fun onCardException(cardException: CardServiceException) {
-                val sw = cardException.sw.toShort()
+            override fun onCardException(exception: CardServiceException) {
+                val sw = exception.sw.toShort()
                 when (sw) {
                     ISO7816.SW_CLA_NOT_SUPPORTED -> {
                         Toast.makeText(context, getString(R.string.warning_cla_not_supported), Toast.LENGTH_SHORT).show()
                     }
                     else -> {
-                        Toast.makeText(context, cardException.toString(), Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, exception.toString(), Toast.LENGTH_SHORT).show()
                     }
                 }
-                this@NfcFragment.onCardException(cardException)
-                onNFCReadFinish()
+                this@NfcFragment.onCardException(exception)
             }
 
             override fun onGeneralException(exception: Exception?) {
                 Toast.makeText(context, exception!!.toString(), Toast.LENGTH_SHORT).show()
                 this@NfcFragment.onCardException(exception)
-                onNFCReadFinish()
             }
         })
-        nfcPassportAsyncTask.execute()
+
+        disposable.add(subscribe)
 
     }
-
 
     override fun onAttach(context: Context?) {
         super.onAttach(context)
@@ -161,6 +163,13 @@ class NfcFragment : androidx.fragment.app.Fragment() {
         if (nfcFragmentListener != null) {
             nfcFragmentListener!!.onDisableNfc()
         }
+    }
+
+    override fun onDestroyView() {
+        if (!disposable.isDisposed()) {
+            disposable.dispose();
+        }
+        super.onDestroyView()
     }
 
     protected fun onNFCSReadStart() {
@@ -196,6 +205,8 @@ class NfcFragment : androidx.fragment.app.Fragment() {
         fun onPassportRead(passport: Passport?)
         fun onCardException(cardException: Exception?)
     }
+
+
 
     companion object {
         private val TAG = NfcFragment::class.java.simpleName

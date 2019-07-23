@@ -25,9 +25,6 @@ import android.graphics.Color
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
-import androidx.core.app.ActivityCompat
-import androidx.fragment.app.DialogFragment
-import androidx.fragment.app.Fragment
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -38,28 +35,27 @@ import android.widget.Toast
 import org.jmrtd.lds.icao.MRZInfo
 
 import example.jllarraz.com.passportreader.R
-import example.jllarraz.com.passportreader.asynctask.OcrRecognizeMlKitAsyncTask2
 import example.jllarraz.com.passportreader.mlkit.OcrMrzDetectorProcessor
-import example.jllarraz.com.passportreader.mlkit.VisionProcessorBase
 import example.jllarraz.com.passportreader.utils.MRZUtil
-import io.fotoapparat.Fotoapparat
 import io.fotoapparat.preview.Frame
-import io.fotoapparat.util.FrameProcessor
+import io.fotoapparat.view.CameraView
+import io.reactivex.Single
+import io.reactivex.android.schedulers.AndroidSchedulers
+import io.reactivex.disposables.CompositeDisposable
+import io.reactivex.schedulers.Schedulers
 import kotlinx.android.synthetic.main.fragment_camera_mrz.*
 
-class CameraMLKitFragment : androidx.fragment.app.Fragment(), ActivityCompat.OnRequestPermissionsResultCallback {
+class CameraMLKitFragment : CameraFragment() {
 
-
-    /**
-     * Camera Manager
-     */
-    private var fotoapparat: Fotoapparat?=null
     
     ////////////////////////////////////////
 
-    private var cameraMLKitFragmentListener: CameraMLKitFragmentListener? = null
+    private var cameraMLKitCallback: CameraMLKitCallback? = null
     private var frameProcessor: OcrMrzDetectorProcessor? = null
     private val mHandler = Handler(Looper.getMainLooper())
+    var disposable = CompositeDisposable()
+
+    private var isDecoding = false
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
                               savedInstanceState: Bundle?): View? {
@@ -67,107 +63,172 @@ class CameraMLKitFragment : androidx.fragment.app.Fragment(), ActivityCompat.OnR
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        frameProcessor = OcrMrzDetectorProcessor()
-
-        val callbackFrameProcessor = object : FrameProcessor {
-            private var isDecoding = false
-            override fun invoke(frame: Frame) {
-                if (!isDecoding) {
-                    isDecoding = true
-                    val ocrRecognizeMlKitAsyncTask = OcrRecognizeMlKitAsyncTask2(context!!.applicationContext,
-                            frameProcessor!!,
-                            frame,
-                            object : VisionProcessorBase.OcrListener {
-                                override fun onMRZRead(mrzInfo: MRZInfo, timeRequired: Long) {
-                                    mHandler.post {
-                                        try {
-                                            status_view_top!!.text = getString(R.string.status_bar_ocr, mrzInfo.documentNumber, mrzInfo.dateOfBirth, mrzInfo.dateOfExpiry)
-                                            status_view_bottom!!.text = getString(R.string.status_bar_success, timeRequired)
-                                            status_view_bottom!!.setTextColor(resources.getColor(R.color.status_text))
-                                            if (cameraMLKitFragmentListener != null) {
-                                                cameraMLKitFragmentListener!!.onPassportRead(mrzInfo)
-                                            }
-
-                                        } catch (e: IllegalStateException) {
-                                            //The fragment is destroyed
-                                        }
-                                    }
-                                }
-
-                                override fun onMRZReadFailure(timeRequired: Long) {
-                                    mHandler.post {
-                                        try {
-                                            status_view_bottom!!.text = getString(R.string.status_bar_failure, timeRequired)
-                                            status_view_bottom!!.setTextColor(Color.RED)
-                                            status_view_top!!.text = ""
-                                        } catch (e: IllegalStateException) {
-                                            //The fragment is destroyed
-                                        }
-                                    }
-
-                                    isDecoding = false
-                                }
-
-                                override fun onFailure(e: Exception, timeRequired: Long) {
-                                    isDecoding = false
-                                    e.printStackTrace()
-                                    mHandler.post {
-                                        if (cameraMLKitFragmentListener != null) {
-                                            cameraMLKitFragmentListener!!.onError()
-                                        }
-                                    }
-                                }
-                            })
-                    ocrRecognizeMlKitAsyncTask.execute()
-                }
-            }
-
-
-        }
-
-        fotoapparat = Fotoapparat
-                .with(context!!)
-                .into(camera_view)
-                .frameProcessor(
-                        callbackFrameProcessor
-                )
-                .build()
-
+        super.onViewCreated(view, savedInstanceState)
     }
 
-    override fun onResume() {
-        super.onResume()
-        MRZUtil.cleanStorage()
 
-        fotoapparat?.start()
+
+
+    override fun onResume() {
+        MRZUtil.cleanStorage()
+        frameProcessor = textProcessor
+        super.onResume()
     }
 
 
 
     override fun onPause() {
-        fotoapparat?.stop()
+        frameProcessor?.stop()
+        frameProcessor = null
 
         super.onPause()
     }
 
     override fun onDestroyView() {
-        frameProcessor!!.stop()
+        if (!disposable.isDisposed()) {
+            disposable.dispose();
+        }
         super.onDestroyView()
     }
 
     override fun onAttach(context: Context?) {
         super.onAttach(context)
         val activity = activity
-        if (activity is CameraMLKitFragmentListener) {
-            cameraMLKitFragmentListener = activity
+        if (activity is CameraMLKitCallback) {
+            cameraMLKitCallback = activity
         }
     }
 
     override fun onDetach() {
-        cameraMLKitFragmentListener = null
+        cameraMLKitCallback = null
         super.onDetach()
 
     }
+
+
+
+    ////////////////////////////////////////////////////////////////////////////////////////
+    //
+    //        Events from camera fragment
+    //
+    ////////////////////////////////////////////////////////////////////////////////////////
+
+
+    override val callbackFrameProcessor: io.fotoapparat.preview.FrameProcessor
+        get() {
+            val callbackFrameProcessor2 = object : io.fotoapparat.preview.FrameProcessor {
+                override fun process(frame: Frame) {
+                    try {
+                        if (!isDecoding) {
+                            isDecoding = true
+
+                            if (frameProcessor != null) {
+                                val subscribe = Single.fromCallable({
+                                    (frameProcessor as OcrMrzDetectorProcessor).process(frame, rotation)
+                                }).subscribeOn(Schedulers.io()).observeOn(AndroidSchedulers.mainThread()).subscribe({ success ->
+                                    {
+                                        //Don't do anything
+                                    }
+                                })
+                                disposable.add(subscribe)
+                            }
+                        }
+                    }catch (e:Exception){
+                        e.printStackTrace()
+                    }
+
+                }
+            }
+            return  callbackFrameProcessor2
+
+        }
+
+    ////////////////////////////////////////////////////////////////////////////////////////
+    //
+    //        Get camera preview
+    //
+    ////////////////////////////////////////////////////////////////////////////////////////
+
+    override val cameraPreview: CameraView
+        get(){
+            return camera_preview
+        }
+
+    ////////////////////////////////////////////////////////////////////////////////////////
+    //
+    //        Permission requested
+    //
+    ////////////////////////////////////////////////////////////////////////////////////////
+
+    override val requestedPermissions: ArrayList<String>
+        get() {
+            //Nothing as we don't need any other permission than camera and that's managed in the parent fragment
+            return ArrayList<String>()
+        }
+
+    override fun onRequestPermissionsResult(permissionsDenied: ArrayList<String>, permissionsGranted: ArrayList<String>) {
+    }
+
+
+
+    ////////////////////////////////////////////////////////////////////////////////////////
+    //
+    //       Instantiate the text processor to perform OCR
+    //
+    ////////////////////////////////////////////////////////////////////////////////////////
+    protected val textProcessor: OcrMrzDetectorProcessor
+        get() = OcrMrzDetectorProcessor(object : OcrMrzDetectorProcessor.MRZCallback {
+            override fun onMRZRead(mrzInfo: MRZInfo, timeRequired: Long) {
+                isDecoding = false
+                if(!isAdded){
+                    return
+                }
+                mHandler.post {
+                    try {
+                        status_view_top!!.text = getString(R.string.status_bar_ocr, mrzInfo.documentNumber, mrzInfo.dateOfBirth, mrzInfo.dateOfExpiry)
+                        status_view_bottom!!.text = getString(R.string.status_bar_success, timeRequired)
+                        status_view_bottom!!.setTextColor(resources.getColor(R.color.status_text))
+                        if (cameraMLKitCallback != null) {
+                            cameraMLKitCallback!!.onPassportRead(mrzInfo)
+                        }
+
+                    } catch (e: IllegalStateException) {
+                        //The fragment is destroyed
+                    }
+                }
+            }
+
+            override fun onMRZReadFailure(timeRequired: Long) {
+                isDecoding = false
+                if(!isAdded){
+                    return
+                }
+                mHandler.post {
+                    try {
+                        status_view_bottom!!.text = getString(R.string.status_bar_failure, timeRequired)
+                        status_view_bottom!!.setTextColor(Color.RED)
+                        status_view_top!!.text = ""
+                    } catch (e: IllegalStateException) {
+                        //The fragment is destroyed
+                    }
+                }
+            }
+
+            override fun onFailure(e: Exception, timeRequired: Long) {
+                isDecoding = false
+                if(!isAdded){
+                    return
+                }
+                e.printStackTrace()
+                mHandler.post {
+                    if (cameraMLKitCallback != null) {
+                        cameraMLKitCallback!!.onError()
+                    }
+                }
+            }
+        })
+
+
 
     ////////////////////////////////////////////////////////////////////////////////////////
     //
@@ -269,7 +330,7 @@ class CameraMLKitFragment : androidx.fragment.app.Fragment(), ActivityCompat.OnR
     //
     ////////////////////////////////////////////////////////////////////////////////////////
 
-    interface CameraMLKitFragmentListener {
+    interface CameraMLKitCallback {
         fun onPassportRead(mrzInfo: MRZInfo)
         fun onError()
     }

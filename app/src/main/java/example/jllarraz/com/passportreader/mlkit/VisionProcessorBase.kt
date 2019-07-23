@@ -19,6 +19,7 @@ import android.media.Image
 import com.google.android.gms.tasks.Task
 import com.google.firebase.ml.vision.common.FirebaseVisionImage
 import com.google.firebase.ml.vision.common.FirebaseVisionImageMetadata
+import example.jllarraz.com.passportreader.utils.ImageUtil
 import io.fotoapparat.preview.Frame
 
 
@@ -35,9 +36,9 @@ abstract class VisionProcessorBase<T> : VisionImageProcessor {
     private val shouldThrottle = AtomicBoolean(false)
 
     override fun process(
-            data: ByteBuffer, frameMetadata: FrameMetadata, ocrListener: OcrListener) {
+            data: ByteBuffer, frameMetadata: FrameMetadata):Boolean {
         if (shouldThrottle.get()) {
-            return
+            return false
         }
         val metadata = FirebaseVisionImageMetadata.Builder()
                 .setFormat(FirebaseVisionImageMetadata.IMAGE_FORMAT_NV21)
@@ -46,35 +47,63 @@ abstract class VisionProcessorBase<T> : VisionImageProcessor {
                 .setRotation(frameMetadata.rotation)
                 .build()
 
-        detectInVisionImage(
-                FirebaseVisionImage.fromByteBuffer(data, metadata), frameMetadata, ocrListener)
+        return detectInVisionImage(
+                FirebaseVisionImage.fromByteBuffer(data, metadata), frameMetadata)
     }
 
     // Bitmap version
-    override fun process(bitmap: Bitmap, ocrListener: OcrListener) {
-        if (shouldThrottle.get()) {
-            return
+    override fun process(bitmap: Bitmap, rotation:Int):Boolean {
+        val frameMetadata = FrameMetadata.Builder()
+                .setWidth(bitmap.width)
+                .setHeight(bitmap.height)
+                .setRotation(rotation).build()
+        val bitmapToProcess:Bitmap?
+        when(rotation){
+            0 -> {
+                bitmapToProcess = bitmap
+            }
+            else  -> {
+                bitmapToProcess = ImageUtil.rotateBitmap(bitmap, rotation.toFloat())
+            }
         }
-        detectInVisionImage(FirebaseVisionImage.fromBitmap(bitmap), null, ocrListener)
+
+        return detectInVisionImage(FirebaseVisionImage.fromBitmap(bitmapToProcess), frameMetadata)
     }
 
     // Bitmap version
-    override fun process(frame: Frame, ocrListener: OcrListener) {
+    override fun process(frame: Frame, rotation:Int):Boolean {
         if (shouldThrottle.get()) {
-            return
+            return false
         }
+
+        var intFirebaseRotation=FirebaseVisionImageMetadata.ROTATION_0
+        when(rotation){
+            0 ->{
+                intFirebaseRotation = FirebaseVisionImageMetadata.ROTATION_0
+            }
+            90 ->{
+                intFirebaseRotation = FirebaseVisionImageMetadata.ROTATION_90
+            }
+            180 ->{
+                intFirebaseRotation = FirebaseVisionImageMetadata.ROTATION_180
+            }
+            270 ->{
+                intFirebaseRotation = FirebaseVisionImageMetadata.ROTATION_270
+            }
+        }
+
 
         val frameMetadata = FrameMetadata.Builder()
                 .setWidth(frame.size.width)
                 .setHeight(frame.size.height)
-                .setRotation(frame.rotation).build()
+                .setRotation(rotation).build()
         val metadata = FirebaseVisionImageMetadata.Builder()
                 .setFormat(FirebaseVisionImageMetadata.IMAGE_FORMAT_NV21)
                 .setWidth(frameMetadata.width)
                 .setHeight(frameMetadata.height)
-                .setRotation(frameMetadata.rotation)
+                .setRotation(intFirebaseRotation)
                 .build()
-        detectInVisionImage(FirebaseVisionImage.fromByteArray(frame.image, metadata), frameMetadata, ocrListener)
+        return detectInVisionImage(FirebaseVisionImage.fromByteArray(frame.image, metadata), frameMetadata)
     }
 
     /**
@@ -82,35 +111,37 @@ abstract class VisionProcessorBase<T> : VisionImageProcessor {
      *
      * @return created FirebaseVisionImage
      */
-    override fun process(image: Image, rotation: Int, ocrListener: OcrListener) {
+    override fun process(image: Image, rotation: Int):Boolean {
         if (shouldThrottle.get()) {
-            return
+            return false
         }
         // This is for overlay display's usage
         val frameMetadata = FrameMetadata.Builder().setWidth(image.width).setHeight(image.height).build()
         val fbVisionImage = FirebaseVisionImage.fromMediaImage(image, rotation)
-        detectInVisionImage(fbVisionImage, frameMetadata, ocrListener)
+        return detectInVisionImage(fbVisionImage, frameMetadata)
     }
 
     private fun detectInVisionImage(
             image: FirebaseVisionImage,
-            metadata: FrameMetadata?,
-            ocrListener: OcrListener) {
+            metadata: FrameMetadata?
+            ):Boolean {
         val start = System.currentTimeMillis()
+        val bitmapForDebugging = image.bitmap
         detectInImage(image)
                 .addOnSuccessListener { results ->
                     shouldThrottle.set(false)
                     val timeRequired = System.currentTimeMillis() - start
-                    this@VisionProcessorBase.onSuccess(results, metadata, timeRequired, ocrListener)
+                    this@VisionProcessorBase.onSuccess(results, metadata, timeRequired, bitmapForDebugging)
                 }
                 .addOnFailureListener { e ->
                     shouldThrottle.set(false)
                     val timeRequired = System.currentTimeMillis() - start
-                    this@VisionProcessorBase.onFailure(e, timeRequired, ocrListener)
+                    this@VisionProcessorBase.onFailure(e, timeRequired)
                 }
         // Begin throttling until this frame of input has been processed, either in onSuccess or
         // onFailure.
         shouldThrottle.set(true)
+        return true
     }
 
     override fun stop() {}
@@ -121,13 +152,9 @@ abstract class VisionProcessorBase<T> : VisionImageProcessor {
             results: T,
             frameMetadata: FrameMetadata?,
             timeRequired: Long,
-            ocrListener: OcrListener)
+            bitmap: Bitmap)
 
-    protected abstract fun onFailure(e: Exception, timeRequired: Long, ocrListener: OcrListener)
+    protected abstract fun onFailure(e: Exception, timeRequired: Long)
 
-    interface OcrListener {
-        fun onMRZRead(mrzInfo: MRZInfo, timeRequired: Long)
-        fun onMRZReadFailure(timeRequired: Long)
-        fun onFailure(e: Exception, timeRequired: Long)
-    }
+
 }
