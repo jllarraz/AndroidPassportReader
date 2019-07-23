@@ -82,11 +82,11 @@ class FeatureStatus : Parcelable {
     }
 
     constructor(`in`: Parcel) {
-        this.hasSAC = Verdict.valueOf(`in`.readString())
-        this.hasBAC = Verdict.valueOf(`in`.readString())
-        this.hasAA = Verdict.valueOf(`in`.readString())
-        this.hasEAC = Verdict.valueOf(`in`.readString())
-        this.hasCA = Verdict.valueOf(`in`.readString())
+        this.hasSAC = Verdict.valueOf(`in`.readString()!!)
+        this.hasBAC = Verdict.valueOf(`in`.readString()!!)
+        this.hasAA = Verdict.valueOf(`in`.readString()!!)
+        this.hasEAC = Verdict.valueOf(`in`.readString()!!)
+        this.hasCA = Verdict.valueOf(`in`.readString()!!)
     }
 
     override fun describeContents(): Int {

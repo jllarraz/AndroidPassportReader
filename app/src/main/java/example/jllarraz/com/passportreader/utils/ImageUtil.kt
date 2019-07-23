@@ -10,7 +10,7 @@ import android.graphics.YuvImage
 import android.media.Image
 import android.util.Log
 
-import org.jnbis.WsqDecoder
+import org.jnbis.internal.WsqDecoder
 
 import java.io.BufferedInputStream
 import java.io.ByteArrayInputStream
@@ -105,7 +105,7 @@ object ImageUtil {
         } else if (WSQ_MIME_TYPE.equals(mimeType, ignoreCase = true)) {
             //org.jnbis.Bitmap bitmap = WSQDecoder.decode(inputStream);
             val wsqDecoder = WsqDecoder()
-            val bitmap = wsqDecoder.decode(inputStream)
+            val bitmap = wsqDecoder.decode(inputStream.readBytes())
             val byteData = bitmap.pixels
             val intData = IntArray(byteData.size)
             for (j in byteData.indices) {

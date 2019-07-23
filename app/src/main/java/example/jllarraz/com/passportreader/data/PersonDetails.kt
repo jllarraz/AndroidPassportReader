@@ -40,7 +40,7 @@ class PersonDetails : Parcelable {
         this.dateOfExpiry = if (`in`.readInt() == 1) `in`.readString() else null
         this.optionalData1 = if (`in`.readInt() == 1) `in`.readString() else null
         this.optionalData2 = if (`in`.readInt() == 1) `in`.readString() else null
-        this.gender = if (`in`.readInt() == 1) Gender.valueOf(`in`.readString()) else Gender.UNKNOWN
+        this.gender = if (`in`.readInt() == 1) Gender.valueOf(`in`.readString()!!) else Gender.UNKNOWN
     }
 
     override fun describeContents(): Int {

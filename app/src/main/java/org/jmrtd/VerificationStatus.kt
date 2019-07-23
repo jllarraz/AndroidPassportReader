@@ -328,14 +328,14 @@ class VerificationStatus : Parcelable {
 
 
     constructor(`in`: Parcel) {
-        this.aa = Verdict.valueOf(`in`.readString())
-        this.bac = Verdict.valueOf(`in`.readString())
-        this.sac = Verdict.valueOf(`in`.readString())
-        this.cs = Verdict.valueOf(`in`.readString())
-        this.ht = Verdict.valueOf(`in`.readString())
-        this.ds = Verdict.valueOf(`in`.readString())
-        this.eac = Verdict.valueOf(`in`.readString())
-        this.ca = Verdict.valueOf(`in`.readString())
+        this.aa = Verdict.valueOf(`in`.readString()!!)
+        this.bac = Verdict.valueOf(`in`.readString()!!)
+        this.sac = Verdict.valueOf(`in`.readString()!!)
+        this.cs = Verdict.valueOf(`in`.readString()!!)
+        this.ht = Verdict.valueOf(`in`.readString()!!)
+        this.ds = Verdict.valueOf(`in`.readString()!!)
+        this.eac = Verdict.valueOf(`in`.readString()!!)
+        this.ca = Verdict.valueOf(`in`.readString()!!)
 
         this.aaReason = if (`in`.readInt() == 1) `in`.readString() else null
         this.bacReason = if (`in`.readInt() == 1) `in`.readString() else null
