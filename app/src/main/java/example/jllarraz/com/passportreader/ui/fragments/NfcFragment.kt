@@ -132,7 +132,7 @@ class NfcFragment : androidx.fragment.app.Fragment() {
 
     }
 
-    override fun onAttach(context: Context?) {
+    override fun onAttach(context: Context) {
         super.onAttach(context)
         val activity = activity
         if (activity is NfcFragment.NfcFragmentListener) {
