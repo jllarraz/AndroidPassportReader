@@ -169,7 +169,7 @@ abstract class CameraFragment : androidx.fragment.app.Fragment(), ActivityCompat
         super.onDestroyView()
     }
 
-    override fun onAttach(context: Context?) {
+    override fun onAttach(context: Context) {
         super.onAttach(context)
     }
 

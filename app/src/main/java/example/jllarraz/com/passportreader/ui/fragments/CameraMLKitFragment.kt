@@ -91,7 +91,7 @@ class CameraMLKitFragment : CameraFragment() {
         super.onDestroyView()
     }
 
-    override fun onAttach(context: Context?) {
+    override fun onAttach(context: Context) {
         super.onAttach(context)
         val activity = activity
         if (activity is CameraMLKitCallback) {
