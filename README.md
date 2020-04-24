@@ -38,6 +38,14 @@ This is are examples of how the app performs.
 https://youtu.be/ZmRl_-3RH2U (Full read)
 https://youtu.be/kuIkZ1ZktCk (Just OCR)
 
+## Country Verifying Certification Authority
+
+For the CSCA certificates the example points to the Master List provided by the spanish government. You should point it to whatever list your country has.
+-https://www.dnielectronico.es/PortalDNIe/PRF1_Cons02.action?pag=REF_1093&id_menu=55
+
+You can find some information in
+-https://jmrtd.org/certificates.shtml
+
 ## License
 
 Licensed to the Apache Software Foundation (ASF) under one or more contributor license agreements. See the NOTICE file distributed with this work for additional information regarding copyright ownership. The ASF licenses this file to you under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License. You may obtain a copy of the License at
