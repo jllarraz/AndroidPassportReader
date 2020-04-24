@@ -45,6 +45,9 @@
     <string name="prompt_document_date_of_birth">Date of Birth (yymmdd)</string>
 
     <string name="read_nfc">READ NFC</string>
+    <string name="download_csca">Download Spanish CSCA Master List</string>
+    <string name="delete_csca">Delete CSCA Master List</string>
+
 
     <string name="error_validation_date">Date format is not valid</string>
     <string name="error_validation_document_number">Document number is not valid</string>
@@ -73,6 +76,7 @@
     <string name="label_authentication_active">Active</string>
     <string name="label_authentication_eac">EAC</string>
     <string name="label_authentication_document_signing">Document Signing</string>
+    <string name="label_authentication_country_signing">CSCA</string>
 
 
     <string name="label_additional_document_information">Additional document information</string>
@@ -109,6 +113,10 @@
     <string name="document_content_success">The passport content is valid</string>
     <string name="document_chip_failure">The passport chip is invalid</string>
     <string name="document_document_failure">The passport document information is invalid</string>
+    <string name="document_csca_failure">The CSCA information is invalid</string>
     <string name="document_unknown_passport_message">Unable to authenticate the passport</string>
+
+    <string name="keystore_not_empty_title">Keystore</string>
+    <string name="keystore_not_empty_message">Do you want to replace the current keystore?</string>
 
 </resources>

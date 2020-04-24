@@ -80,6 +80,20 @@ dependencies {
 
     //OpenLDAP
     //implementation 'com.unboundid:unboundid-ldapsdk:5.0.1@jar'
+
+    //OKHttp
+    implementation 'com.squareup.okhttp3:okhttp:4.4.0'
+    implementation "com.squareup.okhttp3:okhttp-urlconnection:4.4.0"
+    implementation 'com.squareup.okhttp3:logging-interceptor:4.4.0'
+
+    //Retrofit
+    implementation 'com.squareup.retrofit2:retrofit:2.6.2'
+    implementation 'com.squareup.retrofit2:converter-gson:2.6.2'
+    implementation 'com.squareup.retrofit2:adapter-rxjava2:2.6.2'
+
+    //RX
+    implementation 'io.reactivex.rxjava2:rxandroid:2.1.1'
+    implementation 'io.reactivex.rxjava2:rxjava:2.2.15'
 }
 
 apply plugin: 'com.google.gms.google-services'

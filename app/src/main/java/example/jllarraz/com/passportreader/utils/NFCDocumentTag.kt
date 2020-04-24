@@ -22,7 +22,7 @@ import java.security.Security
 
 class NFCDocumentTag {
 
-    fun handleTag(context: Context, tag: Tag, mrzInfo: MRZInfo, passportCallback: PassportCallback):Disposable{
+    fun handleTag(context: Context, tag: Tag, mrzInfo: MRZInfo, mrtdTrustStore: MRTDTrustStore, passportCallback: PassportCallback):Disposable{
         return  Single.fromCallable({
             var passport: Passport? = null
             var cardServiceException: Exception? = null
@@ -35,7 +35,7 @@ class NFCDocumentTag {
                 ps = PassportService(cs, 256, 224, false, true)
                 ps.open()
 
-                val passportNFC = PassportNFC(ps, MRTDTrustStore(), mrzInfo)
+                val passportNFC = PassportNFC(ps, mrtdTrustStore, mrzInfo)
                 val verifySecurity = passportNFC.verifySecurity()
                 val features = passportNFC.features
 

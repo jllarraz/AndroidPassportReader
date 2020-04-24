@@ -124,11 +124,15 @@ class CameraMLKitFragment : CameraFragment() {
 
                             if (frameProcessor != null) {
                                 val subscribe = Single.fromCallable({
-                                    (frameProcessor as OcrMrzDetectorProcessor).process(frame, rotation)
-                                }).subscribeOn(Schedulers.io()).observeOn(AndroidSchedulers.mainThread()).subscribe({ success ->
-                                    {
-                                        //Don't do anything
-                                    }
+                                        (frameProcessor as OcrMrzDetectorProcessor).process(frame, rotation)
+                                }).subscribeOn(Schedulers.io())
+                                .observeOn(AndroidSchedulers.mainThread())
+                                .subscribe({ success ->
+                                    //Don't do anything
+
+                                },{error->
+                                    isDecoding = false
+                                    Toast.makeText(requireContext(), "Error: "+error, Toast.LENGTH_SHORT).show()
                                 })
                                 disposable.add(subscribe)
                             }

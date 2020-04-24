@@ -16,18 +16,16 @@
 
 package example.jllarraz.com.passportreader.ui.activities
 
+
 import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
-import androidx.fragment.app.Fragment
 import androidx.appcompat.app.AppCompatActivity
-
-
-import org.jmrtd.lds.icao.MRZInfo
-
+import com.unboundid.ldap.sdk.LDAPConnection
 import example.jllarraz.com.passportreader.R
 import example.jllarraz.com.passportreader.common.IntentData
 import example.jllarraz.com.passportreader.ui.fragments.SelectionFragment
+import org.jmrtd.lds.icao.MRZInfo
 
 class SelectionActivity : AppCompatActivity(), SelectionFragment.SelectionFragmentListener {
 
@@ -96,6 +94,8 @@ class SelectionActivity : AppCompatActivity(), SelectionFragment.SelectionFragme
         val intent = Intent(this, CameraActivity::class.java)
         startActivityForResult(intent, REQUEST_MRZ)
     }
+
+
 
     companion object {
 

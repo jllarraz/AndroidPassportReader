@@ -75,6 +75,8 @@ class NfcActivity : androidx.fragment.app.FragmentActivity(), NfcFragment.NfcFra
         if (NfcAdapter.ACTION_TAG_DISCOVERED == intent.action || NfcAdapter.ACTION_TECH_DISCOVERED == intent.action) {
             // drop NFC events
             handleIntent(intent)
+        }else{
+            super.onNewIntent(intent)
         }
     }
 

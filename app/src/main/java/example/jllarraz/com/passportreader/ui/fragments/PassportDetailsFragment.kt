@@ -232,7 +232,7 @@ class PassportDetailsFragment : androidx.fragment.app.Fragment() {
         var message = ""
         var title = ""
         if (featureStatus.hasCA() == FeatureStatus.Verdict.PRESENT) {
-            if (verificationStatus!!.ca == VerificationStatus.Verdict.SUCCEEDED && verificationStatus.ht == VerificationStatus.Verdict.SUCCEEDED) {
+            if (verificationStatus!!.ca == VerificationStatus.Verdict.SUCCEEDED && verificationStatus.ht == VerificationStatus.Verdict.SUCCEEDED && verificationStatus.cs == VerificationStatus.Verdict.SUCCEEDED) {
                 //Everything is fine
                 colorCard = android.R.color.holo_green_light
                 title = getString(R.string.document_valid_passport)
@@ -247,6 +247,11 @@ class PassportDetailsFragment : androidx.fragment.app.Fragment() {
                 colorCard = android.R.color.holo_red_light
                 title = getString(R.string.document_invalid_passport)
                 message = getString(R.string.document_document_failure)
+            } else if (verificationStatus.cs == VerificationStatus.Verdict.FAILED) {
+                //CSCA information
+                colorCard = android.R.color.holo_red_light
+                title = getString(R.string.document_invalid_passport)
+                message = getString(R.string.document_csca_failure)
             } else {
                 //Unknown
                 colorCard = android.R.color.darker_gray
@@ -264,6 +269,11 @@ class PassportDetailsFragment : androidx.fragment.app.Fragment() {
                 colorCard = android.R.color.holo_red_light
                 title = getString(R.string.document_invalid_passport)
                 message = getString(R.string.document_document_failure)
+            } else if (verificationStatus.cs == VerificationStatus.Verdict.FAILED) {
+                //CSCA information
+                colorCard = android.R.color.holo_red_light
+                title = getString(R.string.document_invalid_passport)
+                message = getString(R.string.document_csca_failure)
             } else {
                 //Unknown
                 colorCard = android.R.color.darker_gray
@@ -319,6 +329,7 @@ class PassportDetailsFragment : androidx.fragment.app.Fragment() {
         displayVerificationStatusIcon(value_passive, verificationStatus.ht)
         displayVerificationStatusIcon(value_active, verificationStatus.aa)
         displayVerificationStatusIcon(value_document_signing, verificationStatus.ds)
+        displayVerificationStatusIcon(value_country_signing, verificationStatus.cs)
         displayVerificationStatusIcon(value_chip, verificationStatus.ca)
         displayVerificationStatusIcon(value_eac, verificationStatus.eac)
     }

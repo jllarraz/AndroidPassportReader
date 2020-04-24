@@ -27,12 +27,6 @@ import java.io.InputStream
 import java.net.MalformedURLException
 import java.net.URI
 import java.net.URLConnection
-import java.security.GeneralSecurityException
-import java.security.InvalidAlgorithmParameterException
-import java.security.KeyStore
-import java.security.KeyStoreException
-import java.security.NoSuchAlgorithmException
-import java.security.Provider
 import java.security.cert.CertSelector
 import java.security.cert.CertStore
 import java.security.cert.CertStoreException
@@ -54,6 +48,7 @@ import javax.security.auth.x500.X500Principal
 import org.jmrtd.cert.KeyStoreCertStoreParameters
 import org.jmrtd.cert.PKDCertStoreParameters
 import org.jmrtd.cert.PKDMasterListCertStoreParameters
+import java.security.*
 
 /**
  * Provides lookup for certificates, keys, CRLs used in
@@ -304,6 +299,14 @@ class MRTDTrustStore
         addCSCAAnchors(getAsAnchors(rootCerts))
     }
 
+    @Throws(KeyStoreException::class, InvalidAlgorithmParameterException::class, NoSuchAlgorithmException::class, CertStoreException::class)
+    fun addAsCSCACertStore(certStore: CertStore) {
+        addCSCAStore(certStore)
+        val rootCerts = certStore.getCertificates(SELF_SIGNED_X509_CERT_SELECTOR)
+        addCSCAAnchors(getAsAnchors(rootCerts))
+    }
+
+
     private fun getKeyStore(uri: URI): KeyStore {
         /*
 		 * We have to try all store types, only Bouncy Castle Store (BKS)
@@ -329,6 +332,10 @@ class MRTDTrustStore
     }
 
     companion object {
+
+        init {
+            Security.insertProviderAt(org.spongycastle.jce.provider.BouncyCastleProvider(), 1)
+        }
 
         private val JMRTD_PROVIDER = JMRTDSecurityProvider.instance
 
@@ -370,3 +377,5 @@ class MRTDTrustStore
 /**
  * Constructs an instance.
  */
+
+
