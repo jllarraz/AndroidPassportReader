@@ -77,7 +77,7 @@ class OcrMrzDetectorProcessor(val callback: MRZCallback) : VisionProcessorBase<F
                 //temp+=lines.get(j).getText().trim()+"-";
                 temp += lines[j].text + "-"
             }
-            temp = temp.replace("\r".toRegex(), "").replace("\n".toRegex(), "").replace("\t".toRegex(), "")
+            temp = temp.replace("\r".toRegex(), "").replace("\n".toRegex(), "").replace("\t".toRegex(), "").replace(" ", "")
             fullRead += "$temp-"
         }
         Log.d(TAG, "Read: $fullRead")
