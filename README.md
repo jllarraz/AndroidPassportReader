@@ -38,7 +38,7 @@ This is are examples of how the app performs.
 https://youtu.be/ZmRl_-3RH2U (Full read)
 https://youtu.be/kuIkZ1ZktCk (Just OCR)
 
-## Country Verifying Certification Authority
+## Country Signing Certificate Authority
 
 For the CSCA certificates the example points to the Master List provided by the spanish government. You should point it to whatever list your country has.
 -https://www.dnielectronico.es/PortalDNIe/PRF1_Cons02.action?pag=REF_1093&id_menu=55

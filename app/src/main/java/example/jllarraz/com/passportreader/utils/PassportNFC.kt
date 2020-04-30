@@ -1479,7 +1479,7 @@ private constructor() {
 
         private val TAG = PassportNFC::class.java.simpleName
 
-        private val BC_PROVIDER = JMRTDSecurityProvider.bouncyCastleProvider
+        private val BC_PROVIDER = JMRTDSecurityProvider.spongyCastleProvider
 
         private val EMPTY_TRIED_BAC_ENTRY_LIST = emptyList<BACKey>()
         private val EMPTY_CERTIFICATE_CHAIN = emptyList<Certificate>()
