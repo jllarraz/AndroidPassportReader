@@ -30,8 +30,8 @@ class NFCDocumentTag {
             var ps: PassportService? = null
             try {
                 val nfc = IsoDep.get(tag)
+                nfc.timeout = 5*1000 //5 seconds timeout
                 val cs = CardService.getInstance(nfc)
-
                 ps = PassportService(cs, 256, 224, false, true)
                 ps.open()
 
