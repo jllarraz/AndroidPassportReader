@@ -82,11 +82,11 @@ class FeatureStatus : Parcelable {
     }
 
     constructor(`in`: Parcel) {
-        this.hasSAC = Verdict.valueOf(`in`.readString()!!)
-        this.hasBAC = Verdict.valueOf(`in`.readString()!!)
-        this.hasAA = Verdict.valueOf(`in`.readString()!!)
-        this.hasEAC = Verdict.valueOf(`in`.readString()!!)
-        this.hasCA = Verdict.valueOf(`in`.readString()!!)
+        this.hasSAC = if(`in`.readInt() == 1){ Verdict.valueOf(`in`.readString()!!) } else { null }
+        this.hasBAC = if(`in`.readInt() == 1){Verdict.valueOf(`in`.readString()!!) } else { null }
+        this.hasAA = if(`in`.readInt() == 1){Verdict.valueOf(`in`.readString()!!) } else { null }
+        this.hasEAC = if(`in`.readInt() == 1){Verdict.valueOf(`in`.readString()!!) } else { null }
+        this.hasCA = if(`in`.readInt() == 1){Verdict.valueOf(`in`.readString()!!) } else { null }
     }
 
     override fun describeContents(): Int {
@@ -94,11 +94,26 @@ class FeatureStatus : Parcelable {
     }
 
     override fun writeToParcel(dest: Parcel, flags: Int) {
-        dest.writeString(this.hasSAC!!.name)
-        dest.writeString(this.hasBAC!!.name)
-        dest.writeString(this.hasAA!!.name)
-        dest.writeString(this.hasEAC!!.name)
-        dest.writeString(this.hasCA!!.name)
+        dest.writeInt(if(this.hasSAC!=null) 1 else 0)
+        if(this.hasSAC!=null) {
+            dest.writeString(this.hasSAC?.name)
+        }
+        dest.writeInt(if(this.hasBAC!=null) 1 else 0)
+        if(this.hasBAC!=null) {
+            dest.writeString(this.hasBAC?.name)
+        }
+        dest.writeInt(if(this.hasAA!=null) 1 else 0)
+        if(this.hasAA!=null) {
+            dest.writeString(this.hasAA?.name)
+        }
+        dest.writeInt(if(this.hasEAC!=null) 1 else 0)
+        if(this.hasEAC!=null) {
+            dest.writeString(this.hasEAC?.name)
+        }
+        dest.writeInt(if(this.hasCA!=null) 1 else 0)
+        if(this.hasCA!=null) {
+            dest.writeString(this.hasCA?.name)
+        }
     }
 
     companion object {
