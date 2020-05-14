@@ -132,7 +132,7 @@ class JMRTDSecurityProvider private constructor() : Provider("JMRTD", 0.1, "JMRT
         //	private static final Provider SUN_PROVIDER = null; // getProviderOrNull(SUN_PROVIDER_CLASS_NAME);
         private val BC_PROVIDER = org.bouncycastle.jce.provider.BouncyCastleProvider()
         //			getProviderOrNull(BC_PROVIDER_CLASS_NAME);
-        private val SC_PROVIDER = org.bouncycastle.jce.provider.BouncyCastleProvider()
+        private val SC_PROVIDER = org.spongycastle.jce.provider.BouncyCastleProvider()
         //			getProviderOrNull(SC_PROVIDER_CLASS_NAME);
         val instance: Provider = JMRTDSecurityProvider()
 

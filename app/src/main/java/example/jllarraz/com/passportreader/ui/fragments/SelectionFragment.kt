@@ -1,32 +1,34 @@
 package example.jllarraz.com.passportreader.ui.fragments
 
+
 import android.content.Context
+import android.content.DialogInterface
 import android.graphics.Bitmap
 import android.os.Bundle
-import androidx.fragment.app.Fragment
-import androidx.fragment.app.FragmentActivity
-import androidx.appcompat.widget.AppCompatEditText
+import android.os.Environment
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Button
-import android.widget.EditText
-import android.widget.LinearLayout
-import android.widget.RadioGroup
-import android.widget.Toast
-
+import android.widget.*
+import androidx.appcompat.app.AlertDialog
+import androidx.appcompat.widget.AppCompatEditText
 import com.mobsandgeeks.saripaar.ValidationError
 import com.mobsandgeeks.saripaar.Validator
-
-import net.sf.scuba.data.Gender
-
-
-import org.jmrtd.lds.icao.MRZInfo
-
 import example.jllarraz.com.passportreader.R
-import example.jllarraz.com.passportreader.common.IntentData
+import example.jllarraz.com.passportreader.network.MasterListService
 import example.jllarraz.com.passportreader.ui.validators.DateRule
 import example.jllarraz.com.passportreader.ui.validators.DocumentNumberRule
+import example.jllarraz.com.passportreader.utils.KeyStoreUtils
+import io.reactivex.Single
+import io.reactivex.android.schedulers.AndroidSchedulers
+import io.reactivex.disposables.CompositeDisposable
+import io.reactivex.schedulers.Schedulers
+import kotlinx.android.synthetic.main.fragment_selection.*
+import net.sf.scuba.data.Gender
+import org.jmrtd.lds.icao.MRZInfo
+import java.security.Security
+import java.security.cert.Certificate
 
 class SelectionFragment : androidx.fragment.app.Fragment(), Validator.ValidationListener {
 
@@ -40,6 +42,7 @@ class SelectionFragment : androidx.fragment.app.Fragment(), Validator.Validation
 
     private var mValidator: Validator? = null
     private var selectionFragmentListener: SelectionFragmentListener? = null
+    var disposable = CompositeDisposable()
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
                               savedInstanceState: Bundle?): View? {
@@ -85,6 +88,19 @@ class SelectionFragment : androidx.fragment.app.Fragment(), Validator.Validation
         mValidator!!.put(appCompatEditTextDocumentNumber!!, DocumentNumberRule())
         mValidator!!.put(appCompatEditTextDocumentExpiration!!, DateRule())
         mValidator!!.put(appCompatEditTextDateOfBirth!!, DateRule())
+
+        buttonDownloadCSCA?.setOnClickListener {
+            requireDownloadCSCA()
+        }
+        buttonDeleteCSCA?.setOnClickListener {
+            val subscribe = cleanCSCAFolder()
+                    .subscribeOn(Schedulers.io())
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .subscribe { result ->
+                        Toast.makeText(requireContext(), "CSCA Folder deleted", Toast.LENGTH_SHORT).show()
+                    }
+            disposable.add(subscribe)
+        }
     }
 
     protected fun validateFields() {
@@ -120,6 +136,14 @@ class SelectionFragment : androidx.fragment.app.Fragment(), Validator.Validation
         selectionFragmentListener = null
         super.onDetach()
 
+    }
+
+    override fun onDestroyView() {
+
+        if (!disposable.isDisposed) {
+            disposable.dispose()
+        }
+        super.onDestroyView()
     }
 
 
@@ -170,8 +194,109 @@ class SelectionFragment : androidx.fragment.app.Fragment(), Validator.Validation
         fun onMrzRequest()
     }
 
-    companion object {
 
+    ////////////////////////////////////////////////////////////////////////////////////////
+    //
+    //        Download Master List Spanish Certificates
+    //
+    ////////////////////////////////////////////////////////////////////////////////////////
+
+
+    fun requireDownloadCSCA(){
+        val downloadsFolder = requireContext().getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS)!!
+        val keyStore = KeyStoreUtils().readKeystoreFromFile(downloadsFolder)
+        if(keyStore==null || keyStore.aliases().toList().isNullOrEmpty()){
+            //No certificates downloaded
+            downloadSpanishMasterList()
+        } else{
+            //Certificates in the keystore
+            val dialog = AlertDialog.Builder(requireContext())
+                    .setTitle(R.string.keystore_not_empty_title)
+                    .setMessage(R.string.keystore_not_empty_message)
+                    .setPositiveButton(android.R.string.ok, object : DialogInterface.OnClickListener {
+                        override fun onClick(dialog: DialogInterface?, which: Int) {
+                            val subscribe = cleanCSCAFolder()
+                                    .subscribeOn(Schedulers.io())
+                                    .observeOn(AndroidSchedulers.mainThread())
+                                    .subscribe { result ->
+                                        downloadSpanishMasterList()
+                                    }
+                            disposable.add(subscribe)
+
+                        }
+                    })
+                    .setNegativeButton(android.R.string.cancel, object : DialogInterface.OnClickListener {
+                        override fun onClick(dialog: DialogInterface?, which: Int) {
+                            //WE don't do anything
+                        }
+
+                    })
+                    .create()
+            dialog.show()
+        }
+    }
+
+    fun cleanCSCAFolder():Single<Boolean>{
+        return Single.fromCallable {
+            try {
+                val downloadsFolder = requireContext().getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS)!!
+                val listFiles = downloadsFolder.listFiles()
+                for (tempFile in listFiles) {
+                    tempFile.delete()
+                }
+                val listFiles1 = downloadsFolder.listFiles()
+                true
+            }catch (e:java.lang.Exception){
+                false
+            }
+        }
+    }
+
+    fun downloadSpanishMasterList(){
+        val masterListService = MasterListService(requireContext(), "https://www.dnielectronico.es/")
+        val subscribe = masterListService.getSpanishMasterList()
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(
+                        { certificates ->
+                            saveCertificates(certificates)
+                        },
+                        {error->
+                            Toast.makeText(requireContext(), "No certificates has been download "+error, Toast.LENGTH_SHORT).show()
+                        }
+                )
+        disposable.add(subscribe)
+    }
+
+    fun saveCertificates(certificates:ArrayList<Certificate>){
+        val subscribe = Single.fromCallable {
+            try {
+                val size = certificates.size
+                Log.d(TAG, "Number of certificates: " + size)
+                val map = KeyStoreUtils().toMap(certificates)
+                val downloadsFolder = requireContext().getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS)!!
+                KeyStoreUtils().toKeyStoreFile(map, outputDir = downloadsFolder)
+                size
+            } catch (e: java.lang.Exception) {
+                e.printStackTrace()
+                -1
+            }
+        }.subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe { result ->
+                    if(result>0) {
+                        Toast.makeText(requireContext(), "Certificates Downloaded: "+result, Toast.LENGTH_SHORT).show()
+                    } else {
+                        Toast.makeText(requireContext(), "No certificates has been download", Toast.LENGTH_SHORT).show()
+                    }
+                }
+        disposable.add(subscribe)
+    }
+    companion object {
+        val TAG = SelectionFragment::class.java.simpleName
+        init {
+            Security.insertProviderAt(org.spongycastle.jce.provider.BouncyCastleProvider(), 1)
+        }
         fun newInstance(mrzInfo: MRZInfo, face: Bitmap): PassportDetailsFragment {
             val myFragment = PassportDetailsFragment()
             val args = Bundle()

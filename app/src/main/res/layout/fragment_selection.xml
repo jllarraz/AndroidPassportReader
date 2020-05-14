@@ -116,6 +116,18 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="@string/read_nfc"/>
+
+        <Button
+            android:id="@+id/buttonDownloadCSCA"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/download_csca"/>
+
+        <Button
+            android:id="@+id/buttonDeleteCSCA"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/delete_csca"/>
         </LinearLayout>
 
 

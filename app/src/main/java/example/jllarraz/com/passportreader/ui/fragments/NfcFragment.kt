@@ -5,6 +5,7 @@ import android.content.Intent
 import android.nfc.NfcAdapter
 import android.nfc.Tag
 import android.os.Bundle
+import android.os.Environment
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
@@ -23,7 +24,6 @@ import org.jmrtd.AccessDeniedException
 import org.jmrtd.BACDeniedException
 import org.jmrtd.PACEException
 import org.jmrtd.lds.icao.MRZInfo
-import org.spongycastle.jce.provider.BouncyCastleProvider
 
 
 import java.security.Security
@@ -32,8 +32,10 @@ import java.security.Security
 import example.jllarraz.com.passportreader.R
 import example.jllarraz.com.passportreader.common.IntentData
 import example.jllarraz.com.passportreader.data.Passport
+import example.jllarraz.com.passportreader.utils.KeyStoreUtils
 import example.jllarraz.com.passportreader.utils.NFCDocumentTag
 import io.reactivex.disposables.CompositeDisposable
+import org.jmrtd.MRTDTrustStore
 
 
 class NfcFragment : androidx.fragment.app.Fragment() {
@@ -77,7 +79,20 @@ class NfcFragment : androidx.fragment.app.Fragment() {
             return
         }
         val tag = intent.getParcelableExtra<Tag>(NfcAdapter.EXTRA_TAG) ?: return
-        val subscribe = NFCDocumentTag().handleTag(context!!, tag, mrzInfo!!, object : NFCDocumentTag.PassportCallback {
+
+        val folder = context!!.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS)!!
+        val keyStore = KeyStoreUtils().readKeystoreFromFile(folder)
+
+        val mrtdTrustStore = MRTDTrustStore()
+        if(keyStore!=null){
+            val certStore = KeyStoreUtils().toCertStore(keyStore = keyStore)
+
+            mrtdTrustStore.addAsCSCACertStore(certStore)
+        }
+        //mrtdTrustStore.addCSCAStore(readKeystoreFromFile)
+
+
+        val subscribe = NFCDocumentTag().handleTag(context!!, tag, mrzInfo!!, mrtdTrustStore, object : NFCDocumentTag.PassportCallback {
 
             override fun onPassportReadStart() {
                 onNFCSReadStart()
@@ -212,9 +227,8 @@ class NfcFragment : androidx.fragment.app.Fragment() {
         private val TAG = NfcFragment::class.java.simpleName
 
         init {
-            Security.addProvider(BouncyCastleProvider())
+            Security.insertProviderAt(org.spongycastle.jce.provider.BouncyCastleProvider(), 1)
         }
-
         fun newInstance(mrzInfo: MRZInfo): NfcFragment {
             val myFragment = NfcFragment()
             val args = Bundle()
