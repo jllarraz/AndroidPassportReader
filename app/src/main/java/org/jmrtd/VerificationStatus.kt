@@ -328,14 +328,14 @@ class VerificationStatus : Parcelable {
 
 
     constructor(`in`: Parcel) {
-        this.aa = Verdict.valueOf(`in`.readString()!!)
-        this.bac = Verdict.valueOf(`in`.readString()!!)
-        this.sac = Verdict.valueOf(`in`.readString()!!)
-        this.cs = Verdict.valueOf(`in`.readString()!!)
-        this.ht = Verdict.valueOf(`in`.readString()!!)
-        this.ds = Verdict.valueOf(`in`.readString()!!)
-        this.eac = Verdict.valueOf(`in`.readString()!!)
-        this.ca = Verdict.valueOf(`in`.readString()!!)
+        this.aa =  if (`in`.readInt() == 1) Verdict.valueOf(`in`.readString()!!)  else null
+        this.bac =  if (`in`.readInt() == 1) Verdict.valueOf(`in`.readString()!!) else null
+        this.sac =  if (`in`.readInt() == 1) Verdict.valueOf(`in`.readString()!!) else null
+        this.cs =  if (`in`.readInt() == 1) Verdict.valueOf(`in`.readString()!!) else null
+        this.ht = if (`in`.readInt() == 1) Verdict.valueOf(`in`.readString()!!) else null
+        this.ds =  if (`in`.readInt() == 1) Verdict.valueOf(`in`.readString()!!) else null
+        this.eac =  if (`in`.readInt() == 1) Verdict.valueOf(`in`.readString()!!) else null
+        this.ca =  if (`in`.readInt() == 1) Verdict.valueOf(`in`.readString()!!) else null
 
         this.aaReason = if (`in`.readInt() == 1) `in`.readString() else null
         this.bacReason = if (`in`.readInt() == 1) `in`.readString() else null
@@ -380,14 +380,38 @@ class VerificationStatus : Parcelable {
     }
 
     override fun writeToParcel(dest: Parcel, flags: Int) {
-        dest.writeString(aa!!.name)
-        dest.writeString(bac!!.name)
-        dest.writeString(sac!!.name)
-        dest.writeString(cs!!.name)
-        dest.writeString(ht!!.name)
-        dest.writeString(ds!!.name)
-        dest.writeString(eac!!.name)
-        dest.writeString(ca!!.name)
+        dest.writeInt(if(this.aa!=null) 1 else 0)
+        if(aa!=null) {
+            dest.writeString(aa?.name)
+        }
+        dest.writeInt(if(this.bac!=null) 1 else 0)
+        if(bac!=null) {
+            dest.writeString(bac?.name)
+        }
+        dest.writeInt(if(this.sac!=null) 1 else 0)
+        if(sac!=null) {
+            dest.writeString(sac?.name)
+        }
+        dest.writeInt(if(this.cs!=null) 1 else 0)
+        if(cs!=null) {
+            dest.writeString(cs?.name)
+        }
+        dest.writeInt(if(this.ht!=null) 1 else 0)
+        if(ht!=null) {
+            dest.writeString(ht?.name)
+        }
+        dest.writeInt(if(this.ds!=null) 1 else 0)
+        if(ds!=null) {
+            dest.writeString(ds?.name)
+        }
+        dest.writeInt(if(this.eac!=null) 1 else 0)
+        if(eac!=null) {
+            dest.writeString(eac?.name)
+        }
+        dest.writeInt(if(this.ca!=null) 1 else 0)
+        if(ca!=null) {
+            dest.writeString(ca?.name)
+        }
 
         dest.writeInt(if (aaReason != null) 1 else 0)
         if (aaReason != null) {
