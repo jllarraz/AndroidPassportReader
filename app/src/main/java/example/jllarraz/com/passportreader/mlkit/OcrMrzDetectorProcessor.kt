@@ -80,6 +80,7 @@ class OcrMrzDetectorProcessor(val callback: MRZCallback) : VisionProcessorBase<F
             temp = temp.replace("\r".toRegex(), "").replace("\n".toRegex(), "").replace("\t".toRegex(), "").replace(" ", "")
             fullRead += "$temp-"
         }
+        fullRead = fullRead.toUpperCase()
         Log.d(TAG, "Read: $fullRead")
         val patternLineOldPassportType = Pattern.compile(REGEX_OLD_PASSPORT)
         val matcherLineOldPassportType = patternLineOldPassportType.matcher(fullRead)
