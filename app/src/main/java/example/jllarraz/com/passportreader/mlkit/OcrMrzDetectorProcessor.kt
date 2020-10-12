@@ -89,9 +89,9 @@ class OcrMrzDetectorProcessor(val callback: MRZCallback) : VisionProcessorBase<F
         if (matcherLineOldPassportType.find()) {
             //Old passport format
             val line2 = matcherLineOldPassportType.group(0)
-            var documentNumber = line2.substring(0, 9)
-            val dateOfBirthDay = line2.substring(13, 19)
-            val expirationDate = line2.substring(21, 27)
+            var documentNumber = matcherLineOldPassportType.group(1)
+            val dateOfBirthDay = cleanDate(matcherLineOldPassportType.group(4))
+            val expirationDate = cleanDate(matcherLineOldPassportType.group(7))
 
             //As O and 0 and really similar most of the countries just removed them from the passport, so for accuracy I am formatting it
             documentNumber = documentNumber.replace("O".toRegex(), "0")
@@ -142,6 +142,17 @@ class OcrMrzDetectorProcessor(val callback: MRZCallback) : VisionProcessorBase<F
         )
     }
 
+    private fun cleanDate(date:String):String{
+        var tempDate = date
+        tempDate = tempDate.replace("I".toRegex(), "1")
+        tempDate = tempDate.replace("L".toRegex(), "1")
+        tempDate = tempDate.replace("D".toRegex(), "0")
+        tempDate = tempDate.replace("O".toRegex(), "0")
+        tempDate = tempDate.replace("S".toRegex(), "5")
+        tempDate = tempDate.replace("G".toRegex(), "6")
+        return tempDate
+    }
+
     override fun onFailure(e: Exception, timeRequired: Long) {
         Log.w(TAG, "Text detection failed.$e")
         callback.onFailure(e, timeRequired)
@@ -157,7 +168,8 @@ class OcrMrzDetectorProcessor(val callback: MRZCallback) : VisionProcessorBase<F
 
         private val TAG = OcrMrzDetectorProcessor::class.java.simpleName
 
-        private val REGEX_OLD_PASSPORT = "[A-Z0-9<]{9}[0-9]{1}[A-Z<]{3}[0-9]{6}[0-9]{1}[FM<]{1}[0-9]{6}[0-9]{1}"
+        private val REGEX_OLD_PASSPORT = "(?<documentNumber>[A-Z0-9<]{9})(?<checkDigitDocumentNumber>[0-9ILDSOG]{1})(?<nationality>[A-Z<]{3})(?<dateOfBirth>[0-9ILDSOG]{6})(?<checkDigitDateOfBirth>[0-9ILDSOG]{1})(?<sex>[FM<]){1}(?<expirationDate>[0-9ILDSOG]{6})(?<checkDigitExpiration>[0-9ILDSOG]{1})"
+        private val REGEX_OLD_PASSPORT_CLEAN = "(?<documentNumber>[A-Z0-9<]{9})(?<checkDigitDocumentNumber>[0-9]{1})(?<nationality>[A-Z<]{3})(?<dateOfBirth>[0-9]{6})(?<checkDigitDateOfBirth>[0-9]{1})(?<sex>[FM<]){1}(?<expirationDate>[0-9]{6})(?<checkDigitExpiration>[0-9]{1})"
         private val REGEX_IP_PASSPORT_LINE_1 = "\\bIP[A-Z<]{3}[A-Z0-9<]{9}[0-9]{1}"
         private val REGEX_IP_PASSPORT_LINE_2 = "[0-9]{6}[0-9]{1}[FM<]{1}[0-9]{6}[0-9]{1}[A-Z<]{3}"
     }
