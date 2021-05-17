@@ -44,27 +44,27 @@ class AdditionalPersonDetails : Parcelable {
         this.fullDateOfBirth = if (`in`.readInt() == 1) `in`.readString() else null
         this.nameOfHolder = if (`in`.readInt() == 1) `in`.readString() else null
         if (`in`.readInt() == 1) {
-            `in`.readList(otherNames, String::class.java.classLoader)
+            `in`.readList(otherNames!!, String::class.java.classLoader)
         }
         if (`in`.readInt() == 1) {
-            `in`.readList(otherValidTDNumbers, String::class.java.classLoader)
+            `in`.readList(otherValidTDNumbers!!, String::class.java.classLoader)
         }
         if (`in`.readInt() == 1) {
-            `in`.readList(permanentAddress, String::class.java.classLoader)
+            `in`.readList(permanentAddress!!, String::class.java.classLoader)
         }
         this.personalNumber = if (`in`.readInt() == 1) `in`.readString() else null
         this.personalSummary = if (`in`.readInt() == 1) `in`.readString() else null
         if (`in`.readInt() == 1) {
-            `in`.readList(placeOfBirth, String::class.java.classLoader)
+            `in`.readList(placeOfBirth!!, String::class.java.classLoader)
         }
         this.profession = if (`in`.readInt() == 1) `in`.readString() else null
         if (`in`.readInt() == 1) {
             this.proofOfCitizenship = ByteArray(`in`.readInt())
-            `in`.readByteArray(this.proofOfCitizenship)
+            `in`.readByteArray(this.proofOfCitizenship!!)
         }
         tag = `in`.readInt()
         if (`in`.readInt() == 1) {
-            `in`.readList(tagPresenceList, Int::class.java.classLoader)
+            `in`.readList(tagPresenceList!!, Int::class.java.classLoader)
         }
 
         this.telephone = if (`in`.readInt() == 1) `in`.readString() else null

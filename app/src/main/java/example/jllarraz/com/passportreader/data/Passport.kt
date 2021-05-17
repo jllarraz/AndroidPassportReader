@@ -34,7 +34,7 @@ class Passport : Parcelable {
         this.additionalPersonDetails = if (`in`.readInt() == 1) `in`.readParcelable(AdditionalPersonDetails::class.java.classLoader) else null
 
         if (`in`.readInt() == 1) {
-            `in`.readList(fingerprints, Bitmap::class.java.classLoader)
+            `in`.readList(fingerprints!!, Bitmap::class.java.classLoader)
         }
 
         this.signature = if (`in`.readInt() == 1) `in`.readParcelable(Bitmap::class.java.classLoader) else null

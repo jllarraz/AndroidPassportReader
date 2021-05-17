@@ -36,15 +36,16 @@
             android:layout_marginLeft="1dp"
             android:id="@+id/radioButtonManual"
             android:text="@string/selection_manual"
-            style="@style/ToogleButton.Left"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
             />
 
         <androidx.appcompat.widget.AppCompatRadioButton
             android:layout_marginRight="1dp"
             android:id="@+id/radioButtonOcr"
             android:text="@string/selection_automatic"
-            style="@style/ToogleButton.Right"
-            />
+            android:layout_width="wrap_content"
+             android:layout_height="wrap_content"/>
     </RadioGroup>
 
 

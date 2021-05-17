@@ -41,7 +41,7 @@ class AdditionalDocumentDetails : Parcelable {
         this.issuingAuthority = if (`in`.readInt() == 1) `in`.readString() else null
 
         if (`in`.readInt() == 1) {
-            `in`.readList(namesOfOtherPersons, String::class.java.classLoader)
+            `in`.readList(namesOfOtherPersons!!, String::class.java.classLoader)
         }
 
         this.personalizationSystemSerialNumber = if (`in`.readInt() == 1) `in`.readString() else null
@@ -49,7 +49,7 @@ class AdditionalDocumentDetails : Parcelable {
 
         tag = `in`.readInt()
         if (`in`.readInt() == 1) {
-            `in`.readList(tagPresenceList, Int::class.java.classLoader)
+            `in`.readList(tagPresenceList!!, Int::class.java.classLoader)
         }
 
 

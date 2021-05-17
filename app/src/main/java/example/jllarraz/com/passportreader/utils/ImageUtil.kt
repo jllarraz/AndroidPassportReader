@@ -4,6 +4,8 @@ import android.content.Context
 import android.graphics.*
 import android.media.Image
 import android.util.Log
+import androidx.annotation.Nullable
+import example.jllarraz.com.passportreader.mlkit.FrameMetadata
 
 import org.jnbis.internal.WsqDecoder
 
@@ -117,6 +119,32 @@ object ImageUtil {
         val matrix = Matrix()
         matrix.postRotate(angle)
         return Bitmap.createBitmap(source, 0, 0, source.width, source.height, matrix, true)
+    }
+
+    // Convert NV21 format byte buffer to bitmap.
+    @Nullable
+    fun getBitmap(data: ByteBuffer, metadata: FrameMetadata): Bitmap? {
+        data.rewind()
+        val imageInBuffer = ByteArray(data.limit())
+        data.get(imageInBuffer, 0, imageInBuffer.size)
+        try {
+            val image = YuvImage(
+                imageInBuffer, ImageFormat.NV21, metadata.width, metadata.height, null
+            )
+            if (image != null) {
+                val stream = ByteArrayOutputStream()
+                image.compressToJpeg(Rect(0, 0, metadata.width, metadata.height), 80, stream)
+
+                val bmp = BitmapFactory.decodeByteArray(stream.toByteArray(), 0, stream.size())
+
+                stream.close()
+                return rotateBitmap(bmp, metadata.rotation.toFloat())
+            }
+        } catch (e: Exception) {
+            Log.e("VisionProcessorBase", "Error: " + e.message)
+        }
+
+        return null
     }
 
     /* ONLY PRIVATE METHODS BELOW */

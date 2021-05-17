@@ -348,7 +348,7 @@ class VerificationStatus : Parcelable {
 
         if (`in`.readInt() == 1) {
             triedBACEntries = ArrayList()
-            `in`.readList(triedBACEntries, BACKey::class.java.classLoader)
+            `in`.readList(triedBACEntries!!, BACKey::class.java.classLoader)
         }
 
         if (`in`.readInt() == 1) {
@@ -363,7 +363,7 @@ class VerificationStatus : Parcelable {
 
         if (`in`.readInt() == 1) {
             certificateChain = ArrayList()
-            `in`.readList(certificateChain, Certificate::class.java.classLoader)
+            `in`.readList(certificateChain!!, Certificate::class.java.classLoader)
         }
 
         if (`in`.readInt() == 1) {

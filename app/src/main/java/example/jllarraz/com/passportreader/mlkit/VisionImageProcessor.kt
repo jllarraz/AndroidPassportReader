@@ -17,26 +17,34 @@ import android.graphics.Bitmap
 import android.media.Image
 
 import com.google.firebase.ml.common.FirebaseMLException
+import com.google.mlkit.vision.common.InputImage
 import io.fotoapparat.preview.Frame
 
 import java.nio.ByteBuffer
 
 /** An inferface to process the images with different ML Kit detectors and custom image models.  */
-interface VisionImageProcessor {
+interface VisionImageProcessor<T> {
 
     /** Processes the images with the underlying machine learning models.  */
     @Throws(FirebaseMLException::class)
-    fun process(data: ByteBuffer, frameMetadata: FrameMetadata):Boolean
+    fun process(data: ByteBuffer, frameMetadata: FrameMetadata, graphicOverlay: GraphicOverlay?=null, isOriginalImageReturned:Boolean = true, listener: VisionProcessorBase.Listener<T>):Boolean
 
     /** Processes the bitmap images.  */
-    fun process(bitmap: Bitmap, rotation:Int):Boolean
-
-    /** Processes the bitmap images.  */
-    fun process(frame:Frame, rotation:Int):Boolean
+    fun process(bitmap: Bitmap, rotation: Int = 0, graphicOverlay: GraphicOverlay?=null, isOriginalImageReturned:Boolean = true, convertToNv21:Boolean = true, listener: VisionProcessorBase.Listener<T>):Boolean
 
     /** Processes the images.  */
-    fun process(image: Image, rotation: Int):Boolean
+    fun process(image: Image, rotation: Int = 0, graphicOverlay: GraphicOverlay?=null, isOriginalImageReturned:Boolean = true, listener: VisionProcessorBase.Listener<T>):Boolean
+
+    /** Processes the bitmap images.  */
+    fun process(frame: Frame, rotation:Int = 0, graphicOverlay: GraphicOverlay?=null, isOriginalImageReturned:Boolean = true, listener: VisionProcessorBase.Listener<T>):Boolean
+
+    /** Processes the FirebaseVisionImage  */
+    fun process(image: InputImage, metadata: FrameMetadata?, graphicOverlay: GraphicOverlay?, isOriginalImageReturned:Boolean = true, listener: VisionProcessorBase.Listener<T>):Boolean
 
     /** Stops the underlying machine learning model and release resources.  */
     fun stop()
+
+    fun canHandleNewFrame():Boolean
+
+    fun resetThrottle()
 }

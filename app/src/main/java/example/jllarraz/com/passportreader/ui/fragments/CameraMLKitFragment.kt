@@ -21,6 +21,7 @@ import android.app.AlertDialog
 import android.app.Dialog
 import android.content.Context
 import android.content.pm.PackageManager
+import android.graphics.Bitmap
 import android.graphics.Color
 import android.os.Bundle
 import android.os.Handler
@@ -30,13 +31,18 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import com.google.mlkit.vision.text.Text
 
 
 import org.jmrtd.lds.icao.MRZInfo
 
 import example.jllarraz.com.passportreader.R
+import example.jllarraz.com.passportreader.mlkit.FrameMetadata
+import example.jllarraz.com.passportreader.mlkit.GraphicOverlay
 import example.jllarraz.com.passportreader.mlkit.OcrMrzDetectorProcessor
+import example.jllarraz.com.passportreader.mlkit.VisionProcessorBase
 import example.jllarraz.com.passportreader.utils.MRZUtil
+import example.jllarraz.com.passportreader.utils.OcrUtils
 import io.fotoapparat.preview.Frame
 import io.fotoapparat.view.CameraView
 import io.reactivex.Single
@@ -44,6 +50,7 @@ import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.schedulers.Schedulers
 import kotlinx.android.synthetic.main.fragment_camera_mrz.*
+import java.util.regex.Pattern
 
 class CameraMLKitFragment : CameraFragment() {
 
@@ -124,7 +131,13 @@ class CameraMLKitFragment : CameraFragment() {
 
                             if (frameProcessor != null) {
                                 val subscribe = Single.fromCallable({
-                                        (frameProcessor as OcrMrzDetectorProcessor).process(frame, rotation)
+                                        frameProcessor?.process(
+                                            frame = frame,
+                                            rotation = rotation,
+                                            graphicOverlay = null,
+                                            true,
+                                            listener = ocrListener
+                                        )
                                 }).subscribeOn(Schedulers.io())
                                 .observeOn(AndroidSchedulers.mainThread())
                                 .subscribe({ success ->
@@ -180,57 +193,108 @@ class CameraMLKitFragment : CameraFragment() {
     //       Instantiate the text processor to perform OCR
     //
     ////////////////////////////////////////////////////////////////////////////////////////
-    protected val textProcessor: OcrMrzDetectorProcessor
-        get() = OcrMrzDetectorProcessor(object : OcrMrzDetectorProcessor.MRZCallback {
-            override fun onMRZRead(mrzInfo: MRZInfo, timeRequired: Long) {
-                isDecoding = false
-                if(!isAdded){
-                    return
-                }
-                mHandler.post {
-                    try {
-                        status_view_top!!.text = getString(R.string.status_bar_ocr, mrzInfo.documentNumber, mrzInfo.dateOfBirth, mrzInfo.dateOfExpiry)
-                        status_view_bottom!!.text = getString(R.string.status_bar_success, timeRequired)
-                        status_view_bottom!!.setTextColor(resources.getColor(R.color.status_text))
-                        if (cameraMLKitCallback != null) {
-                            cameraMLKitCallback!!.onPassportRead(mrzInfo)
-                        }
 
-                    } catch (e: IllegalStateException) {
-                        //The fragment is destroyed
-                    }
-                }
+    //OCR listener
+    val ocrListener = object : VisionProcessorBase.Listener<com.google.mlkit.vision.text.Text> {
+        override fun onSuccess(
+            results: Text,
+            frameMetadata: FrameMetadata?,
+            timeRequired: Long,
+            bitmap: Bitmap?,
+            graphicOverlay: GraphicOverlay?
+        ) {
+            if (!isAdded) {
+                return
+            }
+            OcrUtils.processOcr(
+                results = results,
+                timeRequired = timeRequired,
+                callback = mrzListener
+            )
+        }
+
+        override fun onCanceled(timeRequired: Long) {
+            if (!isAdded) {
+                return
+            }
+        }
+
+        override fun onFailure(
+            e: Exception,
+            timeRequired: Long
+        ) {
+            if (!isAdded) {
+                return
+            }
+            mrzListener.onFailure(e, timeRequired)
+        }
+
+        override fun onCompleted(timeRequired: Long) {
+            if (!isAdded) {
+                return
             }
 
-            override fun onMRZReadFailure(timeRequired: Long) {
-                isDecoding = false
-                if(!isAdded){
-                    return
-                }
-                mHandler.post {
-                    try {
-                        status_view_bottom!!.text = getString(R.string.status_bar_failure, timeRequired)
-                        status_view_bottom!!.setTextColor(Color.RED)
-                        status_view_top!!.text = ""
-                    } catch (e: IllegalStateException) {
-                        //The fragment is destroyed
-                    }
-                }
-            }
+        }
 
-            override fun onFailure(e: Exception, timeRequired: Long) {
-                isDecoding = false
-                if(!isAdded){
-                    return
-                }
-                e.printStackTrace()
-                mHandler.post {
+    }
+
+    //MRZ Listener
+    var mrzListener = object : OcrUtils.MRZCallback {
+        override fun onMRZRead(mrzInfo: MRZInfo, timeRequired: Long) {
+            isDecoding = false
+            if(!isAdded){
+                return
+            }
+            mHandler.post {
+                try {
+                    status_view_top!!.text = getString(R.string.status_bar_ocr, mrzInfo.documentNumber, mrzInfo.dateOfBirth, mrzInfo.dateOfExpiry)
+                    status_view_bottom!!.text = getString(R.string.status_bar_success, timeRequired)
+                    status_view_bottom!!.setTextColor(resources.getColor(R.color.status_text))
                     if (cameraMLKitCallback != null) {
-                        cameraMLKitCallback!!.onError()
+                        cameraMLKitCallback!!.onPassportRead(mrzInfo)
                     }
+
+                } catch (e: IllegalStateException) {
+                    //The fragment is destroyed
                 }
             }
-        })
+        }
+
+        override fun onMRZReadFailure(timeRequired: Long) {
+            isDecoding = false
+            if(!isAdded){
+                return
+            }
+            mHandler.post {
+                try {
+                    status_view_bottom!!.text = getString(R.string.status_bar_failure, timeRequired)
+                    status_view_bottom!!.setTextColor(Color.RED)
+                    status_view_top!!.text = ""
+                } catch (e: IllegalStateException) {
+                    //The fragment is destroyed
+                }
+            }
+        }
+
+        override fun onFailure(e: Exception, timeRequired: Long) {
+            isDecoding = false
+            if(!isAdded){
+                return
+            }
+            e.printStackTrace()
+            mHandler.post {
+                if (cameraMLKitCallback != null) {
+                    cameraMLKitCallback!!.onError()
+                }
+            }
+        }
+    }
+
+
+
+
+    protected val textProcessor: OcrMrzDetectorProcessor
+        get() = OcrMrzDetectorProcessor()
 
 
 
