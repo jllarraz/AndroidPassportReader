@@ -38,10 +38,7 @@ class PassportDetailsFragment : Fragment(R.layout.fragment_passport_details) {
         }
 
         binding.iconPhoto.setOnClickListener {
-            var bitmap = passport!!.face
-            if (bitmap == null) {
-                bitmap = passport!!.portrait
-            }
+            val bitmap = passport!!.face ?: passport!!.portrait
             if (passportDetailsFragmentListener != null) {
                 passportDetailsFragmentListener!!.onImageSelected(bitmap)
             }
@@ -211,9 +208,9 @@ class PassportDetailsFragment : Fragment(R.layout.fragment_passport_details) {
     }
 
     private fun displayWarningTitle(verificationStatus: VerificationStatus?, featureStatus: FeatureStatus) {
-        var colorCard = android.R.color.holo_green_light
-        var message = ""
-        var title = ""
+        val colorCard: Int
+        val message: String
+        val title: String
         if (featureStatus.hasCA() == FeatureStatus.Verdict.PRESENT) {
             if (verificationStatus!!.ca == VerificationStatus.Verdict.SUCCEEDED && verificationStatus.ht == VerificationStatus.Verdict.SUCCEEDED && verificationStatus.cs == VerificationStatus.Verdict.SUCCEEDED) {
                 //Everything is fine
@@ -321,13 +318,11 @@ class PassportDetailsFragment : Fragment(R.layout.fragment_passport_details) {
     }
 
     private fun displayVerificationStatusIcon(imageView: ImageView?, verdict: VerificationStatus.Verdict?) {
-        var verdict = verdict
-        if (verdict == null) {
-            verdict = VerificationStatus.Verdict.UNKNOWN
-        }
+        val verdictType = verdict ?: VerificationStatus.Verdict.UNKNOWN
+
         val resourceIconId: Int
         val resourceColorId: Int
-        when (verdict) {
+        when (verdictType) {
             VerificationStatus.Verdict.SUCCEEDED -> {
                 resourceIconId = R.drawable.ic_check_circle_outline
                 resourceColorId = android.R.color.holo_green_light
@@ -345,10 +340,6 @@ class PassportDetailsFragment : Fragment(R.layout.fragment_passport_details) {
                 resourceColorId = android.R.color.holo_orange_light
             }
             VerificationStatus.Verdict.UNKNOWN -> {
-                resourceIconId = R.drawable.ic_close_circle_outline
-                resourceColorId = android.R.color.darker_gray
-            }
-            else -> {
                 resourceIconId = R.drawable.ic_close_circle_outline
                 resourceColorId = android.R.color.darker_gray
             }
