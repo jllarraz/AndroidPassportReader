@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Passport Reader</string>
+    <string name="app_name">Passport And Card Reader</string>
 
     <string name="camera_error">This device doesn\'t support Camera2 API.</string>
     <string-array name="ocrenginemodes">

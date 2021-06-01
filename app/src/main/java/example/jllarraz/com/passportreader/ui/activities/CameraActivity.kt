@@ -31,7 +31,7 @@ class CameraActivity : AppCompatActivity(), CameraMLKitFragment.CameraMLKitCallb
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_camera)
+        setContentView(R.layout.activity_selection)
         supportFragmentManager.beginTransaction()
                 .replace(R.id.container, CameraMLKitFragment())
                 .commit()
