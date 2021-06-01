@@ -3,43 +3,25 @@ package example.jllarraz.com.passportreader.ui.fragments
 import android.content.Context
 import android.graphics.Bitmap
 import android.os.Bundle
-import androidx.fragment.app.Fragment
-import androidx.fragment.app.FragmentActivity
-import android.view.LayoutInflater
 import android.view.View
-import android.view.ViewGroup
-
+import androidx.fragment.app.Fragment
 import example.jllarraz.com.passportreader.R
 import example.jllarraz.com.passportreader.common.IntentData
-import example.jllarraz.com.passportreader.ui.views.TouchImageView
-import kotlinx.android.synthetic.main.fragment_photo.*
+import example.jllarraz.com.passportreader.databinding.FragmentPhotoBinding
 
-class PassportPhotoFragment : androidx.fragment.app.Fragment() {
+class PassportPhotoFragment : Fragment(R.layout.fragment_photo) {
 
     private var passportPhotoFragmentListener: PassportPhotoFragmentListener? = null
 
     private var bitmap: Bitmap? = null
 
-
-
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
-                              savedInstanceState: Bundle?): View? {
-
-        val inflatedView = inflater.inflate(R.layout.fragment_photo, container, false)
-
-
-
-        return inflatedView
-    }
-
+    private lateinit var binding: FragmentPhotoBinding
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
+        binding = FragmentPhotoBinding.bind(view)
         val arguments = arguments
         if (arguments!!.containsKey(IntentData.KEY_IMAGE)) {
             bitmap = arguments.getParcelable<Bitmap>(IntentData.KEY_IMAGE)
-        } else {
-            //error
         }
     }
 
@@ -52,7 +34,7 @@ class PassportPhotoFragment : androidx.fragment.app.Fragment() {
         if (bitmap == null) {
             return
         }
-        image?.setImageBitmap(bitmap)
+        binding.image.setImageBitmap(bitmap)
     }
 
 

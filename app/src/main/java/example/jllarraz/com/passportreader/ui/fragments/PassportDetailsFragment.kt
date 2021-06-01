@@ -3,58 +3,41 @@ package example.jllarraz.com.passportreader.ui.fragments
 import android.content.Context
 import android.graphics.Bitmap
 import android.os.Bundle
-import androidx.core.content.ContextCompat
-import android.view.LayoutInflater
 import android.view.View
-import android.view.ViewGroup
 import android.widget.ImageView
-import org.jmrtd.FeatureStatus
-import org.jmrtd.VerificationStatus
-
-import java.security.MessageDigest
-import java.text.SimpleDateFormat
-
-import javax.security.auth.x500.X500Principal
-
+import androidx.core.content.ContextCompat
+import androidx.fragment.app.Fragment
 import example.jllarraz.com.passportreader.R
 import example.jllarraz.com.passportreader.common.IntentData
 import example.jllarraz.com.passportreader.data.Passport
+import example.jllarraz.com.passportreader.databinding.FragmentPassportDetailsBinding
 import example.jllarraz.com.passportreader.utils.StringUtils
-import kotlinx.android.synthetic.main.fragment_passport_details.*
+import org.jmrtd.FeatureStatus
+import org.jmrtd.VerificationStatus
+import java.security.MessageDigest
+import java.text.SimpleDateFormat
 import java.util.*
+import javax.security.auth.x500.X500Principal
 
-class PassportDetailsFragment : androidx.fragment.app.Fragment() {
+class PassportDetailsFragment : Fragment(R.layout.fragment_passport_details) {
 
     private var passportDetailsFragmentListener: PassportDetailsFragmentListener? = null
 
-    internal var simpleDateFormat = SimpleDateFormat("dd/MM/yyyy", Locale.ENGLISH)
+    private var simpleDateFormat = SimpleDateFormat("dd/MM/yyyy", Locale.ENGLISH)
 
     private var passport: Passport? = null
 
-
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
-                              savedInstanceState: Bundle?): View? {
-
-        val inflatedView = inflater.inflate(R.layout.fragment_passport_details, container, false)
-
-
-
-
-        return inflatedView
-    }
-
+    private lateinit var binding: FragmentPassportDetailsBinding
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        binding = FragmentPassportDetailsBinding.bind(view)
 
         val arguments = arguments
         if (arguments!!.containsKey(IntentData.KEY_PASSPORT)) {
             passport = arguments.getParcelable<Passport>(IntentData.KEY_PASSPORT)
-        } else {
-            //error
         }
 
-
-        iconPhoto!!.setOnClickListener {
+        binding.iconPhoto.setOnClickListener {
             var bitmap = passport!!.face
             if (bitmap == null) {
                 bitmap = passport!!.portrait
@@ -76,154 +59,154 @@ class PassportDetailsFragment : androidx.fragment.app.Fragment() {
             return
         }
 
-        if (passport.face != null) {
-            //Add teh face
-            iconPhoto!!.setImageBitmap(passport.face)
-        } else if (passport.portrait != null) {
-            //If we don't have the face, we try with the portrait
-            iconPhoto!!.setImageBitmap(passport.portrait)
-        }
-
-        val personDetails = passport.personDetails
-        if (personDetails != null) {
-            val name = personDetails.primaryIdentifier!!.replace("<", "")
-            val surname = personDetails.secondaryIdentifier!!.replace("<", "")
-            value_name!!.text = getString(R.string.name, name, surname)
-            value_DOB!!.text = personDetails.dateOfBirth
-            value_gender!!.text = personDetails.gender!!.name
-            value_passport_number!!.text = personDetails.documentNumber
-            value_expiration_date!!.text = personDetails.dateOfExpiry
-            value_issuing_state!!.text = personDetails.issuingState
-            value_nationality!!.text = personDetails.nationality
-        }
-
-        val additionalPersonDetails = passport.additionalPersonDetails
-        if (additionalPersonDetails != null) {
-            //This object it's not available in the majority of passports
-            card_view_additional_person_information!!.visibility = View.VISIBLE
-
-            if (additionalPersonDetails.custodyInformation != null) {
-                value_custody!!.text = additionalPersonDetails.custodyInformation
-            }
-            if (additionalPersonDetails.fullDateOfBirth != null) {
-
-                value_date_of_birth!!.text = additionalPersonDetails.fullDateOfBirth
-            }
-            if (additionalPersonDetails.otherNames != null && additionalPersonDetails.otherNames!!.size > 0) {
-                value_other_names!!.text = arrayToString(additionalPersonDetails.otherNames!!)
-            }
-            if (additionalPersonDetails.otherValidTDNumbers != null && additionalPersonDetails.otherValidTDNumbers!!.size > 0) {
-                value_other_td_numbers!!.text = arrayToString(additionalPersonDetails.otherValidTDNumbers!!)
-            }
-            if (additionalPersonDetails.permanentAddress != null && additionalPersonDetails.permanentAddress!!.size > 0) {
-                value_permanent_address!!.text = arrayToString(additionalPersonDetails.permanentAddress!!)
+        binding.apply {
+            if (passport.face != null) {
+                //Add teh face
+                iconPhoto.setImageBitmap(passport.face)
+            } else if (passport.portrait != null) {
+                //If we don't have the face, we try with the portrait
+                iconPhoto.setImageBitmap(passport.portrait)
             }
 
-            if (additionalPersonDetails.personalNumber != null) {
-                value_personal_number!!.text = additionalPersonDetails.personalNumber
+            val personDetails = passport.personDetails
+            if (personDetails != null) {
+                val name = personDetails.primaryIdentifier!!.replace("<", "")
+                val surname = personDetails.secondaryIdentifier!!.replace("<", "")
+                valueName.text = getString(R.string.name, name, surname)
+                valueDOB.text = personDetails.dateOfBirth
+                valueGender.text = personDetails.gender!!.name
+                valuePassportNumber.text = personDetails.documentNumber
+                valueExpirationDate.text = personDetails.dateOfExpiry
+                valueIssuingState.text = personDetails.issuingState
+                valueNationality.text = personDetails.nationality
             }
 
-            if (additionalPersonDetails.personalSummary != null) {
-                value_personal_summary!!.text = additionalPersonDetails.personalSummary
-            }
+            val additionalPersonDetails = passport.additionalPersonDetails
+            if (additionalPersonDetails != null) {
+                //This object it's not available in the majority of passports
+                cardViewAdditionalPersonInformation.visibility = View.VISIBLE
 
-            if (additionalPersonDetails.placeOfBirth != null && additionalPersonDetails.placeOfBirth!!.size > 0) {
-                value_place_of_birth!!.text = arrayToString(additionalPersonDetails.placeOfBirth!!)
-            }
+                if (additionalPersonDetails.custodyInformation != null) {
+                    valueCustody.text = additionalPersonDetails.custodyInformation
+                }
+                if (additionalPersonDetails.fullDateOfBirth != null) {
 
-            if (additionalPersonDetails.profession != null) {
-                value_profession!!.text = additionalPersonDetails.profession
-            }
-
-            if (additionalPersonDetails.telephone != null) {
-                value_telephone!!.text = additionalPersonDetails.telephone
-            }
-
-            if (additionalPersonDetails.title != null) {
-                value_title!!.text = additionalPersonDetails.title
-            }
-        } else {
-            card_view_additional_person_information!!.visibility = View.GONE
-        }
-
-        val additionalDocumentDetails = passport.additionalDocumentDetails
-        if (additionalDocumentDetails != null) {
-            card_view_additional_document_information!!.visibility = View.VISIBLE
-
-            if (additionalDocumentDetails.dateAndTimeOfPersonalization != null) {
-                value_date_personalization!!.text = additionalDocumentDetails.dateAndTimeOfPersonalization
-            }
-            if (additionalDocumentDetails.dateOfIssue != null) {
-                value_date_issue!!.text = additionalDocumentDetails.dateOfIssue
-            }
-
-            if (additionalDocumentDetails.endorsementsAndObservations != null) {
-                value_endorsements!!.text = additionalDocumentDetails.endorsementsAndObservations
-            }
-
-            if (additionalDocumentDetails.endorsementsAndObservations != null) {
-                value_endorsements!!.text = additionalDocumentDetails.endorsementsAndObservations
-            }
-
-            if (additionalDocumentDetails.issuingAuthority != null) {
-                value_issuing_authority!!.text = additionalDocumentDetails.issuingAuthority
-            }
-
-            if (additionalDocumentDetails.namesOfOtherPersons != null) {
-                value_names_other_persons!!.text = arrayToString(additionalDocumentDetails.namesOfOtherPersons!!)
-            }
-
-            if (additionalDocumentDetails.personalizationSystemSerialNumber != null) {
-                value_system_serial_number!!.text = additionalDocumentDetails.personalizationSystemSerialNumber
-            }
-
-            if (additionalDocumentDetails.taxOrExitRequirements != null) {
-                value_tax_exit!!.text = additionalDocumentDetails.taxOrExitRequirements
-            }
-        } else {
-            card_view_additional_document_information!!.visibility = View.GONE
-        }
-
-        displayAuthenticationStatus(passport.verificationStatus, passport.featureStatus!!)
-        displayWarningTitle(passport.verificationStatus, passport.featureStatus!!)
-
-
-        val sodFile = passport.sodFile
-        if (sodFile != null) {
-            val countrySigningCertificate = sodFile.issuerX500Principal
-            val dnRFC2253 = countrySigningCertificate.getName(X500Principal.RFC2253)
-            val dnCANONICAL = countrySigningCertificate.getName(X500Principal.CANONICAL)
-            val dnRFC1779 = countrySigningCertificate.getName(X500Principal.RFC1779)
-
-            val name = countrySigningCertificate.name
-            //new X509Certificate(countrySigningCertificate);
-
-            val docSigningCertificate = sodFile.docSigningCertificate
-
-            if (docSigningCertificate != null) {
-
-                value_document_signing_certificate_serial_number!!.text = docSigningCertificate.serialNumber.toString()
-                value_document_signing_certificate_public_key_algorithm!!.text = docSigningCertificate.publicKey.algorithm
-                value_document_signing_certificate_signature_algorithm!!.text = docSigningCertificate.sigAlgName
-
-                try {
-                    value_document_signing_certificate_thumbprint!!.text = StringUtils.bytesToHex(MessageDigest.getInstance("SHA-1").digest(
-                            docSigningCertificate.encoded)).toUpperCase()
-                } catch (e: Exception) {
-                    e.printStackTrace()
+                    valueDateOfBirth.text = additionalPersonDetails.fullDateOfBirth
+                }
+                if (additionalPersonDetails.otherNames != null && additionalPersonDetails.otherNames!!.isNotEmpty()) {
+                    valueOtherNames.text = arrayToString(additionalPersonDetails.otherNames!!)
+                }
+                if (additionalPersonDetails.otherValidTDNumbers != null && additionalPersonDetails.otherValidTDNumbers!!.isNotEmpty()) {
+                    valueOtherTdNumbers.text = arrayToString(additionalPersonDetails.otherValidTDNumbers!!)
+                }
+                if (additionalPersonDetails.permanentAddress != null && additionalPersonDetails.permanentAddress!!.isNotEmpty()) {
+                    valuePermanentAddress.text = arrayToString(additionalPersonDetails.permanentAddress!!)
                 }
 
-                value_document_signing_certificate_issuer!!.text = docSigningCertificate.issuerDN.name
-                value_document_signing_certificate_subject!!.text = docSigningCertificate.subjectDN.name
-                value_document_signing_certificate_valid_from!!.text = simpleDateFormat.format(docSigningCertificate.notBefore)
-                value_document_signing_certificate_valid_to!!.text = simpleDateFormat.format(docSigningCertificate.notAfter)
+                if (additionalPersonDetails.personalNumber != null) {
+                    valuePersonalNumber.text = additionalPersonDetails.personalNumber
+                }
 
+                if (additionalPersonDetails.personalSummary != null) {
+                    valuePersonalSummary.text = additionalPersonDetails.personalSummary
+                }
+
+                if (additionalPersonDetails.placeOfBirth != null && additionalPersonDetails.placeOfBirth!!.isNotEmpty()) {
+                    valuePlaceOfBirth.text = arrayToString(additionalPersonDetails.placeOfBirth!!)
+                }
+
+                if (additionalPersonDetails.profession != null) {
+                    valueProfession.text = additionalPersonDetails.profession
+                }
+
+                if (additionalPersonDetails.telephone != null) {
+                    valueTelephone.text = additionalPersonDetails.telephone
+                }
+
+                if (additionalPersonDetails.title != null) {
+                    valueTitle.text = additionalPersonDetails.title
+                }
             } else {
-                card_view_document_signing_certificate!!.visibility = View.GONE
+                cardViewAdditionalPersonInformation.visibility = View.GONE
             }
 
-        } else {
-            card_view_document_signing_certificate!!.visibility = View.GONE
+            val additionalDocumentDetails = passport.additionalDocumentDetails
+            if (additionalDocumentDetails != null) {
+                cardViewAdditionalDocumentInformation.visibility = View.VISIBLE
+
+                if (additionalDocumentDetails.dateAndTimeOfPersonalization != null) {
+                    valueDatePersonalization.text = additionalDocumentDetails.dateAndTimeOfPersonalization
+                }
+                if (additionalDocumentDetails.dateOfIssue != null) {
+                    valueDateIssue.text = additionalDocumentDetails.dateOfIssue
+                }
+
+                if (additionalDocumentDetails.endorsementsAndObservations != null) {
+                    valueEndorsements.text = additionalDocumentDetails.endorsementsAndObservations
+                }
+
+                if (additionalDocumentDetails.endorsementsAndObservations != null) {
+                    valueEndorsements.text = additionalDocumentDetails.endorsementsAndObservations
+                }
+
+                if (additionalDocumentDetails.issuingAuthority != null) {
+                    valueIssuingAuthority.text = additionalDocumentDetails.issuingAuthority
+                }
+
+                if (additionalDocumentDetails.namesOfOtherPersons != null) {
+                    valueNamesOtherPersons.text = arrayToString(additionalDocumentDetails.namesOfOtherPersons!!)
+                }
+
+                if (additionalDocumentDetails.personalizationSystemSerialNumber != null) {
+                    valueSystemSerialNumber.text = additionalDocumentDetails.personalizationSystemSerialNumber
+                }
+
+                if (additionalDocumentDetails.taxOrExitRequirements != null) {
+                    valueTaxExit.text = additionalDocumentDetails.taxOrExitRequirements
+                }
+            } else {
+                cardViewAdditionalDocumentInformation.visibility = View.GONE
+            }
+
+            displayAuthenticationStatus(passport.verificationStatus, passport.featureStatus!!)
+            displayWarningTitle(passport.verificationStatus, passport.featureStatus!!)
+
+
+            val sodFile = passport.sodFile
+            if (sodFile != null) {
+                val countrySigningCertificate = sodFile.issuerX500Principal
+                val dnRFC2253 = countrySigningCertificate.getName(X500Principal.RFC2253)
+                val dnCANONICAL = countrySigningCertificate.getName(X500Principal.CANONICAL)
+                val dnRFC1779 = countrySigningCertificate.getName(X500Principal.RFC1779)
+
+                val name = countrySigningCertificate.name
+                //new X509Certificate(countrySigningCertificate);
+
+                val docSigningCertificate = sodFile.docSigningCertificate
+
+                if (docSigningCertificate != null) {
+                    valueDocumentSigningCertificateSerialNumber.text = docSigningCertificate.serialNumber.toString()
+                    valueDocumentSigningCertificatePublicKeyAlgorithm.text = docSigningCertificate.publicKey.algorithm
+                    valueDocumentSigningCertificateSignatureAlgorithm.text = docSigningCertificate.sigAlgName
+
+                    try {
+                        valueDocumentSigningCertificateThumbprint.text = StringUtils.bytesToHex(MessageDigest.getInstance("SHA-1").digest(
+                                docSigningCertificate.encoded)).toUpperCase()
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                    }
+
+                    valueDocumentSigningCertificateIssuer.text = docSigningCertificate.issuerDN.name
+                    valueDocumentSigningCertificateSubject.text = docSigningCertificate.subjectDN.name
+                    valueDocumentSigningCertificateValidFrom.text = simpleDateFormat.format(docSigningCertificate.notBefore)
+                    valueDocumentSigningCertificateValidTo.text = simpleDateFormat.format(docSigningCertificate.notAfter)
+                } else {
+                    cardViewDocumentSigningCertificate.visibility = View.GONE
+                }
+
+            } else {
+                cardViewDocumentSigningCertificate.visibility = View.GONE
+            }
         }
     }
 
@@ -286,52 +269,55 @@ class PassportDetailsFragment : androidx.fragment.app.Fragment() {
             title = getString(R.string.document_unknown_passport_title)
             message = getString(R.string.document_unknown_passport_message)
         }
-        card_view_warning!!.setCardBackgroundColor(resources.getColor(colorCard))
-        textWarningTitle!!.text = title
-        textWarningMessage!!.text = message
+        binding.apply {
+            cardViewWarning.setCardBackgroundColor(ContextCompat.getColor(requireContext(), colorCard))
+            textWarningTitle.text = title
+            textWarningMessage.text = message
+        }
     }
 
 
     private fun displayAuthenticationStatus(verificationStatus: VerificationStatus?, featureStatus: FeatureStatus) {
+        binding.apply {
+            if (featureStatus.hasBAC() == FeatureStatus.Verdict.PRESENT) {
+                rowBac.visibility = View.VISIBLE
+            } else {
+                rowBac.visibility = View.GONE
+            }
 
-        if (featureStatus.hasBAC() == FeatureStatus.Verdict.PRESENT) {
-            row_bac!!.visibility = View.VISIBLE
-        } else {
-            row_bac!!.visibility = View.GONE
+            if (featureStatus.hasAA() == FeatureStatus.Verdict.PRESENT) {
+                rowActive.visibility = View.VISIBLE
+            } else {
+                rowActive.visibility = View.GONE
+            }
+
+            if (featureStatus.hasSAC() == FeatureStatus.Verdict.PRESENT) {
+                rowPace.visibility = View.VISIBLE
+            } else {
+                rowPace.visibility = View.GONE
+            }
+
+            if (featureStatus.hasCA() == FeatureStatus.Verdict.PRESENT) {
+                rowChip.visibility = View.VISIBLE
+            } else {
+                rowChip.visibility = View.GONE
+            }
+
+            if (featureStatus.hasEAC() == FeatureStatus.Verdict.PRESENT) {
+                rowEac.visibility = View.VISIBLE
+            } else {
+                rowEac.visibility = View.GONE
+            }
+
+            displayVerificationStatusIcon(valueBac, verificationStatus!!.bac)
+            displayVerificationStatusIcon(valuePace, verificationStatus.sac)
+            displayVerificationStatusIcon(valuePassive, verificationStatus.ht)
+            displayVerificationStatusIcon(valueActive, verificationStatus.aa)
+            displayVerificationStatusIcon(valueDocumentSigning, verificationStatus.ds)
+            displayVerificationStatusIcon(valueCountrySigning, verificationStatus.cs)
+            displayVerificationStatusIcon(valueChip, verificationStatus.ca)
+            displayVerificationStatusIcon(valueEac, verificationStatus.eac)
         }
-
-        if (featureStatus.hasAA() == FeatureStatus.Verdict.PRESENT) {
-            row_active!!.visibility = View.VISIBLE
-        } else {
-            row_active!!.visibility = View.GONE
-        }
-
-        if (featureStatus.hasSAC() == FeatureStatus.Verdict.PRESENT) {
-            row_pace!!.visibility = View.VISIBLE
-        } else {
-            row_pace!!.visibility = View.GONE
-        }
-
-        if (featureStatus.hasCA() == FeatureStatus.Verdict.PRESENT) {
-            row_chip!!.visibility = View.VISIBLE
-        } else {
-            row_chip!!.visibility = View.GONE
-        }
-
-        if (featureStatus.hasEAC() == FeatureStatus.Verdict.PRESENT) {
-            row_eac!!.visibility = View.VISIBLE
-        } else {
-            row_eac!!.visibility = View.GONE
-        }
-
-        displayVerificationStatusIcon(value_bac, verificationStatus!!.bac)
-        displayVerificationStatusIcon(value_pace, verificationStatus.sac)
-        displayVerificationStatusIcon(value_passive, verificationStatus.ht)
-        displayVerificationStatusIcon(value_active, verificationStatus.aa)
-        displayVerificationStatusIcon(value_document_signing, verificationStatus.ds)
-        displayVerificationStatusIcon(value_country_signing, verificationStatus.cs)
-        displayVerificationStatusIcon(value_chip, verificationStatus.ca)
-        displayVerificationStatusIcon(value_eac, verificationStatus.eac)
     }
 
     private fun displayVerificationStatusIcon(imageView: ImageView?, verdict: VerificationStatus.Verdict?) {
@@ -369,14 +355,14 @@ class PassportDetailsFragment : androidx.fragment.app.Fragment() {
         }
 
         imageView!!.setImageResource(resourceIconId)
-        imageView.setColorFilter(ContextCompat.getColor(activity!!, resourceColorId), android.graphics.PorterDuff.Mode.SRC_IN)
+        imageView.setColorFilter(ContextCompat.getColor(requireActivity(), resourceColorId), android.graphics.PorterDuff.Mode.SRC_IN)
     }
 
 
     override fun onAttach(context: Context) {
         super.onAttach(context)
         val activity = activity
-        if (activity is PassportDetailsFragment.PassportDetailsFragmentListener) {
+        if (activity is PassportDetailsFragmentListener) {
             passportDetailsFragmentListener = activity
         }
     }
