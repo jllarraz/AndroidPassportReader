@@ -1,21 +1,18 @@
 package example.jllarraz.com.passportreader.ui.fragments
 
-
 import android.content.Context
 import android.content.DialogInterface
-import android.graphics.Bitmap
 import android.os.Bundle
 import android.os.Environment
 import android.util.Log
-import android.view.LayoutInflater
 import android.view.View
-import android.view.ViewGroup
 import android.widget.*
 import androidx.appcompat.app.AlertDialog
-import androidx.appcompat.widget.AppCompatEditText
+import androidx.fragment.app.Fragment
 import com.mobsandgeeks.saripaar.ValidationError
 import com.mobsandgeeks.saripaar.Validator
 import example.jllarraz.com.passportreader.R
+import example.jllarraz.com.passportreader.databinding.FragmentSelectionBinding
 import example.jllarraz.com.passportreader.network.MasterListService
 import example.jllarraz.com.passportreader.ui.validators.DateRule
 import example.jllarraz.com.passportreader.ui.validators.DocumentNumberRule
@@ -24,94 +21,73 @@ import io.reactivex.Single
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.schedulers.Schedulers
-import kotlinx.android.synthetic.main.fragment_selection.*
 import net.sf.scuba.data.Gender
 import org.jmrtd.lds.icao.MRZInfo
 import java.security.Security
 import java.security.cert.Certificate
 
-class SelectionFragment : androidx.fragment.app.Fragment(), Validator.ValidationListener {
-
-    private var radioGroup: RadioGroup? = null
-    private var linearLayoutManual: LinearLayout? = null
-    private var linearLayoutAutomatic: LinearLayout? = null
-    private var appCompatEditTextDocumentNumber: AppCompatEditText? = null
-    private var appCompatEditTextDocumentExpiration: AppCompatEditText? = null
-    private var appCompatEditTextDateOfBirth: AppCompatEditText? = null
-    private var buttonReadNFC: Button? = null
+class SelectionFragment : Fragment(R.layout.fragment_selection), Validator.ValidationListener {
 
     private var mValidator: Validator? = null
     private var selectionFragmentListener: SelectionFragmentListener? = null
     var disposable = CompositeDisposable()
 
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
-                              savedInstanceState: Bundle?): View? {
-
-        val inflatedView = inflater.inflate(R.layout.fragment_selection, container, false)
-
-
-
-        return inflatedView
-    }
-
+    private lateinit var binding: FragmentSelectionBinding
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        radioGroup = view.findViewById(R.id.radioButtonDataEntry)
-        linearLayoutManual = view.findViewById(R.id.layoutManual)
-        linearLayoutAutomatic = view.findViewById(R.id.layoutAutomatic)
-        appCompatEditTextDocumentNumber = view.findViewById(R.id.documentNumber)
-        appCompatEditTextDocumentExpiration = view.findViewById(R.id.documentExpiration)
-        appCompatEditTextDateOfBirth = view.findViewById(R.id.documentDateOfBirth)
-        buttonReadNFC = view.findViewById(R.id.buttonReadNfc)
+        binding = FragmentSelectionBinding.bind(view)
 
-        radioGroup!!.setOnCheckedChangeListener { group, checkedId ->
-            when (checkedId) {
-                R.id.radioButtonManual -> {
-                    linearLayoutManual!!.visibility = View.VISIBLE
-                    linearLayoutAutomatic!!.visibility = View.GONE
-                }
-                R.id.radioButtonOcr -> {
-                    linearLayoutManual!!.visibility = View.GONE
-                    linearLayoutAutomatic!!.visibility = View.VISIBLE
-                    if (selectionFragmentListener != null) {
-                        selectionFragmentListener!!.onMrzRequest()
+        binding.apply {
+            radioButtonDataEntry.setOnCheckedChangeListener { _, checkedId ->
+                when (checkedId) {
+                    R.id.radioButtonManual -> {
+                        layoutManual.visibility = View.VISIBLE
+                        layoutAutomatic.visibility = View.GONE
+                    }
+                    R.id.radioButtonOcr -> {
+                        layoutManual.visibility = View.GONE
+                        layoutAutomatic.visibility = View.VISIBLE
+                        if (selectionFragmentListener != null) {
+                            selectionFragmentListener!!.onMrzRequest()
+                        }
                     }
                 }
             }
-        }
 
-        buttonReadNFC!!.setOnClickListener { validateFields() }
+
+            buttonReadNfc.setOnClickListener { validateFields() }
 
         mValidator = Validator(this)
         mValidator!!.setValidationListener(this)
 
-        mValidator!!.put(appCompatEditTextDocumentNumber!!, DocumentNumberRule())
-        mValidator!!.put(appCompatEditTextDocumentExpiration!!, DateRule())
-        mValidator!!.put(appCompatEditTextDateOfBirth!!, DateRule())
+            mValidator!!.put(documentNumber, DocumentNumberRule())
+            mValidator!!.put(documentExpiration, DateRule())
+            mValidator!!.put(documentDateOfBirth, DateRule())
 
-        buttonDownloadCSCA?.setOnClickListener {
-            requireDownloadCSCA()
-        }
-        buttonDeleteCSCA?.setOnClickListener {
-            val subscribe = cleanCSCAFolder()
-                    .subscribeOn(Schedulers.io())
-                    .observeOn(AndroidSchedulers.mainThread())
-                    .subscribe { result ->
-                        Toast.makeText(requireContext(), "CSCA Folder deleted", Toast.LENGTH_SHORT).show()
-                    }
-            disposable.add(subscribe)
+            buttonDownloadCSCA.setOnClickListener { requireDownloadCSCA() }
+            buttonDeleteCSCA.setOnClickListener {
+                val subscribe = cleanCSCAFolder()
+                        .subscribeOn(Schedulers.io())
+                        .observeOn(AndroidSchedulers.mainThread())
+                        .subscribe { _ ->
+                            Toast.makeText(requireContext(), "CSCA Folder deleted", Toast.LENGTH_SHORT).show()
+                        }
+                disposable.add(subscribe)
+            }
         }
     }
 
-    protected fun validateFields() {
+    private fun validateFields() {
         try {
-            mValidator!!.removeRules(appCompatEditTextDocumentNumber!!)
-            mValidator!!.removeRules(appCompatEditTextDocumentExpiration!!)
-            mValidator!!.removeRules(appCompatEditTextDateOfBirth!!)
+            binding.apply {
+                mValidator!!.removeRules(documentNumber)
+                mValidator!!.removeRules(documentExpiration)
+                mValidator!!.removeRules(documentDateOfBirth)
 
-            mValidator!!.put(appCompatEditTextDocumentNumber!!, DocumentNumberRule())
-            mValidator!!.put(appCompatEditTextDocumentExpiration!!, DateRule())
-            mValidator!!.put(appCompatEditTextDateOfBirth!!, DateRule())
+                mValidator!!.put(documentNumber, DocumentNumberRule())
+                mValidator!!.put(documentExpiration, DateRule())
+                mValidator!!.put(documentDateOfBirth, DateRule())
+            }
         } catch (e: Exception) {
             e.printStackTrace()
         }
@@ -120,14 +96,14 @@ class SelectionFragment : androidx.fragment.app.Fragment(), Validator.Validation
     }
 
     fun selectManualToggle() {
-        radioGroup!!.check(R.id.radioButtonManual)
+        binding.radioButtonDataEntry.check(R.id.radioButtonManual)
     }
 
 
     override fun onAttach(context: Context) {
         super.onAttach(context)
         val activity = activity
-        if (activity is SelectionFragment.SelectionFragmentListener) {
+        if (activity is SelectionFragmentListener) {
             selectionFragmentListener = activity
         }
     }
@@ -149,23 +125,25 @@ class SelectionFragment : androidx.fragment.app.Fragment(), Validator.Validation
 
     override fun onValidationSucceeded() {
 
-        val documentNumber = appCompatEditTextDocumentNumber!!.text!!.toString()
-        val dateOfBirth = appCompatEditTextDateOfBirth!!.text!!.toString()
-        val documentExpiration = appCompatEditTextDocumentExpiration!!.text!!.toString()
+        binding.apply {
+            val documentNumber = documentNumber.text!!.toString()
+            val dateOfBirth = documentDateOfBirth.text!!.toString()
+            val documentExpiration = documentExpiration.text!!.toString()
 
-        val mrzInfo = MRZInfo("P",
-                "ESP",
-                "DUMMY",
-                "DUMMY",
-                documentNumber,
-                "ESP",
-                dateOfBirth,
-                Gender.MALE,
-                documentExpiration,
-                "DUMMY"
-        )
-        if (selectionFragmentListener != null) {
-            selectionFragmentListener!!.onPassportRead(mrzInfo)
+            val mrzInfo = MRZInfo("P",
+                    "ESP",
+                    "DUMMY",
+                    "DUMMY",
+                    documentNumber,
+                    "ESP",
+                    dateOfBirth,
+                    Gender.MALE,
+                    documentExpiration,
+                    "DUMMY"
+            )
+            if (selectionFragmentListener != null) {
+                selectionFragmentListener!!.onPassportRead(mrzInfo)
+            }
         }
     }
 
@@ -202,13 +180,13 @@ class SelectionFragment : androidx.fragment.app.Fragment(), Validator.Validation
     ////////////////////////////////////////////////////////////////////////////////////////
 
 
-    fun requireDownloadCSCA(){
+    fun requireDownloadCSCA() {
         val downloadsFolder = requireContext().getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS)!!
         val keyStore = KeyStoreUtils().readKeystoreFromFile(downloadsFolder)
-        if(keyStore==null || keyStore.aliases().toList().isNullOrEmpty()){
+        if (keyStore == null || keyStore.aliases().toList().isNullOrEmpty()) {
             //No certificates downloaded
             downloadSpanishMasterList()
-        } else{
+        } else {
             //Certificates in the keystore
             val dialog = AlertDialog.Builder(requireContext())
                     .setTitle(R.string.keystore_not_empty_title)
@@ -236,7 +214,7 @@ class SelectionFragment : androidx.fragment.app.Fragment(), Validator.Validation
         }
     }
 
-    fun cleanCSCAFolder():Single<Boolean>{
+    fun cleanCSCAFolder(): Single<Boolean> {
         return Single.fromCallable {
             try {
                 val downloadsFolder = requireContext().getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS)!!
@@ -244,7 +222,7 @@ class SelectionFragment : androidx.fragment.app.Fragment(), Validator.Validation
                 for (tempFile in listFiles) {
                     tempFile.delete()
                 }
-                val listFiles1 = downloadsFolder.listFiles()
+                downloadsFolder.listFiles()
                 true
             }catch (e:java.lang.Exception){
                 false
@@ -252,7 +230,7 @@ class SelectionFragment : androidx.fragment.app.Fragment(), Validator.Validation
         }
     }
 
-    fun downloadSpanishMasterList(){
+    fun downloadSpanishMasterList() {
         val masterListService = MasterListService(requireContext(), "https://www.dnielectronico.es/")
         val subscribe = masterListService.getSpanishMasterList()
                 .subscribeOn(Schedulers.io())
@@ -268,7 +246,7 @@ class SelectionFragment : androidx.fragment.app.Fragment(), Validator.Validation
         disposable.add(subscribe)
     }
 
-    fun saveCertificates(certificates:ArrayList<Certificate>){
+    fun saveCertificates(certificates: ArrayList<Certificate>) {
         val subscribe = Single.fromCallable {
             try {
                 val size = certificates.size
@@ -292,16 +270,11 @@ class SelectionFragment : androidx.fragment.app.Fragment(), Validator.Validation
                 }
         disposable.add(subscribe)
     }
+
     companion object {
         val TAG = SelectionFragment::class.java.simpleName
         init {
             Security.insertProviderAt(org.spongycastle.jce.provider.BouncyCastleProvider(), 1)
-        }
-        fun newInstance(mrzInfo: MRZInfo, face: Bitmap): PassportDetailsFragment {
-            val myFragment = PassportDetailsFragment()
-            val args = Bundle()
-            myFragment.arguments = args
-            return myFragment
         }
     }
 }
