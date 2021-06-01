@@ -15,6 +15,7 @@ import android.view.WindowManager
 import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.fragment.app.Fragment
 import example.jllarraz.com.passportreader.R
 import io.fotoapparat.Fotoapparat
 import io.fotoapparat.characteristic.LensPosition
@@ -24,8 +25,7 @@ import io.fotoapparat.preview.FrameProcessor
 import io.fotoapparat.selector.*
 import io.fotoapparat.view.CameraView
 
-abstract class CameraFragment : androidx.fragment.app.Fragment(), ActivityCompat.OnRequestPermissionsResultCallback {
-
+abstract class CameraFragment : Fragment(), ActivityCompat.OnRequestPermissionsResultCallback {
 
     /**
      * Camera Manager
@@ -43,34 +43,24 @@ abstract class CameraFragment : androidx.fragment.app.Fragment(), ActivityCompat
     var configuration = CameraConfiguration(
             // A full configuration
             // ...
-            focusMode = firstAvailable(
-                    autoFocus()
-            ),
+            focusMode = firstAvailable(autoFocus()),
             flashMode = off()
     )
-
-
     ////////////////////////////////////////
 
     abstract val callbackFrameProcessor: FrameProcessor
     abstract val cameraPreview: CameraView
     abstract val requestedPermissions: ArrayList<String>
-    var initialLensPosition: LensPosition = LensPosition.Back
+    private var initialLensPosition: LensPosition = LensPosition.Back
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
 
         if (savedInstanceState != null) {
             if (savedInstanceState.containsKey(KEY_CURRENT_ZOOM_PROGRESS)) {
                 zoomProgress = savedInstanceState.getInt(KEY_CURRENT_ZOOM_PROGRESS, 0)
             }
         }
-    }
-
-
-    override fun onActivityCreated(savedInstanceState: Bundle?) {
-        super.onActivityCreated(savedInstanceState)
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
@@ -93,11 +83,7 @@ abstract class CameraFragment : androidx.fragment.app.Fragment(), ActivityCompat
 
         }
 
-        cameraView.setOnTouchListener(object : View.OnTouchListener {
-            override fun onTouch(v: View?, event: MotionEvent?): Boolean {
-                return onTouchEvent(event!!)
-            }
-        })
+        cameraView.setOnTouchListener { v, event -> onTouchEvent(event!!) }
     }
 
     fun configureZoom() {
@@ -144,8 +130,8 @@ abstract class CameraFragment : androidx.fragment.app.Fragment(), ActivityCompat
     override fun onResume() {
         super.onResume()
 
-        rotation = getRotation(context!!, initialLensPosition)
-        buildCamera(cameraPreview!!, initialLensPosition)
+        rotation = getRotation(requireContext(), initialLensPosition)
+        buildCamera(cameraPreview, initialLensPosition)
 
         hasCameraPermission = hasCameraPermission()
         if (hasCameraPermission) {
@@ -163,19 +149,6 @@ abstract class CameraFragment : androidx.fragment.app.Fragment(), ActivityCompat
         }
         fotoapparat = null;
         super.onPause()
-    }
-
-    override fun onDestroyView() {
-        super.onDestroyView()
-    }
-
-    override fun onAttach(context: Context) {
-        super.onAttach(context)
-    }
-
-    override fun onDetach() {
-        super.onDetach()
-
     }
 
 
@@ -247,12 +220,12 @@ abstract class CameraFragment : androidx.fragment.app.Fragment(), ActivityCompat
     ////////////////////////////////////////////////////////////////////////////////////////
 
     protected fun hasCameraPermission(): Boolean {
-        return ContextCompat.checkSelfPermission(context!!, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED
+        return ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED
     }
 
     protected fun checkPermissions(permissions: ArrayList<String> = ArrayList()) {
         //request permission
-        val hasPermissionCamera = ContextCompat.checkSelfPermission(context!!,
+        val hasPermissionCamera = ContextCompat.checkSelfPermission(requireContext(),
                 Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED
         if (!hasPermissionCamera && !permissions.contains(Manifest.permission.CAMERA)) {
             permissions.add(Manifest.permission.CAMERA)
@@ -335,8 +308,8 @@ abstract class CameraFragment : androidx.fragment.app.Fragment(), ActivityCompat
         override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
             val activity = activity
             return AlertDialog.Builder(activity)
-                    .setMessage(arguments!!.getString(ARG_MESSAGE))
-                    .setPositiveButton(android.R.string.ok) { dialogInterface, i -> activity!!.finish() }
+                    .setMessage(requireArguments().getString(ARG_MESSAGE))
+                    .setPositiveButton(android.R.string.ok) { _, _ -> activity!!.finish() }
                     .create()
         }
 
