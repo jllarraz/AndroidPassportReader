@@ -1,7 +1,6 @@
 package example.jllarraz.com.passportreader.ui.fragments
 
 import android.content.Context
-import android.content.DialogInterface
 import android.os.Bundle
 import android.os.Environment
 import android.util.Log
@@ -30,7 +29,7 @@ class SelectionFragment : Fragment(R.layout.fragment_selection), Validator.Valid
 
     private var mValidator: Validator? = null
     private var selectionFragmentListener: SelectionFragmentListener? = null
-    var disposable = CompositeDisposable()
+    private var disposable = CompositeDisposable()
 
     private lateinit var binding: FragmentSelectionBinding
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -57,8 +56,8 @@ class SelectionFragment : Fragment(R.layout.fragment_selection), Validator.Valid
 
             buttonReadNfc.setOnClickListener { validateFields() }
 
-        mValidator = Validator(this)
-        mValidator!!.setValidationListener(this)
+            mValidator = Validator(this)
+            mValidator!!.setValidationListener(this@SelectionFragment)
 
             mValidator!!.put(documentNumber, DocumentNumberRule())
             mValidator!!.put(documentExpiration, DateRule())
@@ -180,7 +179,7 @@ class SelectionFragment : Fragment(R.layout.fragment_selection), Validator.Valid
     ////////////////////////////////////////////////////////////////////////////////////////
 
 
-    fun requireDownloadCSCA() {
+    private fun requireDownloadCSCA() {
         val downloadsFolder = requireContext().getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS)!!
         val keyStore = KeyStoreUtils().readKeystoreFromFile(downloadsFolder)
         if (keyStore == null || keyStore.aliases().toList().isNullOrEmpty()) {
@@ -191,46 +190,38 @@ class SelectionFragment : Fragment(R.layout.fragment_selection), Validator.Valid
             val dialog = AlertDialog.Builder(requireContext())
                     .setTitle(R.string.keystore_not_empty_title)
                     .setMessage(R.string.keystore_not_empty_message)
-                    .setPositiveButton(android.R.string.ok, object : DialogInterface.OnClickListener {
-                        override fun onClick(dialog: DialogInterface?, which: Int) {
-                            val subscribe = cleanCSCAFolder()
-                                    .subscribeOn(Schedulers.io())
-                                    .observeOn(AndroidSchedulers.mainThread())
-                                    .subscribe { result ->
-                                        downloadSpanishMasterList()
-                                    }
-                            disposable.add(subscribe)
-
-                        }
-                    })
-                    .setNegativeButton(android.R.string.cancel, object : DialogInterface.OnClickListener {
-                        override fun onClick(dialog: DialogInterface?, which: Int) {
-                            //WE don't do anything
-                        }
-
-                    })
+                    .setPositiveButton(android.R.string.ok) { _, _ ->
+                        val subscribe = cleanCSCAFolder()
+                                .subscribeOn(Schedulers.io())
+                                .observeOn(AndroidSchedulers.mainThread())
+                                .subscribe { _ ->
+                                    downloadSpanishMasterList()
+                                }
+                        disposable.add(subscribe)
+                    }
+                    .setNegativeButton(android.R.string.cancel, null)
                     .create()
             dialog.show()
         }
     }
 
-    fun cleanCSCAFolder(): Single<Boolean> {
+    private fun cleanCSCAFolder(): Single<Boolean> {
         return Single.fromCallable {
             try {
                 val downloadsFolder = requireContext().getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS)!!
                 val listFiles = downloadsFolder.listFiles()
-                for (tempFile in listFiles) {
+                listFiles?.forEach { tempFile ->
                     tempFile.delete()
                 }
                 downloadsFolder.listFiles()
                 true
-            }catch (e:java.lang.Exception){
+            } catch (e: Exception) {
                 false
             }
         }
     }
 
-    fun downloadSpanishMasterList() {
+    private fun downloadSpanishMasterList() {
         val masterListService = MasterListService(requireContext(), "https://www.dnielectronico.es/")
         val subscribe = masterListService.getSpanishMasterList()
                 .subscribeOn(Schedulers.io())
@@ -239,31 +230,31 @@ class SelectionFragment : Fragment(R.layout.fragment_selection), Validator.Valid
                         { certificates ->
                             saveCertificates(certificates)
                         },
-                        {error->
-                            Toast.makeText(requireContext(), "No certificates has been download "+error, Toast.LENGTH_SHORT).show()
+                        { error ->
+                            Toast.makeText(requireContext(), "No certificates has been download $error", Toast.LENGTH_SHORT).show()
                         }
                 )
         disposable.add(subscribe)
     }
 
-    fun saveCertificates(certificates: ArrayList<Certificate>) {
+    private fun saveCertificates(certificates: ArrayList<Certificate>) {
         val subscribe = Single.fromCallable {
             try {
                 val size = certificates.size
-                Log.d(TAG, "Number of certificates: " + size)
+                Log.d(TAG, "Number of certificates: $size")
                 val map = KeyStoreUtils().toMap(certificates)
                 val downloadsFolder = requireContext().getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS)!!
                 KeyStoreUtils().toKeyStoreFile(map, outputDir = downloadsFolder)
                 size
-            } catch (e: java.lang.Exception) {
+            } catch (e: Exception) {
                 e.printStackTrace()
                 -1
             }
         }.subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe { result ->
-                    if(result>0) {
-                        Toast.makeText(requireContext(), "Certificates Downloaded: "+result, Toast.LENGTH_SHORT).show()
+                    if (result > 0) {
+                        Toast.makeText(requireContext(), "Certificates Downloaded: $result", Toast.LENGTH_SHORT).show()
                     } else {
                         Toast.makeText(requireContext(), "No certificates has been download", Toast.LENGTH_SHORT).show()
                     }
@@ -272,7 +263,8 @@ class SelectionFragment : Fragment(R.layout.fragment_selection), Validator.Valid
     }
 
     companion object {
-        val TAG = SelectionFragment::class.java.simpleName
+        private const val TAG = "SelectionFragment"
+
         init {
             Security.insertProviderAt(org.spongycastle.jce.provider.BouncyCastleProvider(), 1)
         }
