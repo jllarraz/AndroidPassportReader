@@ -26,17 +26,13 @@ import android.graphics.Color
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import com.google.mlkit.vision.text.Text
-
-
-import org.jmrtd.lds.icao.MRZInfo
-
 import example.jllarraz.com.passportreader.R
+import example.jllarraz.com.passportreader.databinding.FragmentCameraMrzBinding
 import example.jllarraz.com.passportreader.mlkit.FrameMetadata
 import example.jllarraz.com.passportreader.mlkit.GraphicOverlay
 import example.jllarraz.com.passportreader.mlkit.OcrMrzDetectorProcessor
@@ -44,17 +40,16 @@ import example.jllarraz.com.passportreader.mlkit.VisionProcessorBase
 import example.jllarraz.com.passportreader.utils.MRZUtil
 import example.jllarraz.com.passportreader.utils.OcrUtils
 import io.fotoapparat.preview.Frame
+import io.fotoapparat.preview.FrameProcessor
 import io.fotoapparat.view.CameraView
 import io.reactivex.Single
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.schedulers.Schedulers
-import kotlinx.android.synthetic.main.fragment_camera_mrz.*
-import java.util.regex.Pattern
+import org.jmrtd.lds.icao.MRZInfo
 
 class CameraMLKitFragment : CameraFragment() {
 
-    
     ////////////////////////////////////////
 
     private var cameraMLKitCallback: CameraMLKitCallback? = null
@@ -64,24 +59,20 @@ class CameraMLKitFragment : CameraFragment() {
 
     private var isDecoding = false
 
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
-                              savedInstanceState: Bundle?): View? {
-        return inflater.inflate(R.layout.fragment_camera_mrz, container, false)
+    private lateinit var binding: FragmentCameraMrzBinding
+    override fun onCreateView(
+            inflater: LayoutInflater, container: ViewGroup?,
+            savedInstanceState: Bundle?
+    ): View {
+        binding = FragmentCameraMrzBinding.inflate(inflater)
+        return binding.root
     }
-
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
-    }
-
-
-
 
     override fun onResume() {
         MRZUtil.cleanStorage()
         frameProcessor = textProcessor
         super.onResume()
     }
-
 
 
     override fun onPause() {
@@ -113,7 +104,6 @@ class CameraMLKitFragment : CameraFragment() {
     }
 
 
-
     ////////////////////////////////////////////////////////////////////////////////////////
     //
     //        Events from camera fragment
@@ -123,41 +113,37 @@ class CameraMLKitFragment : CameraFragment() {
 
     override val callbackFrameProcessor: io.fotoapparat.preview.FrameProcessor
         get() {
-            val callbackFrameProcessor2 = object : io.fotoapparat.preview.FrameProcessor {
+            return object : FrameProcessor {
                 override fun process(frame: Frame) {
                     try {
                         if (!isDecoding) {
                             isDecoding = true
 
                             if (frameProcessor != null) {
-                                val subscribe = Single.fromCallable({
-                                        frameProcessor?.process(
+                                val subscribe = Single.fromCallable {
+                                    frameProcessor?.process(
                                             frame = frame,
                                             rotation = rotation,
                                             graphicOverlay = null,
                                             true,
                                             listener = ocrListener
-                                        )
-                                }).subscribeOn(Schedulers.io())
-                                .observeOn(AndroidSchedulers.mainThread())
-                                .subscribe({ success ->
-                                    //Don't do anything
-
-                                },{error->
-                                    isDecoding = false
-                                    Toast.makeText(requireContext(), "Error: "+error, Toast.LENGTH_SHORT).show()
-                                })
+                                    )
+                                }.subscribeOn(Schedulers.io())
+                                        .observeOn(AndroidSchedulers.mainThread())
+                                        .subscribe({ success ->
+                                            //Don't do anything
+                                        }, { error ->
+                                            isDecoding = false
+                                            Toast.makeText(requireContext(), "Error: $error", Toast.LENGTH_SHORT).show()
+                                        })
                                 disposable.add(subscribe)
                             }
                         }
-                    }catch (e:Exception){
+                    } catch (e: Exception) {
                         e.printStackTrace()
                     }
-
                 }
             }
-            return  callbackFrameProcessor2
-
         }
 
     ////////////////////////////////////////////////////////////////////////////////////////
@@ -167,9 +153,7 @@ class CameraMLKitFragment : CameraFragment() {
     ////////////////////////////////////////////////////////////////////////////////////////
 
     override val cameraPreview: CameraView
-        get(){
-            return camera_preview
-        }
+        get() = binding.cameraPreview
 
     ////////////////////////////////////////////////////////////////////////////////////////
     //
@@ -187,7 +171,6 @@ class CameraMLKitFragment : CameraFragment() {
     }
 
 
-
     ////////////////////////////////////////////////////////////////////////////////////////
     //
     //       Instantiate the text processor to perform OCR
@@ -197,19 +180,19 @@ class CameraMLKitFragment : CameraFragment() {
     //OCR listener
     val ocrListener = object : VisionProcessorBase.Listener<com.google.mlkit.vision.text.Text> {
         override fun onSuccess(
-            results: Text,
-            frameMetadata: FrameMetadata?,
-            timeRequired: Long,
-            bitmap: Bitmap?,
-            graphicOverlay: GraphicOverlay?
+                results: Text,
+                frameMetadata: FrameMetadata?,
+                timeRequired: Long,
+                bitmap: Bitmap?,
+                graphicOverlay: GraphicOverlay?
         ) {
             if (!isAdded) {
                 return
             }
             OcrUtils.processOcr(
-                results = results,
-                timeRequired = timeRequired,
-                callback = mrzListener
+                    results = results,
+                    timeRequired = timeRequired,
+                    callback = mrzListener
             )
         }
 
@@ -219,10 +202,7 @@ class CameraMLKitFragment : CameraFragment() {
             }
         }
 
-        override fun onFailure(
-            e: Exception,
-            timeRequired: Long
-        ) {
+        override fun onFailure(e: Exception, timeRequired: Long) {
             if (!isAdded) {
                 return
             }
@@ -242,18 +222,19 @@ class CameraMLKitFragment : CameraFragment() {
     var mrzListener = object : OcrUtils.MRZCallback {
         override fun onMRZRead(mrzInfo: MRZInfo, timeRequired: Long) {
             isDecoding = false
-            if(!isAdded){
+            if (!isAdded) {
                 return
             }
             mHandler.post {
                 try {
-                    status_view_top!!.text = getString(R.string.status_bar_ocr, mrzInfo.documentNumber, mrzInfo.dateOfBirth, mrzInfo.dateOfExpiry)
-                    status_view_bottom!!.text = getString(R.string.status_bar_success, timeRequired)
-                    status_view_bottom!!.setTextColor(resources.getColor(R.color.status_text))
-                    if (cameraMLKitCallback != null) {
-                        cameraMLKitCallback!!.onPassportRead(mrzInfo)
+                    binding.apply {
+                        statusViewTop.text = getString(R.string.status_bar_ocr, mrzInfo.documentNumber, mrzInfo.dateOfBirth, mrzInfo.dateOfExpiry)
+                        statusViewBottom.text = getString(R.string.status_bar_success, timeRequired)
+                        statusViewBottom.setTextColor(resources.getColor(R.color.status_text))
+                        if (cameraMLKitCallback != null) {
+                            cameraMLKitCallback!!.onPassportRead(mrzInfo)
+                        }
                     }
-
                 } catch (e: IllegalStateException) {
                     //The fragment is destroyed
                 }
@@ -262,14 +243,16 @@ class CameraMLKitFragment : CameraFragment() {
 
         override fun onMRZReadFailure(timeRequired: Long) {
             isDecoding = false
-            if(!isAdded){
+            if (!isAdded) {
                 return
             }
             mHandler.post {
                 try {
-                    status_view_bottom!!.text = getString(R.string.status_bar_failure, timeRequired)
-                    status_view_bottom!!.setTextColor(Color.RED)
-                    status_view_top!!.text = ""
+                    binding.apply {
+                        statusViewBottom.text = getString(R.string.status_bar_failure, timeRequired)
+                        statusViewBottom.setTextColor(Color.RED)
+                        statusViewTop.text = ""
+                    }
                 } catch (e: IllegalStateException) {
                     //The fragment is destroyed
                 }
@@ -278,7 +261,7 @@ class CameraMLKitFragment : CameraFragment() {
 
         override fun onFailure(e: Exception, timeRequired: Long) {
             isDecoding = false
-            if(!isAdded){
+            if (!isAdded) {
                 return
             }
             e.printStackTrace()
@@ -291,11 +274,8 @@ class CameraMLKitFragment : CameraFragment() {
     }
 
 
-
-
     protected val textProcessor: OcrMrzDetectorProcessor
         get() = OcrMrzDetectorProcessor()
-
 
 
     ////////////////////////////////////////////////////////////////////////////////////////
@@ -312,8 +292,10 @@ class CameraMLKitFragment : CameraFragment() {
         }
     }
 
-    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>,
-                                            grantResults: IntArray) {
+    override fun onRequestPermissionsResult(
+            requestCode: Int, permissions: Array<String>,
+            grantResults: IntArray
+    ) {
         if (requestCode == REQUEST_CAMERA_PERMISSION) {
             if (grantResults.size != 1 || grantResults[0] != PackageManager.PERMISSION_GRANTED) {
                 ErrorDialog.newInstance(getString(R.string.permission_camera_rationale))
@@ -349,7 +331,7 @@ class CameraMLKitFragment : CameraFragment() {
         override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
             val activity = activity
             return AlertDialog.Builder(activity)
-                    .setMessage(arguments!!.getString(ARG_MESSAGE))
+                    .setMessage(requireArguments().getString(ARG_MESSAGE))
                     .setPositiveButton(android.R.string.ok) { dialogInterface, i -> activity!!.finish() }
                     .create()
         }
@@ -379,10 +361,10 @@ class CameraMLKitFragment : CameraFragment() {
             return AlertDialog.Builder(activity)
                     .setMessage(R.string.permission_camera_rationale)
                     .setPositiveButton(android.R.string.ok) { dialog, which ->
-                        parent!!.requestPermissions(arrayOf(Manifest.permission.CAMERA),
-                                REQUEST_CAMERA_PERMISSION)
+                        parent!!.requestPermissions(arrayOf(Manifest.permission.CAMERA), REQUEST_CAMERA_PERMISSION)
                     }
-                    .setNegativeButton(android.R.string.cancel
+                    .setNegativeButton(
+                            android.R.string.cancel
                     ) { dialog, which ->
                         val activity = parent!!.activity
                         activity?.finish()
@@ -404,19 +386,7 @@ class CameraMLKitFragment : CameraFragment() {
     }
 
     companion object {
-
-        /**
-         * Tag for the [Log].
-         */
-        private val TAG = CameraMLKitFragment::class.java.simpleName
-
         private val REQUEST_CAMERA_PERMISSION = 1
         private val FRAGMENT_DIALOG = "CameraMLKitFragment"
-
-        fun newInstance(): CameraMLKitFragment {
-            return CameraMLKitFragment()
-        }
     }
-
-
 }
