@@ -30,7 +30,7 @@ class SelectionActivity : AppCompatActivity(), SelectionFragment.SelectionFragme
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_selection)
+        setContentView(R.layout.activity_framelayout_container)
         if (null == savedInstanceState) {
             supportFragmentManager.beginTransaction()
                 .replace(R.id.container, SelectionFragment(), TAG_SELECTION_FRAGMENT)

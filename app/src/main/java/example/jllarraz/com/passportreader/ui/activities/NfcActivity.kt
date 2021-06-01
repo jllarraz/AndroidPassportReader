@@ -1,28 +1,20 @@
 package example.jllarraz.com.passportreader.ui.activities
 
+
 import android.app.PendingIntent
 import android.content.Intent
 import android.graphics.Bitmap
 import android.nfc.NfcAdapter
 import android.os.Bundle
 import android.provider.Settings
-import androidx.fragment.app.Fragment
-import androidx.fragment.app.FragmentActivity
 import android.widget.Toast
-
-import net.sf.scuba.smartcards.CardServiceException
-
-
-import org.jmrtd.lds.icao.MRZInfo
-
 import example.jllarraz.com.passportreader.R
-import example.jllarraz.com.passportreader.common.IntentData
+import example.jllarraz.com.passportreader.common.IntentData.KEY_MRZ_INFO
 import example.jllarraz.com.passportreader.data.Passport
 import example.jllarraz.com.passportreader.ui.fragments.NfcFragment
 import example.jllarraz.com.passportreader.ui.fragments.PassportDetailsFragment
 import example.jllarraz.com.passportreader.ui.fragments.PassportPhotoFragment
-
-import example.jllarraz.com.passportreader.common.IntentData.KEY_MRZ_INFO
+import org.jmrtd.lds.icao.MRZInfo
 
 class NfcActivity : androidx.fragment.app.FragmentActivity(), NfcFragment.NfcFragmentListener, PassportDetailsFragment.PassportDetailsFragmentListener, PassportPhotoFragment.PassportPhotoFragmentListener {
 
@@ -33,10 +25,10 @@ class NfcActivity : androidx.fragment.app.FragmentActivity(), NfcFragment.NfcFra
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_nfc)
+        setContentView(R.layout.activity_framelayout_container)
         val intent = intent
-        if (intent.hasExtra(IntentData.KEY_MRZ_INFO)) {
-            mrzInfo = intent.getSerializableExtra(IntentData.KEY_MRZ_INFO) as MRZInfo
+        if (intent.hasExtra(KEY_MRZ_INFO)) {
+            mrzInfo = intent.getSerializableExtra(KEY_MRZ_INFO) as MRZInfo
         } else {
             onBackPressed()
         }
@@ -61,21 +53,11 @@ class NfcActivity : androidx.fragment.app.FragmentActivity(), NfcFragment.NfcFra
         }
     }
 
-    public override fun onResume() {
-        super.onResume()
-
-    }
-
-    public override fun onPause() {
-        super.onPause()
-
-    }
-
     public override fun onNewIntent(intent: Intent) {
         if (NfcAdapter.ACTION_TAG_DISCOVERED == intent.action || NfcAdapter.ACTION_TECH_DISCOVERED == intent.action) {
             // drop NFC events
             handleIntent(intent)
-        }else{
+        } else {
             super.onNewIntent(intent)
         }
     }
@@ -95,8 +77,6 @@ class NfcActivity : androidx.fragment.app.FragmentActivity(), NfcFragment.NfcFra
     /////////////////////////////////////////////////////
 
     override fun onEnableNfc() {
-
-
         if (nfcAdapter != null) {
             if (!nfcAdapter!!.isEnabled)
                 showWirelessSettings()
@@ -115,6 +95,7 @@ class NfcActivity : androidx.fragment.app.FragmentActivity(), NfcFragment.NfcFra
     }
 
     override fun onCardException(cardException: Exception?) {
+        cardException?.printStackTrace()
         //Toast.makeText(this, cardException.toString(), Toast.LENGTH_SHORT).show();
         //onBackPressed();
     }
@@ -146,10 +127,6 @@ class NfcActivity : androidx.fragment.app.FragmentActivity(), NfcFragment.NfcFra
     }
 
     companion object {
-
-        private val TAG = NfcActivity::class.java.simpleName
-
-
         private val TAG_NFC = "TAG_NFC"
         private val TAG_PASSPORT_DETAILS = "TAG_PASSPORT_DETAILS"
         private val TAG_PASSPORT_PICTURE = "TAG_PASSPORT_PICTURE"
