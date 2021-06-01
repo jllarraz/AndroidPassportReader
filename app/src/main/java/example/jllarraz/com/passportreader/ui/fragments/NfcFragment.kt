@@ -1,5 +1,6 @@
 package example.jllarraz.com.passportreader.ui.fragments
 
+
 import android.content.Context
 import android.content.Intent
 import android.nfc.NfcAdapter
@@ -9,36 +10,27 @@ import android.os.Environment
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
-import android.view.LayoutInflater
 import android.view.View
-import android.view.ViewGroup
 import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
-
-import net.sf.scuba.smartcards.CardServiceException
-import net.sf.scuba.smartcards.ISO7816
-
-
-import org.jmrtd.AccessDeniedException
-import org.jmrtd.BACDeniedException
-import org.jmrtd.PACEException
-import org.jmrtd.lds.icao.MRZInfo
-
-
-import java.security.Security
-
-
+import androidx.fragment.app.Fragment
 import example.jllarraz.com.passportreader.R
 import example.jllarraz.com.passportreader.common.IntentData
 import example.jllarraz.com.passportreader.data.Passport
 import example.jllarraz.com.passportreader.utils.KeyStoreUtils
 import example.jllarraz.com.passportreader.utils.NFCDocumentTag
 import io.reactivex.disposables.CompositeDisposable
+import net.sf.scuba.smartcards.CardServiceException
+import net.sf.scuba.smartcards.ISO7816
+import org.jmrtd.AccessDeniedException
+import org.jmrtd.BACDeniedException
 import org.jmrtd.MRTDTrustStore
+import org.jmrtd.PACEException
+import org.jmrtd.lds.icao.MRZInfo
+import java.security.Security
 
-
-class NfcFragment : androidx.fragment.app.Fragment() {
+class NfcFragment : Fragment(R.layout.fragment_nfc) {
 
     private var mrzInfo: MRZInfo? = null
     private var nfcFragmentListener: NfcFragmentListener? = null
@@ -47,16 +39,8 @@ class NfcFragment : androidx.fragment.app.Fragment() {
     private var textViewDateOfExpiry: TextView? = null
     private var progressBar: ProgressBar? = null
 
-    internal var mHandler = Handler(Looper.getMainLooper())
-    var disposable = CompositeDisposable()
-
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
-                              savedInstanceState: Bundle?): View? {
-
-        val inflatedView = inflater.inflate(R.layout.fragment_nfc, container, false)
-
-        return inflatedView
-    }
+    private var mHandler = Handler(Looper.getMainLooper())
+    private var disposable = CompositeDisposable()
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -64,8 +48,6 @@ class NfcFragment : androidx.fragment.app.Fragment() {
         val arguments = arguments
         if (arguments!!.containsKey(IntentData.KEY_MRZ_INFO)) {
             mrzInfo = arguments.getSerializable(IntentData.KEY_MRZ_INFO) as MRZInfo
-        } else {
-            //error
         }
 
         textViewPassportNumber = view.findViewById(R.id.value_passport_number)
@@ -80,11 +62,11 @@ class NfcFragment : androidx.fragment.app.Fragment() {
         }
         val tag = intent.getParcelableExtra<Tag>(NfcAdapter.EXTRA_TAG) ?: return
 
-        val folder = context!!.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS)!!
+        val folder = requireContext().getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS)!!
         val keyStore = KeyStoreUtils().readKeystoreFromFile(folder)
 
         val mrtdTrustStore = MRTDTrustStore()
-        if(keyStore!=null){
+        if (keyStore != null) {
             val certStore = KeyStoreUtils().toCertStore(keyStore = keyStore)
 
             mrtdTrustStore.addAsCSCACertStore(certStore)
@@ -92,7 +74,7 @@ class NfcFragment : androidx.fragment.app.Fragment() {
         //mrtdTrustStore.addCSCAStore(readKeystoreFromFile)
 
 
-        val subscribe = NFCDocumentTag().handleTag(context!!, tag, mrzInfo!!, mrtdTrustStore, object : NFCDocumentTag.PassportCallback {
+        val subscribe = NFCDocumentTag().handleTag(requireContext(), tag, mrzInfo!!, mrtdTrustStore, object : NFCDocumentTag.PassportCallback {
 
             override fun onPassportReadStart() {
                 onNFCSReadStart()
@@ -125,8 +107,7 @@ class NfcFragment : androidx.fragment.app.Fragment() {
             }
 
             override fun onCardException(exception: CardServiceException) {
-                val sw = exception.sw.toShort()
-                when (sw) {
+                when (exception.sw.toShort()) {
                     ISO7816.SW_CLA_NOT_SUPPORTED -> {
                         Toast.makeText(context, getString(R.string.warning_cla_not_supported), Toast.LENGTH_SHORT).show()
                     }
@@ -150,7 +131,7 @@ class NfcFragment : androidx.fragment.app.Fragment() {
     override fun onAttach(context: Context) {
         super.onAttach(context)
         val activity = activity
-        if (activity is NfcFragment.NfcFragmentListener) {
+        if (activity is NfcFragmentListener) {
             nfcFragmentListener = activity
         }
     }
@@ -181,24 +162,24 @@ class NfcFragment : androidx.fragment.app.Fragment() {
     }
 
     override fun onDestroyView() {
-        if (!disposable.isDisposed()) {
-            disposable.dispose();
+        if (!disposable.isDisposed) {
+            disposable.dispose()
         }
         super.onDestroyView()
     }
 
-    protected fun onNFCSReadStart() {
+    private fun onNFCSReadStart() {
         Log.d(TAG, "onNFCSReadStart")
         mHandler.post { progressBar!!.visibility = View.VISIBLE }
 
     }
 
-    protected fun onNFCReadFinish() {
+    private fun onNFCReadFinish() {
         Log.d(TAG, "onNFCReadFinish")
         mHandler.post { progressBar!!.visibility = View.GONE }
     }
 
-    protected fun onCardException(cardException: Exception?) {
+    private fun onCardException(cardException: Exception?) {
         mHandler.post {
             if (nfcFragmentListener != null) {
                 nfcFragmentListener!!.onCardException(cardException)
@@ -206,7 +187,7 @@ class NfcFragment : androidx.fragment.app.Fragment() {
         }
     }
 
-    protected fun onPassportRead(passport: Passport?) {
+    private fun onPassportRead(passport: Passport?) {
         mHandler.post {
             if (nfcFragmentListener != null) {
                 nfcFragmentListener!!.onPassportRead(passport)
@@ -222,13 +203,13 @@ class NfcFragment : androidx.fragment.app.Fragment() {
     }
 
 
-
     companion object {
         private val TAG = NfcFragment::class.java.simpleName
 
         init {
             Security.insertProviderAt(org.spongycastle.jce.provider.BouncyCastleProvider(), 1)
         }
+
         fun newInstance(mrzInfo: MRZInfo): NfcFragment {
             val myFragment = NfcFragment()
             val args = Bundle()
