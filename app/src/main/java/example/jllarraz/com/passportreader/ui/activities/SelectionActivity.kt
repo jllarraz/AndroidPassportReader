@@ -40,15 +40,12 @@ class SelectionActivity : AppCompatActivity(), SelectionFragment.SelectionFragme
 
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        var data = data
-        if (data == null) {
-            data = Intent()
-        }
+        val intent = data ?: Intent()
         when (requestCode) {
             REQUEST_MRZ -> {
                 when (resultCode) {
                     Activity.RESULT_OK -> {
-                        onPassportRead(data.getSerializableExtra(IntentData.KEY_MRZ_INFO) as MRZInfo)
+                        onPassportRead(intent.getSerializableExtra(IntentData.KEY_MRZ_INFO) as MRZInfo)
                     }
                     Activity.RESULT_CANCELED -> {
                         val fragmentByTag =
@@ -73,7 +70,7 @@ class SelectionActivity : AppCompatActivity(), SelectionFragment.SelectionFragme
                 }
             }
         }
-        super.onActivityResult(requestCode, resultCode, data)
+        super.onActivityResult(requestCode, resultCode, intent)
     }
 
     private fun test() {
