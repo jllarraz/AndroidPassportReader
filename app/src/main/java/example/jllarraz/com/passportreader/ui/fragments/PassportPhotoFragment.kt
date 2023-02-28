@@ -3,16 +3,12 @@ package example.jllarraz.com.passportreader.ui.fragments
 import android.content.Context
 import android.graphics.Bitmap
 import android.os.Bundle
-import androidx.fragment.app.Fragment
-import androidx.fragment.app.FragmentActivity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 
-import example.jllarraz.com.passportreader.R
 import example.jllarraz.com.passportreader.common.IntentData
-import example.jllarraz.com.passportreader.ui.views.TouchImageView
-import kotlinx.android.synthetic.main.fragment_photo.*
+import example.jllarraz.com.passportreader.databinding.FragmentPhotoBinding
 
 class PassportPhotoFragment : androidx.fragment.app.Fragment() {
 
@@ -21,15 +17,11 @@ class PassportPhotoFragment : androidx.fragment.app.Fragment() {
     private var bitmap: Bitmap? = null
 
 
-
+    private var binding:FragmentPhotoBinding?=null
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
                               savedInstanceState: Bundle?): View? {
-
-        val inflatedView = inflater.inflate(R.layout.fragment_photo, container, false)
-
-
-
-        return inflatedView
+        binding = FragmentPhotoBinding.inflate(inflater, container, false)
+        return binding?.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -52,7 +44,7 @@ class PassportPhotoFragment : androidx.fragment.app.Fragment() {
         if (bitmap == null) {
             return
         }
-        image?.setImageBitmap(bitmap)
+        binding?.image?.setImageBitmap(bitmap)
     }
 
 
@@ -68,6 +60,11 @@ class PassportPhotoFragment : androidx.fragment.app.Fragment() {
         passportPhotoFragmentListener = null
         super.onDetach()
 
+    }
+
+    override fun onDestroyView() {
+        binding = null
+        super.onDestroyView()
     }
 
     interface PassportPhotoFragmentListener

@@ -32,6 +32,7 @@ import java.security.Security
 import example.jllarraz.com.passportreader.R
 import example.jllarraz.com.passportreader.common.IntentData
 import example.jllarraz.com.passportreader.data.Passport
+import example.jllarraz.com.passportreader.databinding.FragmentNfcBinding
 import example.jllarraz.com.passportreader.utils.KeyStoreUtils
 import example.jllarraz.com.passportreader.utils.NFCDocumentTag
 import io.reactivex.disposables.CompositeDisposable
@@ -42,20 +43,15 @@ class NfcFragment : androidx.fragment.app.Fragment() {
 
     private var mrzInfo: MRZInfo? = null
     private var nfcFragmentListener: NfcFragmentListener? = null
-    private var textViewPassportNumber: TextView? = null
-    private var textViewDateOfBirth: TextView? = null
-    private var textViewDateOfExpiry: TextView? = null
-    private var progressBar: ProgressBar? = null
 
     internal var mHandler = Handler(Looper.getMainLooper())
     var disposable = CompositeDisposable()
 
+    private var binding:FragmentNfcBinding?=null
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
                               savedInstanceState: Bundle?): View? {
-
-        val inflatedView = inflater.inflate(R.layout.fragment_nfc, container, false)
-
-        return inflatedView
+        binding = FragmentNfcBinding.inflate(inflater, container, false)
+        return binding?.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -67,11 +63,6 @@ class NfcFragment : androidx.fragment.app.Fragment() {
         } else {
             //error
         }
-
-        textViewPassportNumber = view.findViewById(R.id.value_passport_number)
-        textViewDateOfBirth = view.findViewById(R.id.value_DOB)
-        textViewDateOfExpiry = view.findViewById(R.id.value_expiration_date)
-        progressBar = view.findViewById(R.id.progressBar)
     }
 
     fun handleNfcTag(intent: Intent?) {
@@ -80,7 +71,7 @@ class NfcFragment : androidx.fragment.app.Fragment() {
         }
         val tag = intent.getParcelableExtra<Tag>(NfcAdapter.EXTRA_TAG) ?: return
 
-        val folder = context!!.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS)!!
+        val folder = requireContext().getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS)!!
         val keyStore = KeyStoreUtils().readKeystoreFromFile(folder)
 
         val mrtdTrustStore = MRTDTrustStore()
@@ -92,7 +83,7 @@ class NfcFragment : androidx.fragment.app.Fragment() {
         //mrtdTrustStore.addCSCAStore(readKeystoreFromFile)
 
 
-        val subscribe = NFCDocumentTag().handleTag(context!!, tag, mrzInfo!!, mrtdTrustStore, object : NFCDocumentTag.PassportCallback {
+        val subscribe = NFCDocumentTag().handleTag(requireContext(), tag, mrzInfo!!, mrtdTrustStore, object : NFCDocumentTag.PassportCallback {
 
             override fun onPassportReadStart() {
                 onNFCSReadStart()
@@ -164,9 +155,9 @@ class NfcFragment : androidx.fragment.app.Fragment() {
     override fun onResume() {
         super.onResume()
 
-        textViewPassportNumber!!.text = getString(R.string.doc_number, mrzInfo!!.documentNumber)
-        textViewDateOfBirth!!.text = getString(R.string.doc_dob, mrzInfo!!.dateOfBirth)
-        textViewDateOfExpiry!!.text = getString(R.string.doc_expiry, mrzInfo!!.dateOfExpiry)
+        binding?.valuePassportNumber?.text = getString(R.string.doc_number, mrzInfo!!.documentNumber)
+        binding?.valueDOB?.text = getString(R.string.doc_dob, mrzInfo!!.dateOfBirth)
+        binding?.valueExpirationDate?.text = getString(R.string.doc_expiry, mrzInfo!!.dateOfExpiry)
 
         if (nfcFragmentListener != null) {
             nfcFragmentListener!!.onEnableNfc()
@@ -184,24 +175,26 @@ class NfcFragment : androidx.fragment.app.Fragment() {
         if (!disposable.isDisposed()) {
             disposable.dispose();
         }
+        binding = null
         super.onDestroyView()
     }
 
     protected fun onNFCSReadStart() {
         Log.d(TAG, "onNFCSReadStart")
-        mHandler.post { progressBar!!.visibility = View.VISIBLE }
+        mHandler.post {
+            binding?.progressBar?.visibility = View.VISIBLE }
 
     }
 
     protected fun onNFCReadFinish() {
         Log.d(TAG, "onNFCReadFinish")
-        mHandler.post { progressBar!!.visibility = View.GONE }
+        mHandler.post { binding?.progressBar?.visibility = View.GONE }
     }
 
     protected fun onCardException(cardException: Exception?) {
         mHandler.post {
             if (nfcFragmentListener != null) {
-                nfcFragmentListener!!.onCardException(cardException)
+                nfcFragmentListener?.onCardException(cardException)
             }
         }
     }
@@ -209,7 +202,7 @@ class NfcFragment : androidx.fragment.app.Fragment() {
     protected fun onPassportRead(passport: Passport?) {
         mHandler.post {
             if (nfcFragmentListener != null) {
-                nfcFragmentListener!!.onPassportRead(passport)
+                nfcFragmentListener?.onPassportRead(passport)
             }
         }
     }

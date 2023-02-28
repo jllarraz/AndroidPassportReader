@@ -4,6 +4,7 @@ import android.app.PendingIntent
 import android.content.Intent
 import android.graphics.Bitmap
 import android.nfc.NfcAdapter
+import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
 import androidx.fragment.app.Fragment
@@ -49,9 +50,11 @@ class NfcActivity : androidx.fragment.app.FragmentActivity(), NfcFragment.NfcFra
             return
         }
 
-        pendingIntent = PendingIntent.getActivity(this, 0,
-                Intent(this, this.javaClass)
-                        .addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP), 0)
+        pendingIntent = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            PendingIntent.getActivity(this, 0, Intent(this, javaClass).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP), PendingIntent.FLAG_MUTABLE)
+        } else{
+            PendingIntent.getActivity(this, 0, Intent(this, javaClass).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP), 0)
+        }
 
 
         if (null == savedInstanceState) {

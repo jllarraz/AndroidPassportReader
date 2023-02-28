@@ -16,6 +16,7 @@ import androidx.appcompat.widget.AppCompatEditText
 import com.mobsandgeeks.saripaar.ValidationError
 import com.mobsandgeeks.saripaar.Validator
 import example.jllarraz.com.passportreader.R
+import example.jllarraz.com.passportreader.databinding.FragmentSelectionBinding
 import example.jllarraz.com.passportreader.network.MasterListService
 import example.jllarraz.com.passportreader.ui.validators.DateRule
 import example.jllarraz.com.passportreader.ui.validators.DocumentNumberRule
@@ -24,7 +25,6 @@ import io.reactivex.Single
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.schedulers.Schedulers
-import kotlinx.android.synthetic.main.fragment_selection.*
 import net.sf.scuba.data.Gender
 import org.jmrtd.lds.icao.MRZInfo
 import java.security.Security
@@ -44,14 +44,11 @@ class SelectionFragment : androidx.fragment.app.Fragment(), Validator.Validation
     private var selectionFragmentListener: SelectionFragmentListener? = null
     var disposable = CompositeDisposable()
 
+    private var binding:FragmentSelectionBinding?=null
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
                               savedInstanceState: Bundle?): View? {
-
-        val inflatedView = inflater.inflate(R.layout.fragment_selection, container, false)
-
-
-
-        return inflatedView
+        binding = FragmentSelectionBinding.inflate(inflater, container, false)
+        return binding?.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -89,10 +86,11 @@ class SelectionFragment : androidx.fragment.app.Fragment(), Validator.Validation
         mValidator!!.put(appCompatEditTextDocumentExpiration!!, DateRule())
         mValidator!!.put(appCompatEditTextDateOfBirth!!, DateRule())
 
-        buttonDownloadCSCA?.setOnClickListener {
+
+        binding?.buttonDownloadCSCA?.setOnClickListener {
             requireDownloadCSCA()
         }
-        buttonDeleteCSCA?.setOnClickListener {
+        binding?.buttonDeleteCSCA?.setOnClickListener {
             val subscribe = cleanCSCAFolder()
                     .subscribeOn(Schedulers.io())
                     .observeOn(AndroidSchedulers.mainThread())
@@ -143,6 +141,7 @@ class SelectionFragment : androidx.fragment.app.Fragment(), Validator.Validation
         if (!disposable.isDisposed) {
             disposable.dispose()
         }
+        binding = null
         super.onDestroyView()
     }
 
@@ -292,6 +291,7 @@ class SelectionFragment : androidx.fragment.app.Fragment(), Validator.Validation
                 }
         disposable.add(subscribe)
     }
+
     companion object {
         val TAG = SelectionFragment::class.java.simpleName
         init {

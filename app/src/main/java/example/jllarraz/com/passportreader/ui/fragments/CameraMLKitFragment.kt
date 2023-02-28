@@ -37,6 +37,7 @@ import com.google.mlkit.vision.text.Text
 import org.jmrtd.lds.icao.MRZInfo
 
 import example.jllarraz.com.passportreader.R
+import example.jllarraz.com.passportreader.databinding.FragmentCameraMrzBinding
 import example.jllarraz.com.passportreader.mlkit.FrameMetadata
 import example.jllarraz.com.passportreader.mlkit.GraphicOverlay
 import example.jllarraz.com.passportreader.mlkit.OcrMrzDetectorProcessor
@@ -49,8 +50,6 @@ import io.reactivex.Single
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.schedulers.Schedulers
-import kotlinx.android.synthetic.main.fragment_camera_mrz.*
-import java.util.regex.Pattern
 
 class CameraMLKitFragment : CameraFragment() {
 
@@ -64,9 +63,11 @@ class CameraMLKitFragment : CameraFragment() {
 
     private var isDecoding = false
 
+    private var binding:FragmentCameraMrzBinding?=null
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
                               savedInstanceState: Bundle?): View? {
-        return inflater.inflate(R.layout.fragment_camera_mrz, container, false)
+        binding = FragmentCameraMrzBinding.inflate(inflater, container, false)
+        return binding?.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -95,6 +96,7 @@ class CameraMLKitFragment : CameraFragment() {
         if (!disposable.isDisposed()) {
             disposable.dispose();
         }
+        binding = null
         super.onDestroyView()
     }
 
@@ -168,7 +170,7 @@ class CameraMLKitFragment : CameraFragment() {
 
     override val cameraPreview: CameraView
         get(){
-            return camera_preview
+            return binding?.cameraPreview!!
         }
 
     ////////////////////////////////////////////////////////////////////////////////////////
@@ -247,9 +249,10 @@ class CameraMLKitFragment : CameraFragment() {
             }
             mHandler.post {
                 try {
-                    status_view_top!!.text = getString(R.string.status_bar_ocr, mrzInfo.documentNumber, mrzInfo.dateOfBirth, mrzInfo.dateOfExpiry)
-                    status_view_bottom!!.text = getString(R.string.status_bar_success, timeRequired)
-                    status_view_bottom!!.setTextColor(resources.getColor(R.color.status_text))
+
+                    binding?.statusViewTop?.text = getString(R.string.status_bar_ocr, mrzInfo.documentNumber, mrzInfo.dateOfBirth, mrzInfo.dateOfExpiry)
+                    binding?.statusViewBottom?.text = getString(R.string.status_bar_success, timeRequired)
+                    binding?.statusViewBottom?.setTextColor(resources.getColor(R.color.status_text))
                     if (cameraMLKitCallback != null) {
                         cameraMLKitCallback!!.onPassportRead(mrzInfo)
                     }
@@ -267,9 +270,9 @@ class CameraMLKitFragment : CameraFragment() {
             }
             mHandler.post {
                 try {
-                    status_view_bottom!!.text = getString(R.string.status_bar_failure, timeRequired)
-                    status_view_bottom!!.setTextColor(Color.RED)
-                    status_view_top!!.text = ""
+                    binding?.statusViewBottom?.text = getString(R.string.status_bar_failure, timeRequired)
+                    binding?.statusViewBottom?.setTextColor(Color.RED)
+                    binding?.statusViewTop?.text = ""
                 } catch (e: IllegalStateException) {
                     //The fragment is destroyed
                 }
@@ -349,7 +352,7 @@ class CameraMLKitFragment : CameraFragment() {
         override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
             val activity = activity
             return AlertDialog.Builder(activity)
-                    .setMessage(arguments!!.getString(ARG_MESSAGE))
+                    .setMessage(requireArguments().getString(ARG_MESSAGE))
                     .setPositiveButton(android.R.string.ok) { dialogInterface, i -> activity!!.finish() }
                     .create()
         }

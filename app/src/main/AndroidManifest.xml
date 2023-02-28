@@ -39,7 +39,8 @@
         </activity>
 
         <activity android:name=".ui.activities.SelectionActivity"
-            android:screenOrientation="nosensor">
+            android:screenOrientation="nosensor"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
