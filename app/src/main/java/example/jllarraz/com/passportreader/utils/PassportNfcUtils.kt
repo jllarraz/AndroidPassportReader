@@ -227,6 +227,7 @@ object PassportNfcUtils {
             try {
                 result = builder.build(buildParams) as PKIXCertPathBuilderResult
             } catch (cpbe: CertPathBuilderException) {
+                cpbe.printStackTrace()
                 /* NOTE: ignore, result remain null */
             }
 

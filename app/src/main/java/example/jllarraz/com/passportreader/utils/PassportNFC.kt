@@ -383,7 +383,11 @@ private constructor() {
         /* Check EAC support by DG14 presence. */
         if (dgNumbers.contains(14)) {
             features.setEAC(FeatureStatus.Verdict.PRESENT)
-            features.setCA(FeatureStatus.Verdict.PRESENT)
+            if(isChipAuthenticationInfoAvailable(ps, mrzInfo, dg14File, sodFile)) {
+                features.setCA(FeatureStatus.Verdict.PRESENT)
+            }else{
+                features.setCA(FeatureStatus.Verdict.NOT_PRESENT)
+            }
         } else {
             features.setEAC(FeatureStatus.Verdict.NOT_PRESENT)
             features.setCA(FeatureStatus.Verdict.NOT_PRESENT)
@@ -1235,6 +1239,26 @@ private constructor() {
         }
 
         return eaccaResults
+    }
+
+    fun isChipAuthenticationInfoAvailable(ps: PassportService, mrzInfo: MRZInfo, dg14File: DG14File?, sodFile: SODFile?):Boolean{
+        if (dg14File == null) {
+            throw NullPointerException("dg14File is null")
+        }
+
+        if (sodFile == null) {
+            throw NullPointerException("sodFile is null")
+        }
+        val chipAuthenticationPublicKeyInfos = ArrayList<ChipAuthenticationPublicKeyInfo>()
+        val securityInfos = dg14File.securityInfos
+        val securityInfoIterator = securityInfos.iterator()
+        while (securityInfoIterator.hasNext()) {
+            val securityInfo = securityInfoIterator.next()
+            if (securityInfo is ChipAuthenticationPublicKeyInfo) {
+                chipAuthenticationPublicKeyInfos.add(securityInfo)
+            }
+        }
+        return chipAuthenticationPublicKeyInfos.isNotEmpty()
     }
 
     @Throws(IOException::class, CardServiceException::class, GeneralSecurityException::class, IllegalArgumentException::class, NullPointerException::class)
