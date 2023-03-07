@@ -7,12 +7,7 @@ import net.sf.scuba.smartcards.CardServiceException
 import org.bouncycastle.asn1.ASN1Encodable
 import org.bouncycastle.asn1.ASN1Integer
 import org.bouncycastle.asn1.DERSequence
-import org.jmrtd.BACKey
-import org.jmrtd.JMRTDSecurityProvider
-import org.jmrtd.MRTDTrustStore
-import org.jmrtd.PACEKeySpec
-import org.jmrtd.PassportService
-import org.jmrtd.Util
+import org.jmrtd.*
 
 import java.io.IOException
 import java.io.InputStream
@@ -43,8 +38,6 @@ import java.util.TreeSet
 import javax.crypto.Cipher
 import javax.security.auth.x500.X500Principal
 
-import org.jmrtd.FeatureStatus
-import org.jmrtd.VerificationStatus
 import org.jmrtd.cert.CardVerifiableCertificate
 import org.jmrtd.lds.AbstractTaggedLDSFile
 import org.jmrtd.lds.ActiveAuthenticationInfo
@@ -1156,19 +1149,33 @@ private constructor() {
         try {
             val bacKey = BACKey(mrzInfo.documentNumber, mrzInfo.dateOfBirth, mrzInfo.dateOfExpiry)
             val paceKeySpec = PACEKeySpec.createMRZKey(bacKey)
-            isCardAccessFile = ps.getInputStream(PassportService.EF_CARD_ACCESS)
+            isCardAccessFile = ps.getInputStream(PassportService.EF_CARD_ACCESS, 224)
 
             val cardAccessFile = CardAccessFile(isCardAccessFile)
-            val securityInfos = cardAccessFile.securityInfos
-            val securityInfo = securityInfos.iterator().next()
             val paceInfos = ArrayList<PACEInfo>()
-            if (securityInfo is PACEInfo) {
-                paceInfos.add(securityInfo)
+            for(securityInfo in cardAccessFile.securityInfos){
+                if (securityInfo is PACEInfo) {
+                    paceInfos.add(securityInfo)
+                }
             }
 
-            if (paceInfos.size > 0) {
-                val paceInfo = paceInfos.iterator().next()
-                paceResult = ps.doPACE(paceKeySpec, paceInfo.objectIdentifier, PACEInfo.toParameterSpec(paceInfo.parameterId))
+            if (paceInfos.isNotEmpty()) {
+                for(paceInfo in paceInfos){
+                    try {
+                        paceResult = ps.doPACE(
+                            paceKeySpec,
+                            paceInfo.objectIdentifier,
+                            PACEInfo.toParameterSpec(paceInfo.parameterId),
+                            paceInfo.parameterId
+                        )
+                        break
+                    }catch (e: java.lang.Exception){
+                        e.printStackTrace()
+                    }
+                }
+               // val paceInfo = paceInfos.iterator().next()
+                //paceResult = ps.doPACE(paceKeySpec, paceInfo.objectIdentifier, PACEInfo.toParameterSpec(paceInfo.parameterId), paceInfo.parameterId)
+                //paceResult = ps.doPACE(paceKeySpec, paceInfo.objectIdentifier, PACEInfo.toParameterSpec(paceInfo.parameterId))
             }
         } finally {
             if (isCardAccessFile != null) {
