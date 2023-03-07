@@ -44,15 +44,20 @@ object OcrUtils {
             //Old passport format
             val line2 = matcherLineOldPassportType.group(0)
             var documentNumber = matcherLineOldPassportType.group(1)
+            val checkDigitDocumentNumber = cleanDate(matcherLineOldPassportType.group(2)).toInt()
             val dateOfBirthDay = cleanDate(matcherLineOldPassportType.group(4))
             val expirationDate = cleanDate(matcherLineOldPassportType.group(7))
 
-            //As O and 0 and really similar most of the countries just removed them from the passport, so for accuracy I am formatting it
-            documentNumber = documentNumber.replace("O".toRegex(), "0")
+            val cleanDocumentNumber = cleanDocumentNumber(documentNumber, checkDigitDocumentNumber)
+            if (cleanDocumentNumber!=null){
+                val mrzInfo = createDummyMrz(documentNumber, dateOfBirthDay, expirationDate)
+                callback.onMRZRead(mrzInfo, timeRequired)
+            }else{
+                //No success
+                callback.onMRZReadFailure(timeRequired)
+            }
 
 
-            val mrzInfo = createDummyMrz(documentNumber, dateOfBirthDay, expirationDate)
-            callback.onMRZRead(mrzInfo, timeRequired)
         } else {
             //Try with the new IP passport type
             val patternLineIPassportTypeLine1 = Pattern.compile(REGEX_IP_PASSPORT_LINE_1)
@@ -63,19 +68,47 @@ object OcrUtils {
                 val line1 = matcherLineIPassportTypeLine1.group(0)
                 val line2 = matcherLineIPassportTypeLine2.group(0)
                 var documentNumber = line1.substring(5, 14)
+                val checkDigitDocumentNumber = line1.substring(14, 15).toInt()
                 val dateOfBirthDay = line2.substring(0, 6)
                 val expirationDate = line2.substring(8, 14)
 
-                //As O and 0 and really similar most of the countries just removed them from the passport, so for accuracy I am formatting it
-                documentNumber = documentNumber.replace("O".toRegex(), "0")
-
-                val mrzInfo = createDummyMrz(documentNumber, dateOfBirthDay, expirationDate)
-                callback.onMRZRead(mrzInfo, timeRequired)
+                val cleanDocumentNumber = cleanDocumentNumber(documentNumber, checkDigitDocumentNumber)
+                if (cleanDocumentNumber!=null){
+                    val mrzInfo = createDummyMrz(documentNumber, dateOfBirthDay, expirationDate)
+                    callback.onMRZRead(mrzInfo, timeRequired)
+                }else{
+                    //No success
+                    callback.onMRZReadFailure(timeRequired)
+                }
             } else {
                 //No success
                 callback.onMRZReadFailure(timeRequired)
             }
         }
+    }
+
+    private fun cleanDocumentNumber(documentNumber: String, checkDigit:Int):String?{
+        //first we replace all O per 0
+        var tempDcumentNumber = documentNumber.replace("O".toRegex(), "0")
+        //Calculate check digit of the document number
+        var checkDigitCalculated = MRZInfo.checkDigit(tempDcumentNumber).toString().toInt()
+        if (checkDigit == checkDigitCalculated) {
+            //If check digits match we return the document number
+            return tempDcumentNumber
+        }
+        //if no match, we try to replace once at a time the first 0 per O as the alpha part comes first, and check if the digits match
+        var indexOfZero = tempDcumentNumber.indexOf("0")
+        while (indexOfZero>-1) {
+            checkDigitCalculated = MRZInfo.checkDigit(tempDcumentNumber).toString().toInt()
+            if (checkDigit != checkDigitCalculated) {
+                //Some countries like Spain uses a letter O before the numeric part
+                indexOfZero = tempDcumentNumber.indexOf("0")
+                tempDcumentNumber = tempDcumentNumber.replaceFirst("0", "O")
+            }else{
+                return tempDcumentNumber
+            }
+        }
+        return null
     }
 
     private fun createDummyMrz(documentNumber: String, dateOfBirthDay: String, expirationDate: String): MRZInfo {
