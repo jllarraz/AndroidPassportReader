@@ -69,7 +69,7 @@ import org.jmrtd.protocol.PACEResult
 class PassportNFC @Throws(GeneralSecurityException::class)
 private constructor() {
 
-    /** The hash function for DG hashes.  */
+    /** The hash function for DG hashes. */
     private var digest: MessageDigest? = null
 
     /**
@@ -229,23 +229,26 @@ private constructor() {
      * @throws GeneralSecurityException if certain security primitives are not supported
      */
     @Throws(CardServiceException::class, GeneralSecurityException::class)
-    constructor(ps: PassportService?, trustManager: MRTDTrustStore, mrzInfo: MRZInfo) : this() {
+    constructor(ps: PassportService?, trustManager: MRTDTrustStore, mrzInfo: MRZInfo, maxBlockSize:Int) : this() {
         if (ps == null) {
             throw IllegalArgumentException("Service cannot be null")
         }
         this.service = ps
         this.trustManager = trustManager
 
-        val hasSAC: Boolean
+        var hasSAC: Boolean = false
         var isSACSucceeded = false
         var paceResult: PACEResult? = null
+        if(ps.isOpen == false){
+            ps.open()
+        }
         try {
-            (service as PassportService).open()
+            // (service as PassportService).open()
 
             /* Find out whether this MRTD supports SAC. */
             try {
                 Log.i(TAG, "Inspecting card access file")
-                val cardAccessFile = CardAccessFile(ps.getInputStream(PassportService.EF_CARD_ACCESS))
+                val cardAccessFile = CardAccessFile((service as PassportService).getInputStream(PassportService.EF_CARD_ACCESS, maxBlockSize))
                 val securityInfos = cardAccessFile.securityInfos
                 for (securityInfo in securityInfos) {
                     if (securityInfo is PACEInfo) {
@@ -262,14 +265,17 @@ private constructor() {
 
             if (hasSAC) {
                 try {
-                    paceResult = doPACE(ps, mrzInfo)
-                    isSACSucceeded = true
+                    paceResult = doPACE(ps, mrzInfo, maxBlockSize)
+                    if(paceResult!=null) {
+                        isSACSucceeded = true
+                    }else{
+                        isSACSucceeded = false
+                    }
                 } catch (e: Exception) {
                     e.printStackTrace()
                     Log.i(TAG, "PACE failed, falling back to BAC")
                     isSACSucceeded = false
                 }
-
             }
             (service as PassportService).sendSelectApplet(isSACSucceeded)
         } catch (cse: CardServiceException) {
@@ -279,10 +285,16 @@ private constructor() {
             throw CardServiceException("Cannot open document. " + e.message)
         }
 
+
         /* Find out whether this MRTD supports BAC. */
         try {
             /* Attempt to read EF.COM before BAC. */
-            COMFile((service as PassportService).getInputStream(PassportService.EF_COM))
+            COMFile(
+                (service as PassportService).getInputStream(
+                    PassportService.EF_COM,
+                    maxBlockSize
+                ))
+
 
             if (isSACSucceeded) {
                 verificationStatus.setSAC(VerificationStatus.Verdict.SUCCEEDED, "Succeeded")
@@ -321,9 +333,9 @@ private constructor() {
         val dgNumbersAlreadyRead = TreeSet<Int>()
 
         try {
-            comFile = getComFile(ps)
-            sodFile = getSodFile(ps)
-            dg1File = getDG1File(ps)
+            comFile = getComFile(ps, maxBlockSize)
+            sodFile = getSodFile(ps, maxBlockSize)
+            dg1File = getDG1File(ps, maxBlockSize)
             dgNumbersAlreadyRead.add(1)
         } catch (ioe: IOException) {
             ioe.printStackTrace()
@@ -331,13 +343,13 @@ private constructor() {
         }
 
         try {
-            dg14File = getDG14File(ps)
+            dg14File = getDG14File(ps, maxBlockSize)
         } catch (e: Exception) {
             e.printStackTrace()
         }
 
         try {
-            cvcaFile = getCVCAFile(ps)
+            cvcaFile = getCVCAFile(ps, maxBlockSize)
         } catch (e: Exception) {
             e.printStackTrace()
         }
@@ -427,7 +439,7 @@ private constructor() {
         val hasAA = features.hasAA() == FeatureStatus.Verdict.PRESENT
         if (hasAA) {
             try {
-                dg15File = getDG15File(ps)
+                dg15File = getDG15File(ps, maxBlockSize)
                 dgNumbersAlreadyRead.add(15)
             } catch (ioe: IOException) {
                 ioe.printStackTrace()
@@ -443,38 +455,38 @@ private constructor() {
 
 
         try {
-            dg2File = getDG2File(ps)
+            dg2File = getDG2File(ps, maxBlockSize)
         } catch (e: Exception) {
             e.printStackTrace()
         }
 
         try {
-            dg3File = getDG3File(ps)
+            dg3File = getDG3File(ps, maxBlockSize)
         } catch (e: Exception) {
             e.printStackTrace()
         }
 
         try {
-            dg5File = getDG5File(ps)
+            dg5File = getDG5File(ps, maxBlockSize)
         } catch (e: Exception) {
             e.printStackTrace()
         }
 
         try {
-            dg7File = getDG7File(ps)
+            dg7File = getDG7File(ps, maxBlockSize)
         } catch (e: Exception) {
             e.printStackTrace()
         }
 
 
         try {
-            dg11File = getDG11File(ps)
+            dg11File = getDG11File(ps, maxBlockSize)
         } catch (e: Exception) {
             e.printStackTrace()
         }
 
         try {
-            dg12File = getDG12File(ps)
+            dg12File = getDG12File(ps, maxBlockSize)
         } catch (e: Exception) {
             e.printStackTrace()
         }
@@ -519,8 +531,8 @@ private constructor() {
      */
     fun verifySecurity(): VerificationStatus {
         /* NOTE: Since 0.4.9 verifyAA and verifyEAC were removed. AA is always checked as part of the prelude.
-         * (EDIT: For debugging it's back here again, see below...)
-         */
+        * (EDIT: For debugging it's back here again, see below...)
+        */
         /* NOTE: We could also move verifyDS and verifyCS to prelude. */
         /* NOTE: COM SOd consistency check ("Jeroen van Beek sanity check") is implicit now, we work from SOd, ignoring COM. */
 
@@ -605,7 +617,7 @@ private constructor() {
 
     ///////////////////////////////////
 
-    /** Check active authentication.  */
+    /** Check active authentication. */
     private fun verifyAA() {
         if (dg15File == null || service == null) {
             verificationStatus.setAA(VerificationStatus.Verdict.FAILED, "AA failed")
@@ -620,7 +632,7 @@ private constructor() {
             var signatureAlgorithm = "SHA1WithRSA/ISO9796-2"
             if ("EC" == pubKeyAlgorithm || "ECDSA" == pubKeyAlgorithm) {
 
-                //  List activeAuthenticationInfos = dg14File.getActiveAuthenticationInfos();
+                // List activeAuthenticationInfos = dg14File.getActiveAuthenticationInfos();
                 val activeAuthenticationInfoList = ArrayList<ActiveAuthenticationInfo>()
                 val securityInfos = dg14File!!.securityInfos
                 for (securityInfo in securityInfos) {
@@ -760,11 +772,11 @@ private constructor() {
             }
         } catch (nsae: NoSuchAlgorithmException) {
             verificationStatus.setDS(VerificationStatus.Verdict.FAILED, "Unsupported signature algorithm")
-            return  /* NOTE: Serious enough to not perform other checks, leave method. */
+            return /* NOTE: Serious enough to not perform other checks, leave method. */
         } catch (e: Exception) {
             e.printStackTrace()
             verificationStatus.setDS(VerificationStatus.Verdict.FAILED, "Unexpected exception")
-            return  /* NOTE: Serious enough to not perform other checks, leave method. */
+            return /* NOTE: Serious enough to not perform other checks, leave method. */
         }
 
     }
@@ -928,10 +940,10 @@ private constructor() {
             /*InputStream dgIn = null;
             int length = lds.getLength(fid);
             if (length > 0) {
-                dgBytes = new byte[length];
-                dgIn = lds.getInputStream(fid);
-                DataInputStream dgDataIn = new DataInputStream(dgIn);
-                dgDataIn.readFully(dgBytes);
+            dgBytes = new byte[length];
+            dgIn = lds.getInputStream(fid);
+            DataInputStream dgDataIn = new DataInputStream(dgIn);
+            dgDataIn.readFully(dgBytes);
             }*/
 
             val abstractTaggedLDSFile = getDG(fid.toInt())
@@ -1061,9 +1073,9 @@ private constructor() {
         }
 
         /*
-         * For the cases where the signature is simply a digest (haven't seen a passport like this,
-         * thus this is guessing)
-         */
+        * For the cases where the signature is simply a digest (haven't seen a passport like this,
+        * thus this is guessing)
+        */
         if (digestEncryptionAlgorithm == null) {
             val digestAlg = sodFile!!.signerInfoDigestAlgorithm
             var digest: MessageDigest? = null
@@ -1080,10 +1092,10 @@ private constructor() {
 
 
         /* For RSA_SA_PSS
-         *    1. the default hash is SHA1,
-         *    2. The hash id is not encoded in OID
-         * So it has to be specified "manually".
-         */
+        * 1. the default hash is SHA1,
+        * 2. The hash id is not encoded in OID
+        * So it has to be specified "manually".
+        */
         if ("SSAwithRSA/PSS" == digestEncryptionAlgorithm) {
             val digestAlg = sodFile!!.signerInfoDigestAlgorithm
             digestEncryptionAlgorithm = digestAlg.replace("-", "") + "withRSA/PSS"
@@ -1106,9 +1118,9 @@ private constructor() {
             sig!!.setParameter(pssParameterSpec)
         }
         /*try {
-            sig = Signature.getInstance(digestEncryptionAlgorithm);
+        sig = Signature.getInstance(digestEncryptionAlgorithm);
         } catch (Exception e) {
-            sig = Signature.getInstance(digestEncryptionAlgorithm, BC_PROVIDER);
+        sig = Signature.getInstance(digestEncryptionAlgorithm, BC_PROVIDER);
         }*/
         sig!!.initVerify(docSigningCert)
         sig.update(eContent)
@@ -1147,13 +1159,13 @@ private constructor() {
     ////////////////////////////
 
     @Throws(IOException::class, CardServiceException::class, GeneralSecurityException::class)
-    private fun doPACE(ps: PassportService, mrzInfo: MRZInfo): PACEResult? {
+    private fun doPACE(ps: PassportService, mrzInfo: MRZInfo, maxBlockSize: Int): PACEResult? {
         var paceResult: PACEResult? = null
         var isCardAccessFile: InputStream? = null
         try {
             val bacKey = BACKey(mrzInfo.documentNumber, mrzInfo.dateOfBirth, mrzInfo.dateOfExpiry)
             val paceKeySpec = PACEKeySpec.createMRZKey(bacKey)
-            isCardAccessFile = ps.getInputStream(PassportService.EF_CARD_ACCESS, 224)
+            isCardAccessFile = ps.getInputStream(PassportService.EF_CARD_ACCESS, maxBlockSize)
 
             val cardAccessFile = CardAccessFile(isCardAccessFile)
             val paceInfos = ArrayList<PACEInfo>()
@@ -1177,7 +1189,7 @@ private constructor() {
                         e.printStackTrace()
                     }
                 }
-               // val paceInfo = paceInfos.iterator().next()
+                // val paceInfo = paceInfos.iterator().next()
                 //paceResult = ps.doPACE(paceKeySpec, paceInfo.objectIdentifier, PACEInfo.toParameterSpec(paceInfo.parameterId), paceInfo.parameterId)
                 //paceResult = ps.doPACE(paceKeySpec, paceInfo.objectIdentifier, PACEInfo.toParameterSpec(paceInfo.parameterId))
             }
@@ -1186,6 +1198,9 @@ private constructor() {
                 isCardAccessFile.close()
                 isCardAccessFile = null
             }
+        }
+        if(paceResult == null){
+            throw java.lang.Exception("PACE authentication failed")
         }
         return paceResult
     }
@@ -1278,7 +1293,7 @@ private constructor() {
         //EAC
         for (caReference in possibleCVCAReferences) {
             val eacCredentials = PassportNfcUtils.getEACCredentials(caReference, cvcaKeyStores)
-                    ?: continue
+                ?: continue
 
             val privateKey = eacCredentials.privateKey
             val chain = eacCredentials.chain
@@ -1309,11 +1324,11 @@ private constructor() {
 
 
     @Throws(CardServiceException::class, IOException::class)
-    private fun getComFile(ps: PassportService): COMFile {
+    private fun getComFile(ps: PassportService, maxBlockSize:Int): COMFile {
         //COM FILE
         var isComFile: InputStream? = null
         try {
-            isComFile = ps.getInputStream(PassportService.EF_COM)
+            isComFile = ps.getInputStream(PassportService.EF_COM, maxBlockSize)
             return LDSFileUtil.getLDSFile(PassportService.EF_COM, isComFile) as COMFile
         } finally {
             if (isComFile != null) {
@@ -1324,11 +1339,11 @@ private constructor() {
     }
 
     @Throws(CardServiceException::class, IOException::class)
-    private fun getSodFile(ps: PassportService): SODFile {
+    private fun getSodFile(ps: PassportService, maxBlockSize:Int): SODFile {
         //SOD FILE
         var isSodFile: InputStream? = null
         try {
-            isSodFile = ps.getInputStream(PassportService.EF_SOD)
+            isSodFile = ps.getInputStream(PassportService.EF_SOD, maxBlockSize)
             return LDSFileUtil.getLDSFile(PassportService.EF_SOD, isSodFile) as SODFile
         } finally {
             if (isSodFile != null) {
@@ -1339,11 +1354,11 @@ private constructor() {
     }
 
     @Throws(CardServiceException::class, IOException::class)
-    private fun getDG1File(ps: PassportService): DG1File {
+    private fun getDG1File(ps: PassportService, maxBlockSize:Int): DG1File {
         // Basic data
         var isDG1: InputStream? = null
         try {
-            isDG1 = ps.getInputStream(PassportService.EF_DG1)
+            isDG1 = ps.getInputStream(PassportService.EF_DG1, maxBlockSize)
             return LDSFileUtil.getLDSFile(PassportService.EF_DG1, isDG1) as DG1File
         } finally {
             if (isDG1 != null) {
@@ -1354,11 +1369,11 @@ private constructor() {
     }
 
     @Throws(CardServiceException::class, IOException::class)
-    private fun getDG2File(ps: PassportService): DG2File {
+    private fun getDG2File(ps: PassportService, maxBlockSize:Int): DG2File {
         // Basic data
         var isDG2: InputStream? = null
         try {
-            isDG2 = ps.getInputStream(PassportService.EF_DG2)
+            isDG2 = ps.getInputStream(PassportService.EF_DG2, maxBlockSize)
             return LDSFileUtil.getLDSFile(PassportService.EF_DG2, isDG2) as DG2File
         } finally {
             if (isDG2 != null) {
@@ -1369,11 +1384,11 @@ private constructor() {
     }
 
     @Throws(CardServiceException::class, IOException::class)
-    private fun getDG3File(ps: PassportService): DG3File {
+    private fun getDG3File(ps: PassportService, maxBlockSize:Int): DG3File {
         // Basic data
         var isDG3: InputStream? = null
         try {
-            isDG3 = ps.getInputStream(PassportService.EF_DG3)
+            isDG3 = ps.getInputStream(PassportService.EF_DG3, maxBlockSize)
             return LDSFileUtil.getLDSFile(PassportService.EF_DG3, isDG3) as DG3File
         } finally {
             if (isDG3 != null) {
@@ -1384,11 +1399,11 @@ private constructor() {
     }
 
     @Throws(CardServiceException::class, IOException::class)
-    private fun getDG5File(ps: PassportService): DG5File {
+    private fun getDG5File(ps: PassportService, maxBlockSize:Int): DG5File {
         // Basic data
         var isDG5: InputStream? = null
         try {
-            isDG5 = ps.getInputStream(PassportService.EF_DG5)
+            isDG5 = ps.getInputStream(PassportService.EF_DG5, maxBlockSize)
             return LDSFileUtil.getLDSFile(PassportService.EF_DG5, isDG5) as DG5File
         } finally {
             if (isDG5 != null) {
@@ -1399,11 +1414,11 @@ private constructor() {
     }
 
     @Throws(CardServiceException::class, IOException::class)
-    private fun getDG7File(ps: PassportService): DG7File {
+    private fun getDG7File(ps: PassportService, maxBlockSize:Int): DG7File {
         // Basic data
         var isDG7: InputStream? = null
         try {
-            isDG7 = ps.getInputStream(PassportService.EF_DG7)
+            isDG7 = ps.getInputStream(PassportService.EF_DG7, maxBlockSize)
             return LDSFileUtil.getLDSFile(PassportService.EF_DG7, isDG7) as DG7File
         } finally {
             if (isDG7 != null) {
@@ -1414,11 +1429,11 @@ private constructor() {
     }
 
     @Throws(CardServiceException::class, IOException::class)
-    private fun getDG11File(ps: PassportService): DG11File {
+    private fun getDG11File(ps: PassportService, maxBlockSize:Int): DG11File {
         // Basic data
         var isDG11: InputStream? = null
         try {
-            isDG11 = ps.getInputStream(PassportService.EF_DG11)
+            isDG11 = ps.getInputStream(PassportService.EF_DG11, maxBlockSize)
             return LDSFileUtil.getLDSFile(PassportService.EF_DG11, isDG11) as DG11File
         } finally {
             if (isDG11 != null) {
@@ -1429,11 +1444,11 @@ private constructor() {
     }
 
     @Throws(CardServiceException::class, IOException::class)
-    private fun getDG12File(ps: PassportService): DG12File {
+    private fun getDG12File(ps: PassportService, maxBlockSize:Int): DG12File {
         // Basic data
         var isDG12: InputStream? = null
         try {
-            isDG12 = ps.getInputStream(PassportService.EF_DG12)
+            isDG12 = ps.getInputStream(PassportService.EF_DG12, maxBlockSize)
             return LDSFileUtil.getLDSFile(PassportService.EF_DG12, isDG12) as DG12File
         } finally {
             if (isDG12 != null) {
@@ -1444,11 +1459,11 @@ private constructor() {
     }
 
     @Throws(CardServiceException::class, IOException::class)
-    private fun getDG14File(ps: PassportService): DG14File {
+    private fun getDG14File(ps: PassportService, maxBlockSize:Int): DG14File {
         // Basic data
         var isDG14: InputStream? = null
         try {
-            isDG14 = ps.getInputStream(PassportService.EF_DG14)
+            isDG14 = ps.getInputStream(PassportService.EF_DG14, maxBlockSize)
             return LDSFileUtil.getLDSFile(PassportService.EF_DG14, isDG14) as DG14File
         } finally {
             if (isDG14 != null) {
@@ -1459,11 +1474,11 @@ private constructor() {
     }
 
     @Throws(CardServiceException::class, IOException::class)
-    private fun getDG15File(ps: PassportService): DG15File {
+    private fun getDG15File(ps: PassportService, maxBlockSize:Int): DG15File {
         // Basic data
         var isDG15: InputStream? = null
         try {
-            isDG15 = ps.getInputStream(PassportService.EF_DG15)
+            isDG15 = ps.getInputStream(PassportService.EF_DG15, maxBlockSize)
             return LDSFileUtil.getLDSFile(PassportService.EF_DG15, isDG15) as DG15File
         } finally {
             if (isDG15 != null) {
@@ -1474,11 +1489,11 @@ private constructor() {
     }
 
     @Throws(CardServiceException::class, IOException::class)
-    private fun getCVCAFile(ps: PassportService): CVCAFile {
+    private fun getCVCAFile(ps: PassportService, maxBlockSize:Int): CVCAFile {
         // Basic data
         var isEF_CVCA: InputStream? = null
         try {
-            isEF_CVCA = ps.getInputStream(PassportService.EF_CVCA)
+            isEF_CVCA = ps.getInputStream(PassportService.EF_CVCA, maxBlockSize)
             return LDSFileUtil.getLDSFile(PassportService.EF_CVCA, isEF_CVCA) as CVCAFile
         } finally {
             if (isEF_CVCA != null) {
@@ -1507,13 +1522,16 @@ private constructor() {
     }
 
     companion object {
-
         private val TAG = PassportNFC::class.java.simpleName
 
         private val BC_PROVIDER = JMRTDSecurityProvider.spongyCastleProvider
 
         private val EMPTY_TRIED_BAC_ENTRY_LIST = emptyList<BACKey>()
         private val EMPTY_CERTIFICATE_CHAIN = emptyList<Certificate>()
+
+        public val MAX_BLOCK_SIZE:Int= PassportService.DEFAULT_MAX_BLOCKSIZE
+        public val MAX_TRANSCEIVE_LENGTH_FOR_SECURE_MESSAGING:Int= PassportService.NORMAL_MAX_TRANCEIVE_LENGTH
+        public val MAX_TRANSCEIVE_LENGTH_FOR_PACE:Int= PassportService.NORMAL_MAX_TRANCEIVE_LENGTH
     }
 
 }

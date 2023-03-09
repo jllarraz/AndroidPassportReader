@@ -23,19 +23,19 @@ import java.security.Security
 class NFCDocumentTag {
 
     fun handleTag(context: Context, tag: Tag, mrzInfo: MRZInfo, mrtdTrustStore: MRTDTrustStore, passportCallback: PassportCallback):Disposable{
-        return  Single.fromCallable({
+        return Single.fromCallable({
             var passport: Passport? = null
             var cardServiceException: Exception? = null
 
             var ps: PassportService? = null
             try {
                 val nfc = IsoDep.get(tag)
-                nfc.timeout = 5*1000 //5 seconds timeout
+                nfc.timeout = Math.max(nfc.timeout, 2000)
                 val cs = CardService.getInstance(nfc)
-                ps = PassportService(cs, 65536 , 255, false, true)
+                ps = PassportService(cs, PassportNFC.MAX_TRANSCEIVE_LENGTH_FOR_PACE, PassportNFC.MAX_TRANSCEIVE_LENGTH_FOR_SECURE_MESSAGING , PassportNFC.MAX_BLOCK_SIZE, false, true)
                 ps.open()
 
-                val passportNFC = PassportNFC(ps, mrtdTrustStore, mrzInfo)
+                val passportNFC = PassportNFC(ps, mrtdTrustStore, mrzInfo, PassportNFC.MAX_BLOCK_SIZE)
                 val verifySecurity = passportNFC.verifySecurity()
                 val features = passportNFC.features
 
@@ -194,28 +194,28 @@ class NFCDocumentTag {
 
             PassportDTO(passport, cardServiceException)
         })
-        .doOnSubscribe{
-            passportCallback.onPassportReadStart()
-        }
-        .subscribeOn(Schedulers.io()).observeOn(AndroidSchedulers.mainThread()).subscribe({ passportDTO ->
-            if(passportDTO.cardServiceException!=null) {
-                val cardServiceException = passportDTO.cardServiceException
-                if (cardServiceException is AccessDeniedException) {
-                    passportCallback.onAccessDeniedException(cardServiceException)
-                } else if (cardServiceException is BACDeniedException) {
-                    passportCallback.onBACDeniedException(cardServiceException)
-                } else if (cardServiceException is PACEException) {
-                    passportCallback.onPACEException(cardServiceException)
-                } else if (cardServiceException is CardServiceException) {
-                    passportCallback.onCardException(cardServiceException)
-                } else {
-                    passportCallback.onGeneralException(cardServiceException)
-                }
-            } else {
-                passportCallback.onPassportRead(passportDTO.passport)
+            .doOnSubscribe{
+                passportCallback.onPassportReadStart()
             }
-            passportCallback.onPassportReadFinish()
-        })
+            .subscribeOn(Schedulers.io()).observeOn(AndroidSchedulers.mainThread()).subscribe({ passportDTO ->
+                if(passportDTO.cardServiceException!=null) {
+                    val cardServiceException = passportDTO.cardServiceException
+                    if (cardServiceException is AccessDeniedException) {
+                        passportCallback.onAccessDeniedException(cardServiceException)
+                    } else if (cardServiceException is BACDeniedException) {
+                        passportCallback.onBACDeniedException(cardServiceException)
+                    } else if (cardServiceException is PACEException) {
+                        passportCallback.onPACEException(cardServiceException)
+                    } else if (cardServiceException is CardServiceException) {
+                        passportCallback.onCardException(cardServiceException)
+                    } else {
+                        passportCallback.onGeneralException(cardServiceException)
+                    }
+                } else {
+                    passportCallback.onPassportRead(passportDTO.passport)
+                }
+                passportCallback.onPassportReadFinish()
+            })
     }
 
     data class PassportDTO(val passport: Passport? = null, val cardServiceException: Exception? = null)
