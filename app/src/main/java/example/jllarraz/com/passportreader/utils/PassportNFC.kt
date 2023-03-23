@@ -946,9 +946,9 @@ private constructor() {
             dgDataIn.readFully(dgBytes);
             }*/
 
-            val abstractTaggedLDSFile = getDG(fid.toInt())
+            val abstractTaggedLDSFile = getDG(dgNumber)
             if (abstractTaggedLDSFile != null) {
-                dgBytes = abstractTaggedLDSFile.encoded
+                dgBytes = readEF(service!!, dgNumber)
             }
 
             if (abstractTaggedLDSFile == null && verificationStatus.eac != VerificationStatus.Verdict.SUCCEEDED && (fid == PassportService.EF_DG3 || fid == PassportService.EF_DG4)) {
@@ -1519,6 +1519,49 @@ private constructor() {
 
         }
         return dgNumberList
+    }
+
+    /**
+     * Reliable read method to read data group content as bytes.
+     *
+     * @param service JMRTD Service API to communicate to the secure chip
+     * @param n The Data Group Number (1-16)
+     *
+     * @return Content of a Data Group in byte array representation
+     */
+    @Throws(CardServiceException::class, IOException::class)
+    fun readEF(service: PassportService, n: Int): ByteArray? {
+
+        val efdgMap = mapOf<Int, Short>(
+            1 to PassportService.EF_DG1,
+            2 to PassportService.EF_DG2,
+            3 to PassportService.EF_DG3,
+            4 to PassportService.EF_DG4,
+            5 to PassportService.EF_DG5,
+            6 to PassportService.EF_DG6,
+            7 to PassportService.EF_DG7,
+            11 to PassportService.EF_DG11,
+            12 to PassportService.EF_DG12,
+            14 to PassportService.EF_DG14,
+            15 to PassportService.EF_DG15)
+
+        if (!efdgMap.containsKey(n)) {
+            return null
+        }
+
+        val ef = efdgMap[n]!!
+
+        val dgInputStream = service.getInputStream(ef)
+        val buf = ByteArray(dgInputStream.length)
+        var qb: Int
+        var i = 0
+        while (dgInputStream.read().also { qb = it } != -1) {
+            buf[i] = qb.toByte()
+            i++
+        }
+        val retbuf = ByteArray(i)
+        System.arraycopy(buf, 0, retbuf, 0, retbuf.size)
+        return retbuf.clone()
     }
 
     companion object {
