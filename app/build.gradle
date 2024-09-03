@@ -25,8 +25,8 @@ android {
     }
 
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
+        sourceCompatibility kotlin_version
+        targetCompatibility kotlin_version
     }
 
     packagingOptions {
@@ -37,10 +37,12 @@ android {
     buildFeatures {
         viewBinding true
     }
+    buildToolsVersion '28.0.3'
+    ndkVersion '27.0.12077973'
 }
 
 dependencies {
-    implementation fileTree(include: ['*.jar'], dir: 'libs')
+     implementation fileTree(include: ['*.jar'], dir: 'libs')
     implementation 'androidx.appcompat:appcompat:1.6.1'
     implementation 'com.google.android.material:material:1.8.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
@@ -95,4 +97,4 @@ dependencies {
     implementation 'com.squareup.retrofit2:adapter-rxjava2:2.9.0'
 }
 
-apply plugin: 'com.google.gms.google-services'
+//apply plugin: 'com.google.gms.google-services'

@@ -5,9 +5,12 @@ buildscript {
 
     repositories {
         google()
-        jcenter()
         mavenCentral()
         mavenLocal()
+        jcenter()
+        maven {
+            url "https://mirrors.huaweicloud.com/repository/maven/"
+        }
     }
     dependencies {
         classpath 'com.android.tools.build:gradle:7.4.2'
@@ -27,6 +30,9 @@ allprojects {
         jcenter()
         mavenCentral()
         mavenLocal()
+        maven {
+            url "https://mirrors.huaweicloud.com/repository/maven/"
+        }
     }
 }
 
